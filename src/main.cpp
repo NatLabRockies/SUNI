@@ -73,7 +73,10 @@ enum { __idFirst = wxID_HIGHEST+592,
 
 	ID_BTN_INPUTFILE, ID_BTN_OUTPUTFILE, ID_BTN_SERIQCPATH,
 	ID_TXT_INPUTFILE, ID_TXT_OUTPUTFILE, ID_TXT_SERIQCPATH,
-	ID_INTERNAL_DATAFOLDER
+	ID_INTERNAL_DATAFOLDER, ID_CMB_SERI_QC, ID_CMB_INTERVAL,
+	ID_GHIID, ID_GHIModel, ID_GHIClass, ID_GHIClassUncert, ID_GHICalUncert, ID_GHICalDate, ID_GHIDueDate, ID_GHIRadUncert,
+	ID_DNIID, ID_DNIModel, ID_DNIClass, ID_DNIClassUncert, ID_DNICalUncert, ID_DNICalDate, ID_DNIDueDate, ID_DNIRadUncert,
+	ID_DHIID, ID_DHIModel, ID_DHIClass, ID_DHIClassUncert, ID_DHICalUncert, ID_DHICalDate, ID_DHIDueDate, ID_DHIRadUncert
 };
 
 BEGIN_EVENT_TABLE( MainWindow, wxFrame )
@@ -150,15 +153,6 @@ MainWindow::MainWindow()
 	menuBar->Append( helpMenu, wxT("&Help")  );
 	SetMenuBar( menuBar );
 #endif
-/*
-	m_topBook = new wxSimplebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE );
-
-
-	m_caseTabPanel = new wxPanel( m_topBook );
-	m_topBook->AddPage( m_caseTabPanel, wxT("Main project window") );
-
-*/
-	//wxBoxSizer *tools = new wxBoxSizer( wxHORIZONTAL );
 	m_mainMenuBar = new wxMenuBar;
 
 	wxMenu *menu = new wxMenu ;
@@ -173,6 +167,7 @@ MainWindow::MainWindow()
 	wxPanel* p = new wxPanel(this, wxID_ANY);
 
 	wxStaticBoxSizer* sizer0 = new wxStaticBoxSizer(wxVERTICAL,p, "Files");
+	sizer0->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
 	m_bInputFile = new wxButton(p, ID_BTN_INPUTFILE, "Input File");
 	sizer0->Add(m_bInputFile,0, wxALIGN_LEFT,5);
 	m_tInputFile = new wxTextCtrl(p, ID_TXT_INPUTFILE);
@@ -188,24 +183,106 @@ MainWindow::MainWindow()
 	m_tSERIQCPath = new wxTextCtrl(p, ID_TXT_SERIQCPATH);
 	m_tSERIQCPath->SetSizeHints(500, 24);
 	sizer0->Add(m_tSERIQCPath, 1, wxEXPAND | wxALL, 5);
-
+	wxGridSizer* grdFiles = new wxGridSizer(2, 2, 2, 5);
+	grdFiles->Add(new wxStaticText(p, wxID_ANY, "SERI QC Station ID"));
+	grdFiles->Add(new wxStaticText(p, wxID_ANY, "Interval (minutes)"),1, wxALIGN_RIGHT);
+	m_cSERIQCStation = new wxComboBox(p, ID_CMB_SERI_QC);
+	m_cSERIQCStation->SetSizeHints(350, 24);
+	m_cInterval = new wxComboBox(p, ID_CMB_INTERVAL);
+	m_cInterval->SetSizeHints(150, 24);
+	grdFiles->Add(m_cSERIQCStation, 1, wxEXPAND | wxALL);
+	grdFiles->Add(m_cInterval, 1, wxALIGN_RIGHT);
+	sizer0->Add(grdFiles);
 
 	wxStaticBoxSizer* sizer1 = new wxStaticBoxSizer(wxVERTICAL, p, "Instruments and Uncertainty");
-	m_bInputFile = new wxButton(p, ID_BTN_INPUTFILE, "Input File");
-	sizer1->Add(m_bInputFile, 0, wxALIGN_LEFT, 5);
-	m_tInputFile = new wxTextCtrl(p, ID_TXT_INPUTFILE);
-	m_tInputFile->SetSizeHints(500, 24);
-	sizer1->Add(m_tInputFile, 1, wxEXPAND | wxALL, 5);
-	m_bOutputFile = new wxButton(p, ID_BTN_OUTPUTFILE, "Output File");
-	sizer1->Add(m_bOutputFile, 0, wxALIGN_LEFT, 5);
-	m_tOutputFile = new wxTextCtrl(p, ID_TXT_OUTPUTFILE);
-	m_tOutputFile->SetSizeHints(500, 24);
-	sizer1->Add(m_tOutputFile, 1, wxEXPAND | wxALL, 5);
-	m_bSERIQCPath = new wxButton(p, ID_BTN_SERIQCPATH, "SERI QC Path");
-	sizer1->Add(m_bSERIQCPath, 0, wxALIGN_LEFT, 5);
-	m_tSERIQCPath = new wxTextCtrl(p, ID_TXT_SERIQCPATH);
-	m_tSERIQCPath->SetSizeHints(500, 24);
-	sizer1->Add(m_tSERIQCPath, 1, wxEXPAND | wxALL, 5);
+	sizer1->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
+	wxFlexGridSizer* grdInstruments = new wxFlexGridSizer(4, 9, 25, 15);
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, " ", wxDefaultPosition, wxSize(50, 24)));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument ID",wxDefaultPosition,wxSize(150,72)));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument Model", wxDefaultPosition, wxSize(75, 72)));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument Class", wxDefaultPosition, wxSize(75, 72)));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Class Uncertainty (+/- %)", wxDefaultPosition, wxSize(75, 72)));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Uncertainty (+/- %)", wxDefaultPosition, wxSize(75, 72)));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Date", wxDefaultPosition, wxSize(75, 72)));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Due Date", wxDefaultPosition, wxSize(75, 72)));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Radiometer Uncertainty (+/- %)", wxDefaultPosition, wxSize(100, 72)));
+	m_tGHIID = new wxTextCtrl(p, ID_GHIID);
+	m_tGHIID->SetSizeHints(150,24);
+	m_tGHIModel = new wxTextCtrl(p, ID_GHIModel);
+	m_tGHIModel->SetSizeHints(75, 24);
+	m_cGHIClass = new wxComboBox(p, ID_GHIClass);
+	m_cGHIClass->SetSizeHints(50, 24);
+	m_tGHIClassUncert = new wxTextCtrl(p, ID_GHIClassUncert);
+	m_tGHIClassUncert->SetSizeHints(50, 24);
+	m_tGHICalUncert = new wxTextCtrl(p, ID_GHICalUncert);
+	m_tGHICalUncert->SetSizeHints(50, 24);
+	m_tGHICalDate = new wxTextCtrl(p, ID_GHICalDate);
+	m_tGHICalDate->SetSizeHints(75, 24);
+	m_tGHIDueDate = new wxTextCtrl(p, ID_GHIDueDate);
+	m_tGHIDueDate->SetSizeHints(75, 24);
+	m_tGHIRadUncert = new wxTextCtrl(p, ID_GHIRadUncert);
+	m_tGHIRadUncert->SetSizeHints(50, 24);
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "GHI", wxDefaultPosition, wxSize(50, 24)),1,wxALIGN_RIGHT,2);
+	grdInstruments->Add(m_tGHIID);
+	grdInstruments->Add(m_tGHIModel);
+	grdInstruments->Add(m_cGHIClass);
+	grdInstruments->Add(m_tGHIClassUncert);
+	grdInstruments->Add(m_tGHICalUncert);
+	grdInstruments->Add(m_tGHICalDate);
+	grdInstruments->Add(m_tGHIDueDate);
+	grdInstruments->Add(m_tGHIRadUncert);
+	m_tDNIID = new wxTextCtrl(p, ID_DNIID);
+	m_tDNIID->SetSizeHints(150, 24);
+	m_tDNIModel = new wxTextCtrl(p, ID_DNIModel);
+	m_tDNIModel->SetSizeHints(75, 24);
+	m_cDNIClass = new wxComboBox(p, ID_DNIClass);
+	m_cDNIClass->SetSizeHints(50, 24);
+	m_tDNIClassUncert = new wxTextCtrl(p, ID_DNIClassUncert);
+	m_tDNIClassUncert->SetSizeHints(50, 24);
+	m_tDNICalUncert = new wxTextCtrl(p, ID_DNICalUncert);
+	m_tDNICalUncert->SetSizeHints(50, 24);
+	m_tDNICalDate = new wxTextCtrl(p, ID_DNICalDate);
+	m_tDNICalDate->SetSizeHints(75, 24);
+	m_tDNIDueDate = new wxTextCtrl(p, ID_DNIDueDate);
+	m_tDNIDueDate->SetSizeHints(75, 24);
+	m_tDNIRadUncert = new wxTextCtrl(p, ID_DNIRadUncert);
+	m_tDNIRadUncert->SetSizeHints(50, 24);
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "DNI", wxDefaultPosition, wxSize(50, 24)), 1, wxALIGN_RIGHT, 2);
+	grdInstruments->Add(m_tDNIID);
+	grdInstruments->Add(m_tDNIModel);
+	grdInstruments->Add(m_cDNIClass);
+	grdInstruments->Add(m_tDNIClassUncert);
+	grdInstruments->Add(m_tDNICalUncert);
+	grdInstruments->Add(m_tDNICalDate);
+	grdInstruments->Add(m_tDNIDueDate);
+	grdInstruments->Add(m_tDNIRadUncert);
+	m_tDHIID = new wxTextCtrl(p, ID_DHIID);
+	m_tDHIID->SetSizeHints(150, 24);
+	m_tDHIModel = new wxTextCtrl(p, ID_DHIModel);
+	m_tDHIModel->SetSizeHints(75, 24);
+	m_cDHIClass = new wxComboBox(p, ID_DHIClass);
+	m_cDHIClass->SetSizeHints(50, 24);
+	m_tDHIClassUncert = new wxTextCtrl(p, ID_DHIClassUncert);
+	m_tDHIClassUncert->SetSizeHints(50, 24);
+	m_tDHICalUncert = new wxTextCtrl(p, ID_DHICalUncert);
+	m_tDHICalUncert->SetSizeHints(50, 24);
+	m_tDHICalDate = new wxTextCtrl(p, ID_DHICalDate);
+	m_tDHICalDate->SetSizeHints(75, 24);
+	m_tDHIDueDate = new wxTextCtrl(p, ID_DHIDueDate);
+	m_tDHIDueDate->SetSizeHints(75, 24);
+	m_tDHIRadUncert = new wxTextCtrl(p, ID_DHIRadUncert);
+	m_tDHIRadUncert->SetSizeHints(50, 24);
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "DHI", wxDefaultPosition, wxSize(50, 24)), 1, wxALIGN_RIGHT, 2);
+	grdInstruments->Add(m_tDHIID);
+	grdInstruments->Add(m_tDHIModel);
+	grdInstruments->Add(m_cDHIClass);
+	grdInstruments->Add(m_tDHIClassUncert);
+	grdInstruments->Add(m_tDHICalUncert);
+	grdInstruments->Add(m_tDHICalDate);
+	grdInstruments->Add(m_tDHIDueDate);
+	grdInstruments->Add(m_tDHIRadUncert);
+
+	sizer1->Add(grdInstruments, 1, wxEXPAND | wxALL, 5);
 
 	wxStaticBoxSizer* sizer2 = new wxStaticBoxSizer(wxVERTICAL, p, "Defaults");
 	m_bInputFile = new wxButton(p, ID_BTN_INPUTFILE, "Input File");
@@ -244,10 +321,10 @@ MainWindow::MainWindow()
 
 	// add both columns to grid sizer
 	wxFlexGridSizer* sizerTop = new wxFlexGridSizer(2, 2, wxSize(50, 50));
-	sizerTop->Add(sizer0, 1, wxEXPAND);
-	sizerTop->Add(sizer1, 1, wxEXPAND);
-	sizerTop->Add(sizer2, 1, wxEXPAND);
-	sizerTop->Add(sizer3, 1, wxEXPAND);
+	sizerTop->Add(sizer0, 1, wxEXPAND, 3);
+	sizerTop->Add(sizer1, 1, wxEXPAND, 3);
+	sizerTop->Add(sizer2, 1, wxEXPAND, 3);
+	sizerTop->Add(sizer3, 1, wxEXPAND, 3);
 	sizerTop->AddGrowableCol(1);
 
 	//sizerTop->Add(sizerCol2, 1, wxEXPAND);

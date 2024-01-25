@@ -101,18 +101,20 @@ private:
 
 	wxButton *m_bInputFile, *m_bOutputFile, *m_bSERIQCPath, *m_bStart, *m_bCancel;
 
-	wxTextCtrl *m_tInputFile, *m_tOutputFile, *m_tSERIQCPath;
-	wxTextCtrl *m_tGHIID, *m_tGHIModel, *m_tGHIClassUncert, *m_tGHICalUncert, *m_tGHICalDate, *m_tGHIDueDate, *m_tGHIRadUncert;
-	wxTextCtrl *m_tDNIID, *m_tDNIModel, *m_tDNIClassUncert, *m_tDNICalUncert, *m_tDNICalDate, *m_tDNIDueDate, *m_tDNIRadUncert;
-	wxTextCtrl *m_tDHIID, *m_tDHIModel, *m_tDHIClassUncert, *m_tDHICalUncert, *m_tDHICalDate, *m_tDHIDueDate, *m_tDHIRadUncert;
+	wxTextCtrl *InputFile, *OutputFile, *SERIQCPath;
+	wxTextCtrl *GHIid, *GHImodel, *GHIclassUncert, *GHIcalUncert, *GHIcalDate, *GHIdueDate, *GHIradUncert;
+	wxTextCtrl *DNIid, *DNImodel, *DNIclassUncert, *DNIcalUncert, *DNIcalDate, *DNIdueDate, *DNIradUncert;
+	wxTextCtrl *DHIid, *DHImodel, *DHIclassUncert, *DHIcalUncert, *DHIcalDate, *DHIdueDate, *DHIradUncert;
 
-	wxSpinCtrl *m_sMaxSeriQCFlag, *m_sMinDNI, *m_sMaxZenith;
+//	wxSpinCtrl* MaxQC, * MinDNI, * MaxZEN;
+	// wxSpinCtrl for integer values only
+	wxTextCtrl* MaxQC, * MinDNI, * MaxZEN;
 
-	wxComboBox *m_cSERIQCStation, *m_cInterval, *m_cGHIClass, *m_cDNIClass, *m_cDHIClass;
+	wxComboBox *StationID, *Interval, *GHIclass, *DNIclass, *DHIclass;
 
-	wxCheckBox *m_chkExtendedReport;
+	wxCheckBox *ExtendedRpt;
 
-	wxRadioBox *m_rDateFormat;
+	wxRadioButton *DateFormat1, *DateFormat2;
 
 	wxGauge *m_gProgress;
 

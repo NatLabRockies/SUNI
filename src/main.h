@@ -118,8 +118,11 @@ private:
 
 	wxGauge *m_gProgress;
 
+	wxPanel* p;
+
 	wxString m_projectFileName;
 
+	bool OpenConfiguration(const wxString& filename);
 
 	DECLARE_EVENT_TABLE();
 };

@@ -66,6 +66,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "main.h"
 #include "pythonhandler.h"
 
+
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/prettywriter.h" // for stringify JSON
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/document.h"
+
+
 static PythonConfig pythonConfig;
 
 
@@ -158,14 +168,14 @@ MainWindow::MainWindow()
 
 	wxMenu *menu = new wxMenu ;
 	menu->Append(wxID_SAVEAS, "Save Configuration");
-	menu->Append(wxID_OPEN, "Get Configuration");
+	menu->Append(wxID_OPEN, "Open Configuration");
 	menu->Append(wxID_EXIT, "Close");
 
 	m_mainMenuBar->Append(menu, wxT("&File"));
 
 	SetMenuBar(m_mainMenuBar);
 
-	wxPanel* p = new wxPanel(this, wxID_ANY);
+	p = new wxPanel(this, wxID_ANY);
 
 	wxStaticBoxSizer* sizer0 = new wxStaticBoxSizer(wxVERTICAL,p, "Files");
 	sizer0->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
@@ -242,9 +252,9 @@ MainWindow::MainWindow()
 	grdInstruments->Add(GHIradUncert);
 	DNIid = new wxTextCtrl(p, ID_DNIid);
 	DNIid->SetSizeHints(150, 24);
-	DNImodel = new wxTextCtrl(p, ID_DNImodel);
+	DNImodel = new wxTextCtrl(p, ID_DNImodel,wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNImodel");
 	DNImodel->SetSizeHints(75, 24);
-	DNIclass = new wxComboBox(p, ID_DNIclass, "A", wxDefaultPosition, wxDefaultSize, asClass);
+	DNIclass = new wxComboBox(p, ID_DNIclass,"A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "DNIclass");
 	DNIclass->SetSizeHints(50, 24);
 	DNIclassUncert = new wxTextCtrl(p, ID_DNIclassUncert);
 	DNIclassUncert->SetSizeHints(50, 24);
@@ -371,8 +381,7 @@ MainWindow::MainWindow()
 	sizerTop->Add(sizer3, 1, wxEXPAND, 3);
 	sizerTop->AddGrowableCol(1);
 
-	//sizerTop->Add(sizerCol2, 1, wxEXPAND);
-	// testing
+	// testing progress bar
 	m_gProgress->Pulse();
 
 	p->SetSizer(sizerTop);
@@ -402,6 +411,63 @@ void MainWindow::OnInternalCommand( wxCommandEvent &evt )
 	}
 }
 
+bool MainWindow::OpenConfiguration(const wxString& filename)
+{
+	bool ret = false;
+	// iterate over contols and populate from JSON file
+	if (wxFileExists(filename)) {
+		rapidjson::Document doc, table;
+		wxFileInputStream fis(filename);
+
+		if (!fis.IsOk()) {
+			wxLogError(wxS("Couldn't open the file '%s'."), filename);
+			return false;
+		}
+		wxStringOutputStream os;
+		fis.Read(os);
+
+		rapidjson::StringStream is(os.GetString().c_str());
+
+		doc.ParseStream(is);
+		if (doc.HasParseError()) {
+			wxLogError(wxS("Could not read the json file string conversion '%s'."), filename);
+			return false;
+		}
+		else {
+			bool ret = true;
+			for (auto &widget : p->GetChildren()) {
+				auto ci = widget->GetClassInfo();
+				wxString typeName = ci->GetClassName();
+				wxString widgetName = widget->GetName();
+/*				if (name == "DNIClass")
+					wxMessageBox("Here!");
+				if (widgetName == "DNIclass")
+					wxMessageBox("Widget Here!");
+*/				if (doc.FindMember(widgetName.c_str()) != doc.MemberEnd()) {
+					auto jValue = doc.FindMember(widgetName.c_str());
+					// set value based on type
+					if (typeName == "wxComboBox") {
+						int iValue = ((wxComboBox*)widget)->FindString(jValue->value.GetString());
+						if (iValue != wxNOT_FOUND)
+							((wxComboBox*)widget)->SetSelection(iValue);
+					}
+					if (typeName == "wxTextCtrl") {
+						wxString val = jValue->value.GetString();
+						((wxTextCtrl*)widget)->SetValue(val);
+					}
+					//					auto ci = widget->GetClassInfo();
+//					if (ci->GetClassName() == "wxTextCtrl")
+				}
+			}
+			return ret;
+		}
+
+	}
+
+	return ret;
+}
+
+
 
 void MainWindow::OnCommand( wxCommandEvent &evt )
 {
@@ -410,13 +476,11 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 	{
 	case wxID_OPEN:
 		{
-	/*		if (!CloseProject()) return;
-			wxFileDialog dlg(this, "Open SAM file", wxEmptyString, wxEmptyString, "SAM Project Files (*.sam)|*.sam", wxFD_OPEN );
+			wxFileDialog dlg(this, "Open Configuration File", wxEmptyString, wxEmptyString, "Configuration Files (*.json)|*.json", wxFD_OPEN );
 			if (dlg.ShowModal() == wxID_OK)
-				if( !LoadProject( dlg.GetPath() ) )
-					wxMessageBox("Error loading project file:\n\n"
-						+ dlg.GetPath() + "\n\n" + m_project.GetLastError(), "Notice", wxOK, this );
-	*/	}
+				if( !OpenConfiguration( dlg.GetPath() ) )
+					wxMessageBox("Error loading configuration file:\n\n" + dlg.GetPath() + "\n\n", "Notice", wxOK, this );
+		}
 		break;
 	case wxID_SAVEAS:
 		SaveAs();

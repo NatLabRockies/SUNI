@@ -352,7 +352,7 @@ MainWindow::MainWindow()
 	sizer3->Add(szButtons, 1, wxALIGN_CENTER, 25);
 	m_gProgress = new wxGauge(p, ID_PROGRESS, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL);
 	m_gProgress->SetSizeHints(1000, 24);
-	sizer3->Add(m_gProgress, 1, wxALIGN_CENTER | wxEXPAND, 2);
+	sizer3->Add(m_gProgress, 1, wxEXPAND, 2);
 	wxBoxSizer* szPercent = new wxBoxSizer(wxHORIZONTAL);
 	szPercent->Add(new wxStaticText(p, wxID_ANY, "0"));
 	szPercent->AddStretchSpacer();
@@ -360,7 +360,7 @@ MainWindow::MainWindow()
 	szPercent->AddStretchSpacer();
 	szPercent->Add(new wxStaticText(p, wxID_ANY, "100"));
 	szPercent->SetSizeHints(m_gProgress);
-	sizer3->Add(szPercent, 1, wxALIGN_CENTER | wxEXPAND, 2);
+	sizer3->Add(szPercent, 1, wxEXPAND, 2);
 
 
 	// add both columns to grid sizer

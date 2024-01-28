@@ -83,9 +83,6 @@ class MainWindow : public wxFrame
 public:
 	MainWindow( );
 
-	void Save();
-	void SaveAs();
-
 	wxString GetProjectDisplayName();
 	wxString GetProjectFileName();
 
@@ -114,7 +111,8 @@ private:
 
 	wxCheckBox *ExtendedRpt;
 
-	wxRadioButton *DateFormat1, *DateFormat2;
+	// wxRadioBox does not layout per specification and mockup
+	wxRadioButton *DateFormat0, *DateFormat1;
 
 	wxGauge *m_gProgress;
 
@@ -123,6 +121,7 @@ private:
 	wxString m_projectFileName;
 
 	bool OpenConfiguration(const wxString& filename);
+	bool SaveConfiguration(const wxString& filename);
 
 	DECLARE_EVENT_TABLE();
 };

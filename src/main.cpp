@@ -518,16 +518,24 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 		// set value based on type
 		if (typeName == "wxTextCtrl") {
 			wxString val = ((wxTextCtrl*)widget)->GetValue();
-			if (val.IsNumber())
-				jValue = wxAtof(val);
+			double dVal;
+			int iVal;
+			if (val.ToDouble(&dVal))
+				jValue.SetDouble(dVal);
+			else if (val.ToInt(&iVal))
+				jValue.SetInt(iVal);
 			else
 				jValue.SetString(val.c_str(), doc.GetAllocator());
 			doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());
 		}
 		else if (typeName == "wxComboBox") {
 			wxString val = ((wxComboBox*)widget)->GetValue();
-			if (val.IsNumber())
-				jValue = wxAtof(val);
+			double dVal;
+			int iVal;
+			if (val.ToDouble(&dVal))
+				jValue.SetDouble(dVal);
+			else if (val.ToInt(&iVal))
+				jValue.SetInt(iVal);
 			else
 				jValue.SetString(val.c_str(), doc.GetAllocator());
 			doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());

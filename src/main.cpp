@@ -76,6 +76,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "rapidjson/document.h"
 
 
+#include <fstream>
+#include <future>
+#include <sstream>
+
+#ifdef __WINDOWS__
+#include <Windows.h>
+#include <stdio.h>
+#include <tchar.h>
+#pragma warning(disable: 4191)
+#include "AtlBase.h"
+#include "AtlConv.h"
+#endif
+
+
+
 static PythonConfig pythonConfig;
 
 
@@ -98,7 +113,9 @@ BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_MENU( wxID_SAVE, MainWindow::OnCommand )
 	EVT_MENU( wxID_SAVEAS, MainWindow::OnCommand )
 	EVT_MENU( wxID_CLOSE, MainWindow::OnCommand )
-	EVT_MENU( wxID_EXIT, MainWindow::OnCommand )
+	EVT_MENU(wxID_EXIT, MainWindow::OnCommand)
+	EVT_MENU(ID_BTN_START, MainWindow::OnCommand)
+	EVT_MENU(ID_BTN_CANCEL, MainWindow::OnCommand)
 END_EVENT_TABLE()
 
 static std::unique_ptr<std::string> s_python_path;
@@ -164,6 +181,10 @@ MainWindow::MainWindow()
 	menuBar->Append( helpMenu, wxT("&Help")  );
 	SetMenuBar( menuBar );
 #endif
+	// for JSON type loading and saving
+	m_typeInt = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval"};
+	m_typeDouble = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN"};
+
 	m_mainMenuBar = new wxMenuBar;
 
 	wxMenu *menu = new wxMenu ;
@@ -191,9 +212,9 @@ MainWindow::MainWindow()
 	sizer0->Add(OutputFile, 1, wxEXPAND | wxALL, 5);
 	m_bSERIQCPath = new wxButton(p, ID_BTN_SERIQCPATH, "SERI QC Path");
 	sizer0->Add(m_bSERIQCPath, 0, wxALIGN_LEFT, 5);
-	SERIQCPath = new wxTextCtrl(p, ID_TXT_SERIQCPATH, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "SERIQCPath");
-	SERIQCPath->SetSizeHints(500, 24);
-	sizer0->Add(SERIQCPath, 1, wxEXPAND | wxALL, 5);
+	SERIQCpath = new wxTextCtrl(p, ID_TXT_SERIQCPATH, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "SERIQCpath");
+	SERIQCpath->SetSizeHints(500, 24);
+	sizer0->Add(SERIQCpath, 1, wxEXPAND | wxALL, 5);
 	wxGridSizer* grdFiles = new wxGridSizer(2, 2, 2, 5);
 	grdFiles->Add(new wxStaticText(p, wxID_ANY, "SERI QC Station ID"));
 	grdFiles->Add(new wxStaticText(p, wxID_ANY, "Interval (minutes)"),1, wxALIGN_RIGHT);
@@ -311,7 +332,14 @@ MainWindow::MainWindow()
 	wxBoxSizer* szH1 = new wxBoxSizer(wxHORIZONTAL);
 	szH1->Add(new wxStaticText(p, wxID_ANY, "Maximum SERI QC Flag", wxDefaultPosition, wxSize(250, 24),wxALIGN_RIGHT));
 	szH1->AddSpacer(10);
-	MaxQC = new wxTextCtrl(p, ID_MaxQC, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "MaxQC");
+	//MaxQC = new wxTextCtrl(p, ID_MaxQC, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "MaxQC");
+	// see p.32 of version 2 specifications.
+	wxArrayString asMaxQC;
+	asMaxQC.Add("3");
+	for (int i = 9; i < 89; i=i+4)
+		asMaxQC.Add(wxString::FromDouble(i));
+	asMaxQC.Add("87");
+	MaxQC = new wxComboBox(p, ID_DHIclass, "87", wxDefaultPosition, wxDefaultSize, asMaxQC, wxCB_READONLY, wxDefaultValidator, "MaxQC");
 	MaxQC->SetSizeHints(75, 24);
 	szH1->Add(MaxQC);
 	sizer2->Add(szH1, 1, wxALIGN_CENTER, 5);
@@ -449,26 +477,26 @@ bool MainWindow::OpenConfiguration(const wxString& filename)
 					// set value based on type
 					if (typeName == "wxTextCtrl") {
 						wxString val;
-						if (jValue->value.IsDouble())
+						if (m_typeDouble.Index(widgetName) != wxNOT_FOUND)//(jValue->value.IsDouble())
 							val = wxString::Format("%g", jValue->value.GetDouble());
-						else if (jValue->value.IsInt())
+						else if (m_typeInt.Index(widgetName) != wxNOT_FOUND)//(jValue->value.IsInt())
 							val = wxString::Format("%d", jValue->value.GetInt());
-						else if (jValue->value.IsString())
+						else //if (jValue->value.IsString())
 							val = jValue->value.GetString();
-						else
-							ret = false;// throw error?
+						//else
+						//	ret = false;// throw error?
 						((wxTextCtrl*)widget)->SetValue(val);
 					}
 					else if (typeName == "wxComboBox") {
 						wxString val; // to handle "Interval" as integer in JSON
-						if (jValue->value.IsDouble())
+						if (m_typeDouble.Index(widgetName) != wxNOT_FOUND)//(jValue->value.IsDouble())
 							val = wxString::Format("%g", jValue->value.GetDouble());
-						else if (jValue->value.IsInt())
+						else if (m_typeInt.Index(widgetName) != wxNOT_FOUND)//(jValue->value.IsInt())
 							val = wxString::Format("%d", jValue->value.GetInt());
-						else if (jValue->value.IsString())
+						else //if (jValue->value.IsString())
 							val = jValue->value.GetString();
-						else
-							ret = false;// throw error?
+						//else
+						//	ret = false;// throw error?
 						int iValue = ((wxComboBox*)widget)->FindString(val);
 						if (iValue != wxNOT_FOUND)
 							((wxComboBox*)widget)->SetSelection(iValue);
@@ -518,24 +546,20 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 		// set value based on type
 		if (typeName == "wxTextCtrl") {
 			wxString val = ((wxTextCtrl*)widget)->GetValue();
-			double dVal;
-			int iVal;
-			if (val.ToDouble(&dVal))
-				jValue.SetDouble(dVal);
-			else if (val.ToInt(&iVal))
-				jValue.SetInt(iVal);
+			if (m_typeDouble.Index(widgetName) != wxNOT_FOUND) 
+				jValue = wxAtof(val);
+			else if (m_typeInt.Index(widgetName) != wxNOT_FOUND)
+				jValue = wxAtoi(val);
 			else
 				jValue.SetString(val.c_str(), doc.GetAllocator());
 			doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());
 		}
 		else if (typeName == "wxComboBox") {
 			wxString val = ((wxComboBox*)widget)->GetValue();
-			double dVal;
-			int iVal;
-			if (val.ToDouble(&dVal))
-				jValue.SetDouble(dVal);
-			else if (val.ToInt(&iVal))
-				jValue.SetInt(iVal);
+			if (m_typeDouble.Index(widgetName) != wxNOT_FOUND)
+				jValue = wxAtof(val);
+			else if (m_typeInt.Index(widgetName) != wxNOT_FOUND)
+				jValue = wxAtoi(val);
 			else
 				jValue.SetString(val.c_str(), doc.GetAllocator());
 			doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());
@@ -558,8 +582,8 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 			}
 			doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());
 		}
-		else
-			ret = false;// throw error?
+//		else // like group boxes or static boxes - not a failure.
+//			ret = false;// throw error?
 	}
 
 	rapidjson::StringBuffer os;
@@ -596,10 +620,188 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 	case wxID_EXIT:
 		Close();
 		break;
+	case ID_BTN_START:
+		InvokePython();
+		break;
 	}
 }
 
+const size_t BUFSIZE = 4096;
 
+
+std::string call_python_module(const std::string& input_dict_as_text) {
+	std::promise<std::string> python_result;
+	std::future<std::string> f_completes = python_result.get_future();
+	std::thread([&]
+		{
+			std::string cmd;// = std::string(get_python_path()) + "/" + python_exec_path + " -c \"" + python_run_cmd + "\"";
+			size_t pos = cmd.find("<input>");
+			cmd.replace(pos, 7, input_dict_as_text);
+
+			FILE* file_pipe; //= popen(cmd.c_str(), "r");
+			if (!file_pipe) {
+				python_result.set_value("wind_landbosse error. Could not call python with cmd:\n" + cmd);
+				return;
+			}
+
+			std::string mod_response;
+			char buffer[BUFSIZE];
+			while (fgets(buffer, sizeof(buffer), file_pipe)) {
+				mod_response += buffer;
+			}
+//			pclose(file_pipe);
+			if (mod_response.empty())
+				python_result.set_value("LandBOSSE error. Function did not return a response.");
+			else
+				python_result.set_value(mod_response);
+		}
+	).detach();
+
+	std::chrono::system_clock::time_point time_passed
+		= std::chrono::system_clock::now() + std::chrono::seconds(60 * 5);
+
+	if (std::future_status::ready == f_completes.wait_until(time_passed))
+		return f_completes.get();
+//	else
+//		throw exec_error("wind_landbosse", "python handler error. Python process timed out.");
+}
+
+#ifdef __WINDOWS__
+std::string call_python_module_windows(const std::string& input_dict_as_text) {
+	STARTUPINFO si;
+	SECURITY_ATTRIBUTES sa;
+	PROCESS_INFORMATION pi;
+	HANDLE stdin_rd = NULL;
+	HANDLE stdout_wr = NULL;
+	HANDLE stdout_rd = NULL;
+	HANDLE stdin_wr = NULL;
+	HANDLE stderr_rd = NULL;
+	HANDLE stderr_wr = NULL;  //pipe handles
+	char buf[BUFSIZE];           //i/o buffer
+	memset(buf, 0, sizeof(buf));
+
+	std::string pythonpath;// = std::string(get_python_path()) + "\\" + python_exec_path;
+	CA2T programpath(pythonpath.c_str());
+	std::string pythonarg;// = " -c \"" + python_run_cmd + "\"";
+	size_t pos = pythonarg.find("<input>");
+	pythonarg.replace(pos, 7, input_dict_as_text);
+	CA2T programargs(pythonarg.c_str());
+
+	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+	sa.bInheritHandle = TRUE;
+	sa.lpSecurityDescriptor = NULL;
+
+	if (!CreatePipe(&stdin_rd, &stdin_wr, &sa, 0)) {
+		goto done;
+	}
+	if (!SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0)) {
+		goto done;
+	}
+	if (!CreatePipe(&stdout_rd, &stdout_wr, &sa, 0)) {
+		goto done;
+	}
+	if (!SetHandleInformation(stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
+		goto done;
+	}
+	if (!CreatePipe(&stderr_rd, &stderr_wr, &sa, 0)) {
+		goto done;
+	}
+	if (!SetHandleInformation(stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
+		goto done;
+	}
+
+	//set startupinfo for the spawned process
+	/*The dwFlags member tells CreateProcess how to make the process.
+	STARTF_USESTDHANDLES: validates the hStd* members.
+	STARTF_USESHOWWINDOW: validates the wShowWindow member*/
+	GetStartupInfo(&si);
+
+	si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE;
+	//set the new handles for the child process
+	si.hStdOutput = stdout_wr;
+	si.hStdError = stderr_wr;
+	si.hStdInput = stdin_rd;
+
+	//spawn the child process
+	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,
+		NULL, NULL, &si, &pi)) {
+		unsigned long bread;   //bytes read
+		unsigned long bread_last = 0;
+		unsigned long avail;   //bytes available
+		size_t i = 0;
+		size_t n_timeout_max = 100000000; // timeout
+		for (i = 0; i < n_timeout_max; i++) {
+			PeekNamedPipe(stdout_rd, buf, BUFSIZE - 1, &bread, &avail, NULL);
+			//check to see if there is any data to read from stdout
+			if (bread != 0) {
+				if (ReadFile(stdout_rd, buf, BUFSIZE - 1, &bread, NULL)) {
+					bread_last = bread;
+				}
+			}
+			else if (bread_last > 0)
+			{
+				break;
+			}
+		}
+
+		CloseHandle(pi.hThread);
+		CloseHandle(pi.hProcess);
+
+		if (i >= n_timeout_max) {
+			//			throw exec_error("wind_landbosse", "LandBOSSE error. Timeout while running.");
+		}
+	}
+done:
+	std::vector<HANDLE> handles = { stdin_rd, stdin_wr, stdout_rd, stdout_wr, stderr_rd, stderr_wr };
+	for (HANDLE handle : handles) {
+		if (handle && handle != INVALID_HANDLE_VALUE) {
+			CloseHandle(handle);
+		}
+	}
+	if (buf[0] == '\0') {
+		//		throw exec_error("wind_landbosse", "LandBOSSE error. Function did not return a response.");
+	}
+	return buf;
+}
+#endif
+
+
+void cleanOutputString(std::string& output_json) {
+	size_t pos = output_json.find("{");
+	if (pos != std::string::npos)
+		output_json = output_json.substr(pos);
+	std::replace(output_json.begin(), output_json.end(), '\'', '\"');
+}
+
+
+bool MainWindow::InvokePython()
+{
+	// TODO - finish Python call implementation
+	std::string input_dict_as_text;// = input_json;
+
+
+		std::replace(input_dict_as_text.begin(), input_dict_as_text.end(), '\"', '\'');
+
+		try {
+//			load_config();
+#ifdef __WINDOWS__
+			std::string output_json = call_python_module_windows(input_dict_as_text);
+#else
+			std::string output_json = call_python_module(input_dict_as_text);
+#endif
+			//    delete input_json;
+
+			cleanOutputString(output_json);
+
+		}
+		catch (std::future_error& e) {
+//			m_vartab->assign("errors", e.err_text);
+//			delete input_json;
+		}
+
+		return true;
+}
 
 void MainWindow::OnClose( wxCloseEvent &evt )
 {

@@ -98,16 +98,17 @@ private:
 
 	wxButton *m_bInputFile, *m_bOutputFile, *m_bSERIQCPath, *m_bStart, *m_bCancel;
 
-	wxTextCtrl *InputFile, *OutputFile, *SERIQCPath;
+	wxTextCtrl *InputFile, *OutputFile, *SERIQCpath;
 	wxTextCtrl *GHIid, *GHImodel, *GHIclassUncert, *GHIcalUncert, *GHIcalDate, *GHIdueDate, *GHIradUncert;
 	wxTextCtrl *DNIid, *DNImodel, *DNIclassUncert, *DNIcalUncert, *DNIcalDate, *DNIdueDate, *DNIradUncert;
 	wxTextCtrl *DHIid, *DHImodel, *DHIclassUncert, *DHIcalUncert, *DHIcalDate, *DHIdueDate, *DHIradUncert;
 
 //	wxSpinCtrl* MaxQC, * MinDNI, * MaxZEN;
 	// wxSpinCtrl for integer values only
-	wxTextCtrl* MaxQC, * MinDNI, * MaxZEN;
-
-	wxComboBox *StationID, *Interval, *GHIclass, *DNIclass, *DHIclass;
+	//wxTextCtrl* MaxQC, * MinDNI, * MaxZEN;
+	wxTextCtrl *MinDNI, *MaxZEN;
+	// MaxQC changed to combo box per specifications v2 p.32
+	wxComboBox *MaxQC, *StationID, *Interval, *GHIclass, *DNIclass, *DHIclass;
 
 	wxCheckBox *ExtendedRpt;
 
@@ -120,8 +121,13 @@ private:
 
 	wxString m_projectFileName;
 
+	// track types for consistent loading and saving
+	// initialize in constructor (can be a settings file)
+	wxArrayString m_typeInt, m_typeDouble;
+
 	bool OpenConfiguration(const wxString& filename);
 	bool SaveConfiguration(const wxString& filename);
+	bool InvokePython();
 
 	DECLARE_EVENT_TABLE();
 };

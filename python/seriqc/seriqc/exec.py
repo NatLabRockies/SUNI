@@ -20,7 +20,7 @@ from seriqc.qcfit import (
 )
 from seriqc.gompertz_curves import boundary_from_gompertz_curve
 from seriqc.solar import compute_solar_properties
-from seriqc.seriqc import seriqc_flag
+from seriqc.functions import seriqc_flag
 
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ def seriqc_from_file(
     **kwargs
         Extra Keyword arguments to pass to
         :func:`seriqc.solar.compute_solar_properties` or
-        :func:`seriqc.seriqc.seriqc_flag`.
+        :func:`seriqc.functions.seriqc_flag`.
         Allowed args for :func:`seriqc.solar.compute_solar_properties`:
 
             - ``elev``
@@ -98,7 +98,7 @@ def seriqc_from_file(
             - ``delta_t``
             - ``atmos_refract``
 
-        Allowed args for :func:`seriqc.seriqc.seriqc_flag`:
+        Allowed args for :func:`seriqc.functions.seriqc_flag`:
 
             - ``twilight_zenith``
             - ``nan_threshold``

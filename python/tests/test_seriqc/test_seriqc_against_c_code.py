@@ -486,7 +486,8 @@ def test_nominal_time_edge_cases(seriqc_lib, test_data_dir):
 
 
 # Run this test using:
-# pytest --log-cli-level=DEBUG test_seriqc_against_c_code.py -k test_nominal_benchmarking_exec -rapP
+# pytest --log-cli-level=DEBUG test_seriqc_against_c_code.py
+# -k test_nominal_benchmarking_exec -rapP
 @pytest.mark.parametrize(
     "interval, year, month, day, hour, minute, ghi, dni, dhi, site",
     [

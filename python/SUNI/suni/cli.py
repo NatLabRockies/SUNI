@@ -12,6 +12,11 @@ from tqdm import tqdm
 import pandas as pd
 
 from suni.framework import Uprocess, uDat, ErrorCode
+from suni.utilities import (
+    format_date,
+    convert_to_year_first,
+    compute_parameter_stats,
+)
 
 
 PYRANOMETER_UNCERTAINTY = {"A": 2.4, "B": 5.2, "C": 11.9}
@@ -33,7 +38,6 @@ def _data_from_json(fp):
 
 
 def _add_inst_uncertainties(config):
-
     param_to_values = {
         "GHI": (PYRANOMETER_UNCERTAINTY, PYRANOMETER_CAL_DEFAULT),
         "DNI": (PYRHELIOMETER_UNCERTAINTY, PYRHELIOMETER_CAL_DEFAULT),
@@ -46,7 +50,7 @@ def _add_inst_uncertainties(config):
         inst_class = config[f"{param}class"]
         inst_uncert = config.get(f"{param}classUncert", uncert[inst_class])
         cal_uncert = config.get(f"{param}calUncert", defaults[inst_class])
-        config[rad_uncertainty_key] = sqrt(inst_uncert ** 2 + cal_uncert ** 2)
+        config[rad_uncertainty_key] = sqrt(inst_uncert**2 + cal_uncert**2)
 
     return config
 
@@ -100,7 +104,7 @@ def process_from_config(cfg, from_gui=True):
     results.to_csv(of, index=False, float_format="%.1f")
     # print(f"Results written to {str(of)}")
 
-    rf = Path(of).parent / f"{input_file.name}_Report.txt"
+    rf = Path(of).parent / f"{input_file.stem}_Report.txt"
     standard_report = _compile_standard_report(
         input_data, cfg, out, input_file, of, proc_start_time
     )
@@ -121,7 +125,7 @@ def process_from_config(cfg, from_gui=True):
 
 def _finalize_format(results, cfg):
     if cfg.get("DateFormat"):
-        results["DATE"] = results["DATE"].map(_convert_date)
+        results["DATE"] = results["DATE"].map(convert_to_year_first)
         date_col = "Date (YYYY-MM-DD)"
     else:
         date_col = "Date (MM/DD/YYYY)"
@@ -150,24 +154,25 @@ def _finalize_format(results, cfg):
     results["DNI Uncertainty Code"] = results["GHI Uncertainty Code"]
     results["DHI Uncertainty Code"] = results["GHI Uncertainty Code"]
     col_order = [
-        date_col,"Time (HH:MM)","GHI (W/m^2)","GHI SERI QC Flag","GHI Uncertainty (+/-%)","GHI Uncertainty Code", "DNI (W/m^2)","DNI SERI QC Flag","DNI Uncertainty (+/-%)","DNI Uncertainty Code", "DHI (W/m^2)","DHI SERI QC Flag","DHI Uncertainty (+/-%)","DHI Uncertainty Code"
+        date_col,
+        "Time (HH:MM)",
+        "GHI (W/m^2)",
+        "GHI SERI QC Flag",
+        "GHI Uncertainty (+/-%)",
+        "GHI Uncertainty Code",
+        "DNI (W/m^2)",
+        "DNI SERI QC Flag",
+        "DNI Uncertainty (+/-%)",
+        "DNI Uncertainty Code",
+        "DHI (W/m^2)",
+        "DHI SERI QC Flag",
+        "DHI Uncertainty (+/-%)",
+        "DHI Uncertainty Code",
     ]
     if cfg.get("ExtendedRpt"):
         col_order += ["System Uncertainty (+/-%)", "Field Uncertainty (+/-%)"]
 
     return results[col_order]
-
-
-
-def _format_date(year, month, day, cfg):
-    if cfg.get("DateFormat"):
-        return f"{year}-{month}-{day}"
-    return f"{month}/{day}/{year}"
-
-
-def _convert_date(val):
-    month, day, year = val.split("/")
-    return f"{year}-{month}-{day}"
 
 
 def _extract_time_from_input_data(row):
@@ -204,22 +209,22 @@ def _compile_popup_report(input_data, cfg, out, input_file, of):
 
     sq_max = counts[ErrorCode.QC_MAX]
     lines = [
-        f'Uncertainty Processing Report for {input_file.name} '
+        f"Uncertainty Processing Report for {input_file.name} "
         f"{cfg['StationID']}\n",
-        f"Beginning: {_format_date(*start_time[:3], cfg)} "
+        f"Beginning: {format_date(*start_time[:3], cfg.get('DateFormat'))} "
         f"{start_time[3]}:{start_time[4]:02d}, "
-        f"Ending: {_format_date(*end_time[:3], cfg)} "
+        f"Ending: {format_date(*end_time[:3], cfg.get('DateFormat'))} "
         f"{end_time[3]}:{end_time[4]:02d}, "
         f"Data records: {len(results):d}",
         f"Total eligible records: {n_valid:d} ({n_valid/len(results):.1%})",
-        f"Exceeded SERIQC max: {sq_max:d} ({sq_max/len(results):.1%})\n"
+        f"Exceeded SERIQC max: {sq_max:d} ({sq_max/len(results):.1%})\n",
     ]
 
     out_params = ["GHI mean U95", "DNI mean U95", "DHI mean U95"]
     sums = [U95GHIsum, U95DNIsum, U95DHIsum]
     sum_sqs = [U95GHIsumSq, U95DNIsumSq, U95DHIsumSq]
     for param, sum_, sum_sq in zip(out_params, sums, sum_sqs):
-        mean, std = _compute_param_stats(
+        mean, std = compute_parameter_stats(
             sum_, sum_sq, sun_up_count, n_valid
         )
         lines.append(
@@ -231,12 +236,12 @@ def _compile_popup_report(input_data, cfg, out, input_file, of):
         out_params = [
             "Urads Uncertainty Mean",
             "System Uncertainty Mean",
-            "Field Uncertainty Mean"
+            "Field Uncertainty Mean",
         ]
         sums = [Uradssum, UoSYSAbssum, UFieldsum]
         sum_sqs = [UradssumSq, UoSYSAbssumSq, UFieldsumSq]
         for param, sum_, sum_sq in zip(out_params, sums, sum_sqs):
-            # mean, std = _compute_param_stats(
+            # mean, std = compute_parameter_stats(
             #     sum_, sum_sq, sun_up_count, n_valid
             # )
             mean = (sum_ / sun_up_count) if sun_up_count > 0 else -9900
@@ -277,15 +282,15 @@ def _compile_standard_report(
     )
 
     lines = [
-        f'Uncertainty Processing Report for {input_file.name}',
+        f"Uncertainty Processing Report for {input_file.name}",
         # f"{cfg['StationID']}\n",
         f"Processing date: {proc_date}",
-        f"From {_format_date(*start_time[:3], cfg)} "
+        f"From {format_date(*start_time[:3], cfg.get('DateFormat'))} "
         f"{start_time[3]}:{start_time[4]:02d} "
-        f"to {_format_date(*end_time[:3], cfg)} "
+        f"to {format_date(*end_time[:3], cfg.get('DateFormat'))} "
         f"{end_time[3]}:{end_time[4]:02d} "
         f"({cfg['Interval']}-minute interval)\n",
-        "System Configuration:"
+        "System Configuration:",
     ]
 
     out_params = ["GHI", "DNI", "DHI"]
@@ -335,7 +340,7 @@ def _compile_standard_report(
     sums = [U95GHIsum, U95DNIsum, U95DHIsum]
     sum_sqs = [U95GHIsumSq, U95DNIsumSq, U95DHIsumSq]
     for param, sum_, sum_sq in zip(out_params, sums, sum_sqs):
-        mean, std = _compute_param_stats(
+        mean, std = compute_parameter_stats(
             sum_, sum_sq, sun_up_count, n_valid
         )
         lines.append(
@@ -347,12 +352,12 @@ def _compile_standard_report(
         out_params = [
             "Urads Uncertainty Mean: +/-",
             "System Uncertainty Mean: ",
-            "Field Uncertainty Mean: +/-"
+            "Field Uncertainty Mean: +/-",
         ]
         sums = [Uradssum, UoSYSAbssum, UFieldsum]
         sum_sqs = [UradssumSq, UoSYSAbssumSq, UFieldsumSq]
         for param, sum_, sum_sq in zip(out_params, sums, sum_sqs):
-            # mean, std = _compute_param_stats(
+            # mean, std = compute_parameter_stats(
             #     sum_, sum_sq, sun_up_count, n_valid
             # )
             mean = (sum_ / sun_up_count) if sun_up_count > 0 else -9900
@@ -396,39 +401,25 @@ def _compile_test_report(cfg, out, input_file, of):
         f"Input_file,{input_file.name}",
         # f"Config_file,{Path(config).name}",
         f"Output_file,{str(of)}\n",
-        "Code,count"
+        "Code,count",
     ]
     for code, count in enumerate(counts):
         # fh.write(f"{code:<4d},{count:d}\n")
         lines.append(f"{code:d},{count:d}")
 
-    out_params = [
-        "U95GHI",
-        "U95DNI",
-        "U95DHI",
-        "UoSys",
-        "UoSysAbs",
-        "Ufield"
-    ]
-    sums = [
-        U95GHIsum,
-        U95DNIsum,
-        U95DHIsum,
-        UoSYSsum,
-        UoSYSAbssum,
-        UFieldsum
-    ]
+    out_params = ["U95GHI", "U95DNI", "U95DHI", "UoSys", "UoSysAbs", "Ufield"]
+    sums = [U95GHIsum, U95DNIsum, U95DHIsum, UoSYSsum, UoSYSAbssum, UFieldsum]
     sum_sqs = [
         U95GHIsumSq,
         U95DNIsumSq,
         U95DHIsumSq,
         UoSYSsumSq,
         UoSYSAbssumSq,
-        UFieldsumSq
+        UFieldsumSq,
     ]
     lines.append("\nParameter,Mean,Stdev")
     for param, sum_, sum_sq in zip(out_params, sums, sum_sqs):
-        mean, std = _compute_param_stats(
+        mean, std = compute_parameter_stats(
             sum_, sum_sq, sun_up_count, n_valid
         )
 
@@ -442,15 +433,6 @@ def _compile_test_report(cfg, out, input_file, of):
     )
     lines.append(f"PctUfield,{pct_field_uncertainty_count:.2f},")
     return "\n".join(lines)
-
-
-def _compute_param_stats(param_sum, param_sum_sq, sun_up_count, n_valid):
-    mean = (param_sum / sun_up_count) if sun_up_count > 0 else -9900
-    if (divisor := (n_valid - 1)) > 0:
-        std = sqrt((param_sum_sq - param_sum**2 / n_valid) / divisor)
-    else:
-        std = -9900
-    return mean, std
 
 
 def _extract_rad_uncertainty(cfg):
@@ -468,8 +450,12 @@ def _extract_irri(row):
 
 
 def run_mp(input_data, input_file, cfg, max_workers):
-    U95GHIsum = U95DNIsum = U95DHIsum = UFieldsum = Uradssum = UoSYSsum = UoSYSAbssum = 0
-    U95GHIsumSq = U95DNIsumSq = U95DHIsumSq = UFieldsumSq = UradssumSq = UoSYSsumSq = 0
+    U95GHIsum = (
+        U95DNIsum
+    ) = U95DHIsum = UFieldsum = Uradssum = UoSYSsum = UoSYSAbssum = 0
+    U95GHIsumSq = (
+        U95DNIsumSq
+    ) = U95DHIsumSq = UFieldsumSq = UradssumSq = UoSYSsumSq = 0
     UoSYSAbssumSq = 0
     counts = [0] * len(ErrorCode)
     n_valid = sun_up_count = field_uncertainty_count = 0
@@ -580,8 +566,12 @@ def run_mp(input_data, input_file, cfg, max_workers):
 
 
 def run_sp(input_data, input_file, cfg):
-    U95GHIsum = U95DNIsum = U95DHIsum = UFieldsum = Uradssum = UoSYSsum = UoSYSAbssum = 0
-    U95GHIsumSq = U95DNIsumSq = U95DHIsumSq = UFieldsumSq = UradssumSq = UoSYSsumSq = 0
+    U95GHIsum = (
+        U95DNIsum
+    ) = U95DHIsum = UFieldsum = Uradssum = UoSYSsum = UoSYSAbssum = 0
+    U95GHIsumSq = (
+        U95DNIsumSq
+    ) = U95DHIsumSq = UFieldsumSq = UradssumSq = UoSYSsumSq = 0
     UoSYSAbssumSq = 0
     counts = [0] * len(ErrorCode)
     n_valid = sun_up_count = field_uncertainty_count = 0

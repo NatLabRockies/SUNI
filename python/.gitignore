@@ -24,6 +24,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Local testing files
+SRRL2004*.csv
+SRRL2004*.txt
+
 # Distribution / packaging
 .Python
 build/

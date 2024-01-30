@@ -1,0 +1,24 @@
+Uncertainty Processing Report for SRRL2004_01_testing.csv
+Processing date: 01/19/2024 10:39
+From 1/1/2004 0:00 to 1/2/2004 8:00 (1-minute interval)
+
+System Configuration:
+GHI: s/n 14003 | Class: A | Class Uncert: +/-2.40% | Cal Uncert: +/-1.90% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.10%
+DNI: s/n 190042 | Class: A | Class Uncert: +/-0.90% | Cal Uncert: +/-0.75% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-1.20%
+DHI: s/n 140033 | Class: A | Class Uncert: +/-2.40% | Cal Uncert: +/-1.90% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.10%
+SERI QC Max: 87
+Zenith Angle Max: 80.0
+DNI Min: 25.0
+System Uncertainty Max: 100
+
+Input Data Records: 1921
+Three-component records: 426 (22.2%)
+Above SERIQC Max: 0 (0.0%)
+Above Zenith Angle Max: 0 (0.0%)
+Below DNI Minimum: 5 (0.3%)
+Mathematically Invalid: 0 (0.0%)
+Total Eligible Uncertainty Records: 421 (21.9%)
+
+GHI Mean U95: +/-2.3% | Standard deviation: 0.4
+DNI Mean U95: +/-1.0% | Standard deviation: 0.6
+DHI Mean U95: +/-2.3% | Standard deviation: 0.4

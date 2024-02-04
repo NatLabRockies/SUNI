@@ -333,13 +333,13 @@ MainWindow::MainWindow()
 	szH1->Add(new wxStaticText(p, wxID_ANY, "Maximum SERI QC Flag", wxDefaultPosition, wxSize(250, 24),wxALIGN_RIGHT));
 	szH1->AddSpacer(10);
 	//MaxQC = new wxTextCtrl(p, ID_MaxQC, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "MaxQC");
-	// see p.32 of version 2 specifications.
+	// see p.32 of version 2 specifications. Updated per email 1/29/2024 from Steve Wilcox
 	wxArrayString asMaxQC;
-	asMaxQC.Add("3");
-	for (int i = 9; i < 89; i=i+4)
+//	asMaxQC.Add("3");
+	for (int i = 13; i <= 89; i=i+4)
 		asMaxQC.Add(wxString::FromDouble(i));
-	asMaxQC.Add("87");
-	MaxQC = new wxComboBox(p, ID_DHIclass, "87", wxDefaultPosition, wxDefaultSize, asMaxQC, wxCB_READONLY, wxDefaultValidator, "MaxQC");
+//	asMaxQC.Add("87");
+	MaxQC = new wxComboBox(p, ID_DHIclass, "89", wxDefaultPosition, wxDefaultSize, asMaxQC, wxCB_READONLY, wxDefaultValidator, "MaxQC");
 	MaxQC->SetSizeHints(75, 24);
 	szH1->Add(MaxQC);
 	sizer2->Add(szH1, 1, wxALIGN_CENTER, 5);

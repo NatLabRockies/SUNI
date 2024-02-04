@@ -127,7 +127,23 @@ private:
 
 	bool OpenConfiguration(const wxString& filename);
 	bool SaveConfiguration(const wxString& filename);
+	
+	// Python specific functions
+	void LoadPythonConfig();
+	bool CheckPythonPackage(const std::string& pip_name);
+	void InstallPython();
+	void InstallPythonPackage(const std::string& pip_name);
+
+	bool SetupPython();
 	bool InvokePython();
+	void LoadConfig();
+	std::string GetPythonConfigPath();
+	wxString GetAppPath();
+	std::string CallPythonModule(const std::string& input_dict_as_text);
+	std::string CallPythonModuleWindows(const std::string& input_dict_as_text);
+	void CleanOutputString(std::string& output_json);
+
+	std::string m_pythonExecPath, m_pythonRunCmd;
 
 	DECLARE_EVENT_TABLE();
 };

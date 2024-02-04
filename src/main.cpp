@@ -90,6 +90,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
+#ifdef _MSC_VER
+#define popen _popen
+#define pclose _pclose
+#endif
+
 
 static PythonConfig pythonConfig;
 
@@ -114,8 +119,8 @@ BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_MENU( wxID_SAVEAS, MainWindow::OnCommand )
 	EVT_MENU( wxID_CLOSE, MainWindow::OnCommand )
 	EVT_MENU(wxID_EXIT, MainWindow::OnCommand)
-	EVT_MENU(ID_BTN_START, MainWindow::OnCommand)
-	EVT_MENU(ID_BTN_CANCEL, MainWindow::OnCommand)
+	EVT_BUTTON(ID_BTN_START, MainWindow::OnCommand)
+	EVT_BUTTON(ID_BTN_CANCEL, MainWindow::OnCommand)
 END_EVENT_TABLE()
 
 static std::unique_ptr<std::string> s_python_path;
@@ -465,7 +470,7 @@ bool MainWindow::OpenConfiguration(const wxString& filename)
 			return false;
 		}
 		else {
-			bool ret = true;
+			ret = true;
 			// limit on wxRadioButton - only one group supported (if more desired use wxRadioBox)
 			int iRadioGroup = 0;
 			for (auto &widget : p->GetChildren()) {
@@ -522,9 +527,7 @@ bool MainWindow::OpenConfiguration(const wxString& filename)
 			}
 			return ret;
 		}
-
 	}
-
 	return ret;
 }
 
@@ -604,9 +607,14 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 	case wxID_OPEN:
 		{
 			wxFileDialog dlg(this, "Open Configuration File", wxEmptyString, wxEmptyString, "Configuration Files (*.json)|*.json", wxFD_OPEN );
-			if (dlg.ShowModal() == wxID_OK)
-				if( !OpenConfiguration( dlg.GetPath() ) )
-					wxMessageBox("Error opening configuration file:\n\n" + dlg.GetPath() + "\n\n", "Notice", wxOK, this );
+			if (dlg.ShowModal() == wxID_OK) {
+				if (!OpenConfiguration(dlg.GetPath()))
+					wxMessageBox("Error opening configuration file:\n\n" + dlg.GetPath() + "\n\n", "Notice", wxOK, this);
+				else {
+					m_projectFileName = dlg.GetPath();
+					SetTitle(m_projectFileName);
+				}
+			}
 		}
 		break;
 	case wxID_SAVEAS:
@@ -628,19 +636,114 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 
 const size_t BUFSIZE = 4096;
 
+wxString MainWindow::GetAppPath()
+{
+	wxFileName path(g_appArgs[0]);
+	if (!path.IsAbsolute())
+		path.MakeAbsolute();
 
-std::string call_python_module(const std::string& input_dict_as_text) {
+	return wxPathOnly(path.GetFullPath());
+}
+
+std::string MainWindow::GetPythonConfigPath() 
+{
+	wxFileName path(GetAppPath() + "/python");
+	path.Normalize();
+	return path.GetFullPath().ToStdString();
+}
+
+
+void MainWindow::LoadConfig() 
+{
+	std::string python_config_path = GetPythonConfigPath();
+
+	if (python_config_path.empty())
+		throw std::runtime_error("Path to SUNI python configuration directory not set. ");
+
+
+	// load python configuration
+	rapidjson::Document python_config_root;
+	std::ifstream python_config_doc(python_config_path + "/suni.json");
+	if (python_config_doc.fail())
+		throw std::runtime_error("Could not open 'suni.json'. ");
+
+#ifdef __WINDOWS__
+	// check for byte-order mark indicating UTF-8 and skip if it exists since it's not JSON-compatible
+	char a, b, c;
+	a = (char)python_config_doc.get();
+	b = (char)python_config_doc.get();
+	c = (char)python_config_doc.get();
+	if (a != (char)0xEF || b != (char)0xBB || c != (char)0xBF) {
+		python_config_doc.seekg(0);
+	}
+#endif
+
+	std::ostringstream tmp;
+	tmp << python_config_doc.rdbuf();
+	python_config_root.Parse(tmp.str().c_str());
+
+
+	if (!python_config_root.HasMember("exec_path"))
+		throw std::runtime_error( "Missing key 'exec_path' in 'python_config.json'.");
+	if (!python_config_root.HasMember("python_version"))
+		throw std::runtime_error( "Missing key 'python_version' in 'python_config.json'.");
+
+
+	m_pythonExecPath = python_config_root["exec_path"].GetString();
+	if (m_pythonExecPath.empty())
+		throw std::runtime_error( "Missing key 'exec_path' in 'python_config.json'.");
+
+	auto str_python = std::string(GetPythonConfigPath()) + "/" + m_pythonExecPath;
+	if (!wxFileExists(str_python.c_str()))
+		throw std::runtime_error( "Missing python executable 'exe_path' in 'python_config.json'.");
+
+	auto python_version = python_config_root["python_version"].GetString();
+
+	// load landbosse configuration
+	rapidjson::Document landbosse_config_root;
+	std::ifstream landbosse_config_doc(python_config_path + "/landbosse.json");
+	if (landbosse_config_doc.fail())
+		throw std::runtime_error( "Could not open 'landbosse.json'. ");
+
+	std::ostringstream tmplb;
+	tmplb << landbosse_config_doc.rdbuf();
+	landbosse_config_root.Parse(tmplb.str().c_str());
+
+
+	if (!landbosse_config_root.HasMember("run_cmd"))
+		throw std::runtime_error("Missing key 'run_cmd' in 'landbosse.json'.");
+	if (!landbosse_config_root.HasMember("min_python_version"))
+		throw std::runtime_error( "Missing key 'min_python_version' in 'landbosse.json'.");
+
+	m_pythonRunCmd = landbosse_config_root["run_cmd"].GetString();
+	auto min_python_version = landbosse_config_root["min_python_version"].GetString();
+
+	// check version works out
+	std::stringstream min_ver(min_python_version);
+	std::stringstream py_ver(python_version);
+	std::string min_ver_token, py_ver_token;
+
+	while (std::getline(min_ver, min_ver_token, '.')) {
+		if (!std::getline(py_ver, py_ver_token, '.'))
+			return;
+		if (std::stoi(min_ver_token) > std::stoi(py_ver_token))
+			throw std::runtime_error( "'min_python_version' requirement not met.");
+	}
+}
+
+
+std::string MainWindow::CallPythonModule(const std::string& input_dict_as_text) {
 	std::promise<std::string> python_result;
 	std::future<std::string> f_completes = python_result.get_future();
 	std::thread([&]
 		{
-			std::string cmd;// = std::string(get_python_path()) + "/" + python_exec_path + " -c \"" + python_run_cmd + "\"";
+			std::string cmd = std::string(GetPythonConfigPath()) + "/" + m_pythonExecPath + " -c \"" + m_pythonRunCmd + "\"";
 			size_t pos = cmd.find("<input>");
 			cmd.replace(pos, 7, input_dict_as_text);
 
-			FILE* file_pipe; //= popen(cmd.c_str(), "r");
+			FILE* file_pipe = popen(cmd.c_str(), "r");
 			if (!file_pipe) {
-				python_result.set_value("wind_landbosse error. Could not call python with cmd:\n" + cmd);
+				python_result.set_value("SUNI error. Could not call python with cmd:\n" + cmd);
 				return;
 			}
 
@@ -649,9 +752,9 @@ std::string call_python_module(const std::string& input_dict_as_text) {
 			while (fgets(buffer, sizeof(buffer), file_pipe)) {
 				mod_response += buffer;
 			}
-//			pclose(file_pipe);
+			pclose(file_pipe);
 			if (mod_response.empty())
-				python_result.set_value("LandBOSSE error. Function did not return a response.");
+				python_result.set_value("SUNI error. Function did not return a response.");
 			else
 				python_result.set_value(mod_response);
 		}
@@ -662,12 +765,12 @@ std::string call_python_module(const std::string& input_dict_as_text) {
 
 	if (std::future_status::ready == f_completes.wait_until(time_passed))
 		return f_completes.get();
-//	else
-//		throw exec_error("wind_landbosse", "python handler error. Python process timed out.");
+	else
+		throw std::runtime_error("python handler error. Python process timed out.");
 }
 
 #ifdef __WINDOWS__
-std::string call_python_module_windows(const std::string& input_dict_as_text) {
+std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as_text) {
 	STARTUPINFO si;
 	SECURITY_ATTRIBUTES sa;
 	PROCESS_INFORMATION pi;
@@ -680,9 +783,9 @@ std::string call_python_module_windows(const std::string& input_dict_as_text) {
 	char buf[BUFSIZE];           //i/o buffer
 	memset(buf, 0, sizeof(buf));
 
-	std::string pythonpath;// = std::string(get_python_path()) + "\\" + python_exec_path;
+	std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
 	CA2T programpath(pythonpath.c_str());
-	std::string pythonarg;// = " -c \"" + python_run_cmd + "\"";
+	std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
 	size_t pos = pythonarg.find("<input>");
 	pythonarg.replace(pos, 7, input_dict_as_text);
 	CA2T programargs(pythonarg.c_str());
@@ -749,7 +852,7 @@ std::string call_python_module_windows(const std::string& input_dict_as_text) {
 		CloseHandle(pi.hProcess);
 
 		if (i >= n_timeout_max) {
-			//			throw exec_error("wind_landbosse", "LandBOSSE error. Timeout while running.");
+			throw std::runtime_error("SUNI error. Timeout while running.");
 		}
 	}
 done:
@@ -760,14 +863,14 @@ done:
 		}
 	}
 	if (buf[0] == '\0') {
-		//		throw exec_error("wind_landbosse", "LandBOSSE error. Function did not return a response.");
+		throw std::runtime_error("SUNI error. Function did not return a response.");
 	}
 	return buf;
 }
 #endif
 
 
-void cleanOutputString(std::string& output_json) {
+void MainWindow::CleanOutputString(std::string& output_json) {
 	size_t pos = output_json.find("{");
 	if (pos != std::string::npos)
 		output_json = output_json.substr(pos);
@@ -775,38 +878,128 @@ void cleanOutputString(std::string& output_json) {
 }
 
 
+bool MainWindow::CheckPythonPackage(const std::string& pip_name) {
+	if (CheckPythonInstalled(pythonConfig)) {
+		if (CheckPythonPackageInstalled(pip_name, pythonConfig))
+			return true;
+	}
+	return false;
+}
+
+void MainWindow::InstallPython() {
+	if (pythonConfig.pythonVersion.empty() && pythonConfig.minicondaVersion.empty())
+		LoadPythonConfig();
+
+	auto python_path = GetPythonConfigPath();
+	// already installed and correctly configured
+	if (CheckPythonInstalled(pythonConfig)) {
+		set_python_path(python_path.c_str());
+		return;
+	}
+
+#ifdef __WXMSW__
+	// windows
+	bool errors = InstallPythonWindows(python_path, pythonConfig);
+#else
+	bool errors = InstallPythonUnix(python_path, pythonConfig);
+#endif
+	if (errors)
+		throw std::runtime_error("Error installing python.");
+	LoadPythonConfig();
+}
+
+void MainWindow::InstallPythonPackage(const std::string& pip_name) {
+	if (CheckPythonPackageInstalled(pip_name, pythonConfig))
+		return;
+	auto packageConfig = ReadPythonPackageConfig(pip_name, GetPythonConfigPath() + "/" + pip_name + ".json");
+
+#ifdef __WXMSW__
+	bool retval = InstallFromPipWindows(GetPythonConfigPath() + "\\" + pythonConfig.pipPath, packageConfig);
+#else
+	std::string pip_exec = GetPythonConfigPath() + "/" + pythonConfig.pipPath;
+	bool retval = InstallFromPip(pip_exec, packageConfig);
+#endif
+	if (retval == 0) {
+		pythonConfig.packages.push_back(pip_name);
+		WritePythonConfig(GetPythonConfigPath() + "/python_config.json", pythonConfig);
+	}
+	else {
+		throw std::runtime_error("Error installing " + pip_name);
+	}
+}
+
+
+void MainWindow::LoadPythonConfig() {
+	pythonConfig = ReadPythonConfig(GetPythonConfigPath() + "/python_config.json");
+	if (CheckPythonInstalled(pythonConfig)) {
+		std::string python_path = GetPythonConfigPath();
+		set_python_path(python_path.c_str());
+		return;
+	}
+}
+
+bool MainWindow::SetupPython()
+{
+	bool ret = false;
+
+	if (CheckPythonPackage("suni"))
+		ret = true;
+	else {
+		wxBusyCursor wait;
+		wxMessageDialog dlg(this, "Installing the SUNI model. Please note that it may take a few minutes to complete the initial installation. Once installed, you will be able to estimate the solar uncertainty.",	"Solar Uncertainty Integrator");
+		dlg.Show();
+		wxGetApp().Yield(true);
+
+		InstallPython();
+		InstallPythonPackage("suni");
+		dlg.Close();
+		ret = true;
+	}
+
+	return ret;
+}
+
 bool MainWindow::InvokePython()
 {
-	// TODO - finish Python call implementation
-	std::string input_dict_as_text;// = input_json;
+	// Save current configuration for use later or to test from command line	
+	if (SaveConfiguration(m_projectFileName)) {
 
+		// Install Python if necessary
+		if (!SetupPython()) {
+			throw std::runtime_error("Python setup failed");
+			return false;
+		}
 
-		std::replace(input_dict_as_text.begin(), input_dict_as_text.end(), '\"', '\'');
 
 		try {
-//			load_config();
+			LoadConfig();
 #ifdef __WINDOWS__
-			std::string output_json = call_python_module_windows(input_dict_as_text);
+			std::string output_json = CallPythonModuleWindows(m_projectFileName.ToStdString());
 #else
-			std::string output_json = call_python_module(input_dict_as_text);
+			std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
 #endif
 			//    delete input_json;
 
-			cleanOutputString(output_json);
+			CleanOutputString(output_json);
 
 		}
 		catch (std::future_error& e) {
-//			m_vartab->assign("errors", e.err_text);
-//			delete input_json;
+			throw std::runtime_error(e.what());
+			//			delete input_json;
 		}
 
 		return true;
+	}
+	else {
+		throw std::runtime_error("Issue running SUNI");
+		return false;
+	}
 }
 
 void MainWindow::OnClose( wxCloseEvent &evt )
 {
 	Raise();
-	/*
+	/* may want to check for cleanup here!
 	if ( !CloseProject() )
 	{
 		evt.Veto();
@@ -854,7 +1047,9 @@ wxString SUIApp::GetAppPath()
 wxString SUIApp::GetRuntimePath()
 {
 	wxFileName path( GetAppPath() + "/../runtime/" );
-	path.Normalize();
+//	path.Normalize();
+	if (!path.IsAbsolute())
+		path.MakeAbsolute();
 	return path.GetFullPath();
 }
 

@@ -1,6 +1,6 @@
 {
-    "InputFile": "SRRL2004_01_testing.csv",
-    "OutputFile": "SRRL2004_01_Unc.csv",
+    "InputFile": "/Projects/Github/NREL/SolarResourceGUI/SUNI/python/SRRL2004_01_testing.csv",
+    "OutputFile": "/Projects/Github/NREL/SolarResourceGUI/SUNI/python/SRRL2004_01_Unc.csv",
     "SERIQCpath": ".",
     "StationID": "NRELSR",
     "Interval": 1,
@@ -28,6 +28,7 @@
     "DHIcalDate": "2019-05-05",
     "DHIdueDate": "2020-05-05",
     "DHIradUncert": 3.1,
+    "MaxSysUncert": 100,
     "MaxQC": 89,
     "MinDNI": 25.0,
     "MaxZEN": 80.0,

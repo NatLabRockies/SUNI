@@ -663,9 +663,9 @@ void MainWindow::LoadConfig()
 
 	// load python configuration
 	rapidjson::Document python_config_root;
-	std::ifstream python_config_doc(python_config_path + "/suni.json");
+	std::ifstream python_config_doc(python_config_path + "/python_config.json");
 	if (python_config_doc.fail())
-		throw std::runtime_error("Could not open 'suni.json'. ");
+		throw std::runtime_error("Could not open 'python_config.json'. ");
 
 #ifdef __WINDOWS__
 	// check for byte-order mark indicating UTF-8 and skip if it exists since it's not JSON-compatible
@@ -699,24 +699,24 @@ void MainWindow::LoadConfig()
 
 	auto python_version = python_config_root["python_version"].GetString();
 
-	// load landbosse configuration
-	rapidjson::Document landbosse_config_root;
-	std::ifstream landbosse_config_doc(python_config_path + "/landbosse.json");
-	if (landbosse_config_doc.fail())
-		throw std::runtime_error( "Could not open 'landbosse.json'. ");
+	// load suni configuration
+	rapidjson::Document suni_config_root;
+	std::ifstream suni_config_doc(python_config_path + "/suni.json");
+	if (suni_config_doc.fail())
+		throw std::runtime_error( "Could not open 'suni.json'. ");
 
 	std::ostringstream tmplb;
-	tmplb << landbosse_config_doc.rdbuf();
-	landbosse_config_root.Parse(tmplb.str().c_str());
+	tmplb << suni_config_doc.rdbuf();
+	suni_config_root.Parse(tmplb.str().c_str());
 
 
-	if (!landbosse_config_root.HasMember("run_cmd"))
-		throw std::runtime_error("Missing key 'run_cmd' in 'landbosse.json'.");
-	if (!landbosse_config_root.HasMember("min_python_version"))
-		throw std::runtime_error( "Missing key 'min_python_version' in 'landbosse.json'.");
+	if (!suni_config_root.HasMember("run_cmd"))
+		throw std::runtime_error("Missing key 'run_cmd' in 'suni.json'.");
+	if (!suni_config_root.HasMember("min_python_version"))
+		throw std::runtime_error( "Missing key 'min_python_version' in 'suni.json'.");
 
-	m_pythonRunCmd = landbosse_config_root["run_cmd"].GetString();
-	auto min_python_version = landbosse_config_root["min_python_version"].GetString();
+	m_pythonRunCmd = suni_config_root["run_cmd"].GetString();
+	auto min_python_version = suni_config_root["min_python_version"].GetString();
 
 	// check version works out
 	std::stringstream min_ver(min_python_version);

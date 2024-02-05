@@ -197,6 +197,8 @@ bool CheckPythonPackageInstalled(const std::string& package, const PythonConfig&
 #ifdef __WXMSW__
 int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig& package){
 	std::string args = " install " + package.name + "==" + package.version;
+    // testing per email from Paul 1/3/2024
+    args = " install ../../../python";
 	PROCESS_INFORMATION p_info;
 	STARTUPINFO s_info;
 	DWORD ReturnValue;

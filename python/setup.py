@@ -1,9 +1,8 @@
-"""
-setup.py
-"""
+"""setup.py"""
+
 from pathlib import Path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 HERE = Path(__file__).parent.resolve()
@@ -30,7 +29,7 @@ setup(
     long_description=README,
     author="Paul Pinchuk",
     maintainer_email="ppinchuk@nrel.gov",
-    packages=["suni", "seriqc"],
+    packages=find_packages(where="./SUNI") + find_packages(where="./SERIQC"),
     package_dir={"suni": "SUNI/suni", "seriqc": "SERIQC/seriqc"},
     zip_safe=False,
     keywords="suni",

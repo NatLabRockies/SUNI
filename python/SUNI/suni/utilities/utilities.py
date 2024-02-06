@@ -70,3 +70,25 @@ def compute_parameter_stats(param_sum, param_sum_sq, sun_up_count, n_valid):
     else:
         std = -9900
     return mean, std
+
+
+def extract_time_from_input_data(row):
+    """Convert DATE+MST to integer date components.
+
+    Parameters
+    ----------
+    row : pd.Series
+        A series instance containing a "DATE" and "MST" column. "DATE"
+        must have the format MM/DD/YYYY and "MST" must have the format
+        HH:MM.
+
+    Returns
+    -------
+    tuple
+        Tuple of ints corresponding to the
+        (year, month, day, hour, minute) represented by "DATE" and "MST"
+        in the `row` input.
+    """
+    month, day, year = map(int, row["DATE"].split("/"))
+    hour, minute = map(int, row["MST"].split(":"))
+    return year, month, day, hour, minute

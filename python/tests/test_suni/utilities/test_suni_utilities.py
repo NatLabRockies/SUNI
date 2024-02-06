@@ -8,6 +8,7 @@ from suni.utilities import (
     format_date,
     convert_to_year_first,
     compute_parameter_stats,
+    extract_time_from_input_data,
 )
 
 
@@ -31,6 +32,21 @@ def test_compute_parameter_stats():
     assert compute_parameter_stats(100, 100, 0, 1) == (-9900, -9900)
     assert compute_parameter_stats(0, 0, 100, 100) == (0, 0)
     assert compute_parameter_stats(1000, 1000**2, 100, 100) == (10, 100)
+
+
+@pytest.mark.parametrize(
+    "time_in, expected",
+    (
+        (("1/1/2021", "0:1"), (2021, 1, 1, 0, 1)),
+        (("10/10/2020", "24:01"), (2020, 10, 10, 24, 1)),
+        (("31/30/1998", "5:15"), (1998, 31, 30, 5, 15)),
+    ),
+)
+def test_extract_time_from_input_data(time_in, expected):
+    """Test the `extract_time_from_input_data` function"""
+
+    time_in = {"DATE": time_in[0], "MST": time_in[1]}
+    assert extract_time_from_input_data(time_in) == expected
 
 
 if __name__ == "__main__":

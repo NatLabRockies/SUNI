@@ -3,12 +3,14 @@
 from pathlib import Path
 
 import pytest
+import pandas as pd
 
 from suni.utilities import (
     format_date,
     convert_to_year_first,
     compute_parameter_stats,
     extract_time_from_input_data,
+    extract_irradiance_from_input_data,
 )
 
 
@@ -47,6 +49,20 @@ def test_extract_time_from_input_data(time_in, expected):
 
     time_in = {"DATE": time_in[0], "MST": time_in[1]}
     assert extract_time_from_input_data(time_in) == expected
+
+
+@pytest.mark.parametrize(
+    "ghi, dni, dhi, expected",
+    (
+        (1, 1, 1, (1, 1, 1)),
+        (-9999, 1, 9999, (9999, 1, 9999)),
+    ),
+)
+def test_extract_irradiance_from_input_data(ghi, dni, dhi, expected):
+    """Test the `extract_irradiance_from_input_data` function"""
+
+    data_input = pd.Series({"GHI": ghi, "DNI": dni, "DHI": dhi})
+    assert tuple(extract_irradiance_from_input_data(data_input)) == expected
 
 
 if __name__ == "__main__":

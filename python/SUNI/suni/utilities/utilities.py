@@ -92,3 +92,27 @@ def extract_time_from_input_data(row):
     month, day, year = map(int, row["DATE"].split("/"))
     hour, minute = map(int, row["MST"].split(":"))
     return year, month, day, hour, minute
+
+
+def extract_irradiance_from_input_data(row):
+    """Extract GHI, DNI, and DHI from row with NaN conversion.
+
+    Specifically, values of < -9900 get converted to positive values.
+    This is required by the SERIQC code.
+
+    Parameters
+    ----------
+    row : pd.Series
+        A series instance containing "GHI", "DNI", and "DHI" columns.
+        Values in these columns that are set to be below -9900 are
+        converted to positive values.
+
+    Returns
+    -------
+    array-like
+        "GHI", "DNI", and "DHI" values, where NaN representation is
+        positive (required by SERIQC).
+    """
+    irradiance = row[["GHI", "DNI", "DHI"]].astype(float)
+    irradiance[irradiance < -9900] *= -1
+    return irradiance

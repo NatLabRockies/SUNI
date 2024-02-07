@@ -93,6 +93,28 @@ class uDat:
     kd: float = None
     """[OUTPUT] DHI k-space"""
 
+    def as_result_dict(self):
+        return {
+            "qcGHI": self.qcGHI,
+            "qcDNI": self.qcDNI,
+            "qcDHI": self.qcDHI,
+            "uCode": self.uCode,
+            "U95GHI": self.U95GHI,
+            "U95DNI": self.U95DNI,
+            "U95DHI": self.U95DHI,
+            "UoSys": self.Usys,
+            "UoSysAbs": self.UsysAbs,
+            "Ufield": self.Ufield,
+            "zen": self.zen,
+            "ETR": self.ETR,
+            "ETRn": self.ETRn,
+            "kt": self.kt,
+            "kn": self.kn,
+            "kd": self.kd,
+            "SQCcode": self.SQCcode,
+            "Urads": self.Urads,
+        }
+
 
 @define
 class configDat:
@@ -268,7 +290,7 @@ class ErrorCode(IntEnum):
 
 
 def Uprocess(data, **kwargs):
-    """_summary_
+    """Compute uncertainty for measurement data.
 
     Parameters
     ----------
@@ -277,8 +299,8 @@ def Uprocess(data, **kwargs):
 
     Returns
     -------
-    _type_
-        _description_
+    uDat
+        Output data struct containing uncertainty values.
     """
 
     (

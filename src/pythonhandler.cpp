@@ -181,10 +181,15 @@ PythonPackageConfig ReadPythonPackageConfig(const std::string& name, const std::
     if (!python_config_root.HasMember("version"))
         throw std::runtime_error("Missing key 'version' in " + configFile);
 
+    std::string localPackage = "";
+    if (python_config_root.HasMember("local_package"))
+        localPackage = python_config_root["local_package"].GetString();
+
     PythonPackageConfig config = {name,
                                   python_config_root["min_python_version"].GetString(),
                                   python_config_root["run_cmd"].GetString(),
-                                  python_config_root["version"].GetString()};
+                                  python_config_root["version"].GetString(),
+                                  localPackage};
 
     return config;
 }
@@ -195,10 +200,10 @@ bool CheckPythonPackageInstalled(const std::string& package, const PythonConfig&
 }
 
 #ifdef __WXMSW__
-int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig& package){
+int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig& package, const std::string& local_path){
 	std::string args = " install " + package.name + "==" + package.version;
-    // testing per email from Paul 1/3/2024
-    args = " install ../../../python";
+    if (!package.localPackage.empty())
+        args = "install " + local_path + package.localPackage;
 	PROCESS_INFORMATION p_info;
 	STARTUPINFO s_info;
 	DWORD ReturnValue;
@@ -209,8 +214,9 @@ int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig
 	memset(&p_info, 0, sizeof(p_info));
 	s_info.cb = sizeof(s_info);
 
-	if (CreateProcess(programpath, programargs, NULL, NULL, 0, CREATE_NO_WINDOW, NULL, NULL, &s_info, &p_info)) {
-		WaitForSingleObject(p_info.hProcess, INFINITE);
+//    if (CreateProcess(programpath, programargs, NULL, NULL, 0, CREATE_NO_WINDOW, NULL, NULL, &s_info, &p_info)) {
+        if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, 0, NULL, NULL, &s_info, &p_info)) {
+            WaitForSingleObject(p_info.hProcess, INFINITE);
 		GetExitCodeProcess(p_info.hProcess, &ReturnValue);
 		CloseHandle(p_info.hProcess);
 		CloseHandle(p_info.hThread);
@@ -219,7 +225,7 @@ int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig
 }
 #endif
 
-int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& package){
+int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& package, const std::string& local_path){
     std::string cmd = pip_exec + " install " + package.name + "==" + package.version;
     int rvalue = system(cmd.c_str());
     return rvalue;

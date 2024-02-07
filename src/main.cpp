@@ -121,7 +121,10 @@ BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_MENU(wxID_EXIT, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_START, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_CANCEL, MainWindow::OnCommand)
-END_EVENT_TABLE()
+	EVT_BUTTON(ID_BTN_INPUTFILE, MainWindow::OnCommand)
+	EVT_BUTTON(ID_BTN_OUTPUTFILE, MainWindow::OnCommand)
+	EVT_BUTTON(ID_BTN_SERIQCPATH, MainWindow::OnCommand)
+	END_EVENT_TABLE()
 
 static std::unique_ptr<std::string> s_python_path;
 
@@ -601,7 +604,7 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 
 void MainWindow::OnCommand( wxCommandEvent &evt )
 {
-
+	wxString dir;
 	switch( evt.GetId() )
 	{
 	case wxID_OPEN:
@@ -629,8 +632,39 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		Close();
 		break;
 	case ID_BTN_START:
-		InvokePython();
+		try {
+			InvokePython();
+		}
+		catch (std::runtime_error e) {
+			wxMessageBox(e.what(), "Python Error");
+		}
 		break;
+	case ID_BTN_INPUTFILE:
+		{
+			wxFileDialog dlg(this, "Open Input File", wxEmptyString, wxEmptyString, "Input Files (*.csv)|*.csv", wxFD_OPEN);
+			if (dlg.ShowModal() == wxID_OK) {
+				InputFile->SetValue( dlg.GetPath());
+			}
+		}
+		break;
+	case ID_BTN_OUTPUTFILE:
+		{
+			wxFileDialog dlg(this, "Open Output File", wxEmptyString, wxEmptyString, "Output Files (*.csv)|*.csv", wxFD_OPEN);
+			if (dlg.ShowModal() == wxID_OK) {
+				OutputFile->SetValue(dlg.GetPath());
+			}
+		}
+		break;
+	case ID_BTN_SERIQCPATH:
+		{
+			dir = wxDirSelector("Choose folder SERI QC Path");
+			if (!dir.empty()) {
+				SERIQCpath->SetValue(dir);
+				// TODO - populate SERI QC Station ID with list of file in folder
+			}
+		}
+		break;
+
 	}
 }
 
@@ -833,7 +867,8 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 		unsigned long bread_last = 0;
 		unsigned long avail;   //bytes available
 		size_t i = 0;
-		size_t n_timeout_max = 100000000; // timeout
+//		size_t n_timeout_max = 100000000; // timeout
+		size_t n_timeout_max = 1000000000; // timeout
 		for (i = 0; i < n_timeout_max; i++) {
 			PeekNamedPipe(stdout_rd, buf, BUFSIZE - 1, &bread, &avail, NULL);
 			//check to see if there is any data to read from stdout
@@ -914,13 +949,14 @@ void MainWindow::InstallPythonPackage(const std::string& pip_name) {
 	auto packageConfig = ReadPythonPackageConfig(pip_name, GetPythonConfigPath() + "/" + pip_name + ".json");
 
 #ifdef __WXMSW__
-	bool retval = InstallFromPipWindows(GetPythonConfigPath() + "\\" + pythonConfig.pipPath, packageConfig);
+	bool retval = InstallFromPipWindows(GetPythonConfigPath() + "\\" + pythonConfig.pipPath, packageConfig, GetPythonConfigPath() + "\\");
 #else
 	std::string pip_exec = GetPythonConfigPath() + "/" + pythonConfig.pipPath;
-	bool retval = InstallFromPip(pip_exec, packageConfig);
+	bool retval = InstallFromPip(pip_exec, packageConfig, GetPythonConfigPath() + "\\"); // TODO - test
 #endif
-	if (retval == 0) {
-		pythonConfig.packages.push_back(pip_name);
+//	if (retval == 0) {
+		if (retval == 1) {
+			pythonConfig.packages.push_back(pip_name);
 		WritePythonConfig(GetPythonConfigPath() + "/python_config.json", pythonConfig);
 	}
 	else {
@@ -938,6 +974,108 @@ void MainWindow::LoadPythonConfig() {
 	}
 }
 
+class MyMessageDialog : public wxDialog {
+public:
+	MyMessageDialog(wxWindow* parent,
+		const wxString& message,
+		const wxString& title,
+		long buttons,
+		const wxPoint& pos = wxDefaultPosition,
+		const wxSize& size = wxDefaultSize,
+		bool addButtonClose = false)
+		: wxDialog(parent, wxID_ANY, title, pos, size, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
+		SetEscapeId(wxID_NONE);
+
+		wxPanel* panel = new wxPanel(this);
+		panel->SetBackgroundColour(*wxWHITE);
+
+		wxBoxSizer* szpnl = new wxBoxSizer(wxVERTICAL);
+
+		int wrap = 600;
+		if (size != wxDefaultSize && size.x > 100)
+			wrap = size.x - 40;
+
+		int nlpos = message.Find('\n');
+		if (nlpos > 0) {
+			wxStaticText* label1 = new wxStaticText(panel, wxID_ANY, message.Left(nlpos), wxDefaultPosition,
+				wxDefaultSize, wxALIGN_LEFT);
+			wxFont font(label1->GetFont());
+			font.SetPointSize(font.GetPointSize() + 2);
+			label1->SetFont(font);
+			label1->SetForegroundColour(wxColour(0, 0, 120));
+			label1->Wrap(wrap);
+
+			wxStaticText* label2 = new wxStaticText(panel, wxID_ANY, message.Mid(nlpos + 1), wxDefaultPosition,
+				wxDefaultSize, wxALIGN_LEFT);
+			label2->Wrap(wrap);
+
+			szpnl->Add(label1, 0, wxTOP | wxLEFT | wxRIGHT | wxEXPAND, 20);
+			szpnl->Add(label2, 1, wxALL | wxEXPAND, 20);
+		}
+		else {
+			wxStaticText* label = new wxStaticText(panel, wxID_ANY, message, wxDefaultPosition, wxDefaultSize,
+				wxALIGN_LEFT);
+			label->Wrap(wrap);
+
+			szpnl->Add(label, 1, wxALL | wxEXPAND, 20);
+		}
+
+		if (addButtonClose) {
+			wxButton* buttonClose = new wxButton(this, wxID_OK, wxT("OK"));
+			szpnl->Add(buttonClose, 1, wxCENTER);
+		}
+
+		panel->SetSizer(szpnl);
+
+		wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+		sizer->Add(panel, 1, wxALL | wxEXPAND, 0);
+		sizer->Add(CreateButtonSizer(buttons), 0, wxALL | wxEXPAND, 11);
+
+		SetSizerAndFit(sizer);
+
+		if (size != wxDefaultSize)
+			SetClientSize(size);
+		else {
+			wxSize sz = GetClientSize();
+			if (sz.x < 340) sz.x = 340;
+			if (sz.y < 120) sz.y = 120;
+			SetClientSize(sz);
+		}
+
+		if (pos == wxDefaultPosition) {
+			if (parent)
+				CenterOnParent();
+			else
+				CenterOnScreen();
+		}
+	}
+
+	void OnClose(wxCloseEvent&) {
+		EndModal(wxID_CANCEL);
+	}
+
+	void OnCharHook(wxKeyEvent& evt) {
+		if (evt.GetKeyCode() == WXK_ESCAPE)
+			EndModal(wxID_CANCEL);
+	}
+
+	void OnCommand(wxCommandEvent& evt) {
+		EndModal(evt.GetId());
+	}
+};
+
+
+wxWindow* GetCurrentTopLevelWindow() {
+	wxWindowList& wl = ::wxTopLevelWindows;
+	for (wxWindowList::iterator it = wl.begin(); it != wl.end(); ++it)
+		if (wxTopLevelWindow* tlw = dynamic_cast<wxTopLevelWindow*>(*it))
+			if (tlw->IsShown() && tlw->IsActive())
+				return tlw;
+
+	return 0;
+}
+
+
 bool MainWindow::SetupPython()
 {
 	bool ret = false;
@@ -946,7 +1084,7 @@ bool MainWindow::SetupPython()
 		ret = true;
 	else {
 		wxBusyCursor wait;
-		wxMessageDialog dlg(this, "Installing the SUNI model. Please note that it may take a few minutes to complete the initial installation. Once installed, you will be able to estimate the solar uncertainty.",	"Solar Uncertainty Integrator");
+		MyMessageDialog dlg(GetCurrentTopLevelWindow(), "Installing the SUNI model. Please note that it may take a few minutes to complete the initial installation. Once installed, you will be able to estimate the solar uncertainty.",	"Solar Uncertainty Integrator",	wxCENTER, wxDefaultPosition, wxDefaultSize);
 		dlg.Show();
 		wxGetApp().Yield(true);
 
@@ -1228,7 +1366,7 @@ bool SUIApp::OnInit()
 				g_mainWindow->Maximize();
 		}
 	}
-	
+/* Currently done in MainWindow - may want to move here.
 	try {
 		LoadPythonConfig();
 	}
@@ -1236,7 +1374,7 @@ bool SUIApp::OnInit()
 		SUIException ex(e.what());
 		wxMessageBox(ex.what(),"Initialization error", wxICON_ERROR);
 	}
-	
+*/	
 	return true;
 }
 
@@ -1284,7 +1422,7 @@ bool SUIApp::WriteProxyFile( const wxString &proxy )
 	else
 		return false;
 }
-
+/*
 std::string SUIApp::GetPythonConfigPath(){
     wxFileName path( GetAppPath() + "/python" );
     path.Normalize();
@@ -1349,7 +1487,7 @@ void SUIApp::InstallPythonPackage(const std::string& pip_name) {
         throw std::runtime_error("Error installing " + pip_name);
     }
 }
-
+*/
 
 
 IMPLEMENT_APP( SUIApp );

@@ -63,6 +63,7 @@ struct PythonPackageConfig {
     std::string minPythonVersion;
     std::string runCmd;
     std::string version;
+    std::string localPackage;
 };
 
 PythonPackageConfig ReadPythonPackageConfig(const std::string& name, const std::string& configFile);
@@ -70,9 +71,9 @@ PythonPackageConfig ReadPythonPackageConfig(const std::string& name, const std::
 bool CheckPythonPackageInstalled(const std::string& package, const PythonConfig& config);
 
 #ifdef __WXMSW__
-int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig& package);
+int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig& package, const std::string& local_path);
 #endif
 
-int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& package);
+int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& package, const std::string& local_path);
 
 #endif //SYSTEM_ADVISOR_MODEL_PYTHONHANDLER_H

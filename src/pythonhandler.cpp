@@ -208,6 +208,7 @@ int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig
 	STARTUPINFO s_info;
 	DWORD ReturnValue;
 	CA2T programpath(pip_exec.c_str());
+    std::replace(args.begin(), args.end(), '\\', '/');
 	CA2T programargs(args.c_str());
 
 	memset(&s_info, 0, sizeof(s_info));

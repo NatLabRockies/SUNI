@@ -164,7 +164,7 @@ if (!(Test-Path $PYTHON_CONFIG_FILE)) {
 
 $pythonPath = Get-Python $version $majorMinor
 $execPath = Join-Path $pythonPath python.exe
-$pipPath = Join-Path $pythonPath Scripts | Join-Path -ChildPath pip.exe
+$pipPath = Join-Path $pythonPath Scripts | Join-Path -ChildPath pip3.exe
 
 # Update the python config file.
 $data = Get-Content -Raw -Path $PYTHON_CONFIG_FILE | ConvertFrom-Json

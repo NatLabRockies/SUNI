@@ -599,6 +599,12 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 //		else // like group boxes or static boxes - not a failure.
 //			ret = false;// throw error?
 	}
+	// Add required MaxSysUncert that is not an input
+	wxString widgetName = "MaxSysUncert";
+	rapidjson::Value jValue;
+	jValue = 100.0;
+	doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());
+
 
 	rapidjson::StringBuffer os;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os); 
@@ -867,14 +873,35 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	HANDLE stderr_wr = NULL;  //pipe handles
 	char buf[BUFSIZE];           //i/o buffer
 	memset(buf, 0, sizeof(buf));
+	char err_buf[BUFSIZE];           //i/o buffer
+	memset(err_buf, 0, sizeof(err_buf));
+	char out_buf[BUFSIZE];           //i/o buffer
+	memset(out_buf, 0, sizeof(out_buf));
 
 	std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
+	std::replace(pythonpath.begin(), pythonpath.end(), '\\', '/');
 	CA2T programpath(pythonpath.c_str());
 	std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
 	size_t pos = pythonarg.find("<input>");
 	pythonarg.replace(pos, 7, input_dict_as_text);
-	replaceBackslash(pythonarg);
+	std::replace(pythonarg.begin(), pythonarg.end(), '\\', '/');
+
+	// testing - works
+//	pythonarg = " -c \"print('some output');print('something else')\"";
+	// Testing - fails
+//	pythonarg = "-c \" import json; from suni.cli import process_from_config; fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json'); cfg = json.load(fh); print(cfg)\"";
+	// Testing - fails
+//	pythonarg = "-c \" import json; fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json'); cfg = json.load(fh); print(cfg)\"";
+	// Testing - fails
+//	pythonarg = "-c \" import json; fh = open('/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json'); cfg = json.load(fh); print(cfg)\"";
+	// Testing - fails
+//	pythonarg = "-c \" import json; fh = open('C:\\Projects\\GithubNREL\\SolarResourceGUI\\SUNI\\python\\python_config.json'); cfg = json.load(fh); print(cfg)\"";
+//	pythonarg = "-c \" import json; fh = open(\"C:\\Projects\\GithubNREL\\SolarResourceGUI\\SUNI\\python\\python_config.json\"); cfg = json.load(fh); print(cfg)\"";
+//	pythonarg = "-c \"fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json');print(fh)\"";
+	pythonarg = "-c \"fh = \"python_config.json\";print(fh)\"";
 	CA2T programargs(pythonarg.c_str());
+
+//	CA2T programdirectory(GetPythonConfigPath().c_str());
 
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sa.bInheritHandle = TRUE;
@@ -912,17 +939,28 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	si.hStdError = stderr_wr;
 	si.hStdInput = stdin_rd;
 
+
+//	ShellExecute(this->GetHWND(), programpath, NULL, programargs, programdirectory, 1);
 	//spawn the child process
-	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,
-		NULL, NULL, &si, &pi)) {
+//	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, 0, NULL, programdirectory, &si, &pi)) {
+
+	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,	NULL, NULL, &si, &pi)) {
 		unsigned long bread;   //bytes read
 		unsigned long bread_last = 0;
 		unsigned long avail;   //bytes available
+		unsigned long err_bread;   //bytes read
+		unsigned long err_bread_last = 0;
+		unsigned long err_avail;   //bytes available
+		unsigned long out_bread;   //bytes read
+		unsigned long out_bread_last = 0;
+		unsigned long out_avail;   //bytes available
 		size_t i = 0;
-//		size_t n_timeout_max = 100000000; // timeout
-		size_t n_timeout_max = 1000000000; // timeout
+		size_t n_timeout_max = 100000000; // timeout
+//		size_t n_timeout_max = 1000000000; // timeout
 		for (i = 0; i < n_timeout_max; i++) {
 			PeekNamedPipe(stdout_rd, buf, BUFSIZE - 1, &bread, &avail, NULL);
+			PeekNamedPipe(stderr_rd, err_buf, BUFSIZE - 1, &err_bread, &err_avail, NULL);
+			PeekNamedPipe(stdin_rd, out_buf, BUFSIZE - 1, &out_bread, &out_avail, NULL);
 			//check to see if there is any data to read from stdout
 			if (bread != 0) {
 				if (ReadFile(stdout_rd, buf, BUFSIZE - 1, &bread, NULL)) {
@@ -930,6 +968,24 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 				}
 			}
 			else if (bread_last > 0)
+			{
+				break;
+			}
+			if (err_bread != 0) {
+				if (ReadFile(stderr_rd, err_buf, BUFSIZE - 1, &err_bread, NULL)) {
+					err_bread_last = err_bread;
+				}
+			}
+			else if (err_bread_last > 0)
+			{
+				break;
+			}
+			if (out_bread != 0) {
+				if (ReadFile(stdin_rd, out_buf, BUFSIZE - 1, &out_bread, NULL)) {
+					out_bread_last = out_bread;
+				}
+			}
+			else if (out_bread_last > 0)
 			{
 				break;
 			}
@@ -950,6 +1006,10 @@ done:
 		}
 	}
 	if (buf[0] == '\0') {
+		if (err_buf[0] == '\0')
+			throw std::runtime_error("SUNI error. Function did not return a response and no error.");
+		else
+			return err_buf;
 		throw std::runtime_error("SUNI error. Function did not return a response.");
 	}
 	return buf;
@@ -1141,6 +1201,7 @@ bool MainWindow::SetupPython()
 		wxGetApp().Yield(true);
 
 		InstallPython();
+//		InstallPythonPackage("landbosse");
 		InstallPythonPackage("suni");
 		dlg.Close();
 		ret = true;
@@ -1165,15 +1226,15 @@ bool MainWindow::InvokePython()
 			LoadConfig();
 #ifdef __WINDOWS__
 			std::string str = m_projectFileName.ToStdString();
-//			replaceBackslash(str);
 			std::string output_json = CallPythonModuleWindows(str);
 #else
 			std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
 #endif
 			//    delete input_json;
 
-			CleanOutputString(output_json);
+			//CleanOutputString(output_json);
 
+			wxMessageBox(wxString(output_json), "Results");
 		}
 		catch (std::future_error& e) {
 			throw std::runtime_error(e.what());

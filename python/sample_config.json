@@ -11,7 +11,7 @@
     "GHIcalUncert": 1.9,
     "GHIcalDate": "2019-05-05",
     "GHIdueDate": "2020-05-05",
-    "GHIradUncert": 3.1,
+    "GHIradUncert": 3.06105,
     "DNIid": "190042",
     "DNImodel": "CHP1",
     "DNIclass": "A",
@@ -19,7 +19,7 @@
     "DNIcalUncert": 0.75,
     "DNIcalDate": "2019-05-05",
     "DNIdueDate": "2020-05-05",
-    "DNIradUncert": 1.2,
+    "DNIradUncert": 1.17154,
     "DHIid": "140033",
     "DHImodel": "CMP22",
     "DHIclass": "A",
@@ -27,10 +27,11 @@
     "DHIcalUncert": 1.9,
     "DHIcalDate": "2019-05-05",
     "DHIdueDate": "2020-05-05",
-    "DHIradUncert": 3.1,
+    "DHIradUncert": 3.06105,
     "MaxQC": 89,
     "MinDNI": 25.0,
     "MaxZEN": 80.0,
     "ExtendedRpt": 0,
-    "DateFormat": 1
+    "DateFormat": 1,
+    "MaxSysUncert": 100.0
 }

@@ -1,8 +1,8 @@
 {
-    "StationID": "NRELSR",
-    "InputFile": "SRRL2004_01_testing.csv",
-    "OutputFile": "SRRL2004_01_Unc.csv",
+    "InputFile": "/Projects/Github/NREL/SolarResourceGUI/SUNI/python/SRRL2004_01_testing.csv",
+    "OutputFile": "/Projects/Github/NREL/SolarResourceGUI/SUNI/python/SRRL2004_01_Unc.csv",
     "SERIQCpath": ".",
+    "StationID": "NRELSR",
     "Interval": 1,
     "GHIid": "14003",
     "GHImodel": "CMP22",
@@ -11,7 +11,7 @@
     "GHIcalUncert": 1.9,
     "GHIcalDate": "2019-05-05",
     "GHIdueDate": "2020-05-05",
-    "GHIradUncert": 3.1,
+    "GHIradUncert": 3.06105,
     "DNIid": "190042",
     "DNImodel": "CHP1",
     "DNIclass": "A",
@@ -28,10 +28,9 @@
     "DHIcalDate": "2019-05-05",
     "DHIdueDate": "2020-05-05",
     "DHIradUncert": 3.1,
-    "MaxSysUncert": 100,
     "MaxQC": 89,
-    "MinDNI": 25,
-    "MaxZEN": 80,
-    "DateFormat": 0,
-    "ExtendedRpt": 1
+    "MinDNI": 25.0,
+    "MaxZEN": 80.0,
+    "ExtendedRpt": 0,
+    "DateFormat": 1
 }

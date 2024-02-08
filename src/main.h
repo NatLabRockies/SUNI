@@ -91,6 +91,9 @@ protected:
 	void OnClose( wxCloseEvent & );
 	void OnCommand( wxCommandEvent & );
 	void OnInternalCommand( wxCommandEvent & );
+	void UpdateGHIUncertainty(wxCommandEvent&);
+	void UpdateDNIUncertainty(wxCommandEvent&);
+	void UpdateDHIUncertainty(wxCommandEvent&);
 
 private:
 	wxPanel *m_pFiles, *m_pDefaults, *m_pInstruments, *m_pProcessing;
@@ -142,6 +145,7 @@ private:
 	std::string CallPythonModule(const std::string& input_dict_as_text);
 	std::string CallPythonModuleWindows(const std::string& input_dict_as_text);
 	void CleanOutputString(std::string& output_json);
+	void replaceBackslash(std::string& str);
 
 	std::string m_pythonExecPath, m_pythonRunCmd;
 

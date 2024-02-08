@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <set>
+#include <regex>
 //#include <chrono>
 
 #include <wx/wx.h>
@@ -124,6 +125,12 @@ BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_BUTTON(ID_BTN_INPUTFILE, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_OUTPUTFILE, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_SERIQCPATH, MainWindow::OnCommand)
+	EVT_TEXT(ID_GHIclassUncert, MainWindow::UpdateGHIUncertainty)
+	EVT_TEXT(ID_GHIcalUncert, MainWindow::UpdateGHIUncertainty)
+	EVT_TEXT(ID_DNIclassUncert, MainWindow::UpdateDNIUncertainty)
+	EVT_TEXT(ID_DNIcalUncert, MainWindow::UpdateDNIUncertainty)
+	EVT_TEXT(ID_DHIclassUncert, MainWindow::UpdateDHIUncertainty)
+	EVT_TEXT(ID_DHIcalUncert, MainWindow::UpdateDHIUncertainty)
 	END_EVENT_TABLE()
 
 static std::unique_ptr<std::string> s_python_path;
@@ -252,7 +259,7 @@ MainWindow::MainWindow()
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument ID",wxDefaultPosition,wxSize(150,72)));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument model", wxDefaultPosition, wxSize(75, 72)));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument class", wxDefaultPosition, wxSize(75, 72)));
-	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "class Uncertainty (+/- %)", wxDefaultPosition, wxSize(75, 72)));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Class Uncertainty (+/- %)", wxDefaultPosition, wxSize(75, 72)));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Uncertainty (+/- %)", wxDefaultPosition, wxSize(75, 72)));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Date", wxDefaultPosition, wxSize(75, 72)));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Due Date", wxDefaultPosition, wxSize(75, 72)));
@@ -271,8 +278,8 @@ MainWindow::MainWindow()
 	GHIcalDate->SetSizeHints(100, 24);
 	GHIdueDate = new wxTextCtrl(p, ID_GHIdueDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIdueDate");
 	GHIdueDate->SetSizeHints(100, 24);
-	GHIradUncert = new wxTextCtrl(p, ID_GHIradUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIradUncert");
-	GHIradUncert->SetSizeHints(50, 24);
+	GHIradUncert = new wxTextCtrl(p, ID_GHIradUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "GHIradUncert");
+	GHIradUncert->SetSizeHints(100, 24);
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "GHI", wxDefaultPosition, wxSize(50, 24)),1,wxALIGN_RIGHT,2);
 	grdInstruments->Add(GHIid);
 	grdInstruments->Add(GHImodel);
@@ -296,8 +303,8 @@ MainWindow::MainWindow()
 	DNIcalDate->SetSizeHints(100, 24);
 	DNIdueDate = new wxTextCtrl(p, ID_DNIdueDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIdueDate");
 	DNIdueDate->SetSizeHints(100, 24);
-	DNIradUncert = new wxTextCtrl(p, ID_DNIradUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIradUncert");
-	DNIradUncert->SetSizeHints(50, 24);
+	DNIradUncert = new wxTextCtrl(p, ID_DNIradUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DNIradUncert");
+	DNIradUncert->SetSizeHints(100, 24);
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "DNI", wxDefaultPosition, wxSize(50, 24)), 1, wxALIGN_RIGHT, 2);
 	grdInstruments->Add(DNIid);
 	grdInstruments->Add(DNImodel);
@@ -321,8 +328,8 @@ MainWindow::MainWindow()
 	DHIcalDate->SetSizeHints(100, 24);
 	DHIdueDate = new wxTextCtrl(p, ID_DHIdueDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIdueDate");
 	DHIdueDate->SetSizeHints(100, 24);
-	DHIradUncert = new wxTextCtrl(p, ID_DHIradUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIradUncert");
-	DHIradUncert->SetSizeHints(50, 24);
+	DHIradUncert = new wxTextCtrl(p, ID_DHIradUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIradUncert");
+	DHIradUncert->SetSizeHints(100, 24);
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "DHI", wxDefaultPosition, wxSize(50, 24)), 1, wxALIGN_RIGHT, 2);
 	grdInstruments->Add(DHIid);
 	grdInstruments->Add(DHImodel);
@@ -348,7 +355,7 @@ MainWindow::MainWindow()
 		asMaxQC.Add(wxString::FromDouble(i));
 //	asMaxQC.Add("87");
 	MaxQC = new wxComboBox(p, ID_DHIclass, "89", wxDefaultPosition, wxDefaultSize, asMaxQC, wxCB_READONLY, wxDefaultValidator, "MaxQC");
-	MaxQC->SetSizeHints(75, 24);
+	MaxQC->SetSizeHints(75, 30);
 	szH1->Add(MaxQC);
 	sizer2->Add(szH1, 1, wxALIGN_CENTER, 5);
 	wxBoxSizer* szH2 = new wxBoxSizer(wxHORIZONTAL);
@@ -493,7 +500,8 @@ bool MainWindow::OpenConfiguration(const wxString& filename)
 							val = jValue->value.GetString();
 						//else
 						//	ret = false;// throw error?
-						((wxTextCtrl*)widget)->SetValue(val);
+						if (((wxTextCtrl*)widget)->IsEditable())
+							((wxTextCtrl*)widget)->SetValue(val);
 					}
 					else if (typeName == "wxComboBox") {
 						wxString val; // to handle "Interval" as integer in JSON
@@ -593,12 +601,45 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 	}
 
 	rapidjson::StringBuffer os;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os); // MSPT/MP 64MB JSON, 6.7MB txt, JSON Zip 242kB
+	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os); 
 	doc.Accept(writer);
 	wxFFileOutputStream out(filename);
 	out.Write(os.GetString(), os.GetSize());
 	out.Close();
 	return ret;
+}
+
+void MainWindow::UpdateGHIUncertainty(wxCommandEvent&)
+{
+	auto Uclass = GHIclassUncert->GetValue();
+	auto Ucal = GHIcalUncert->GetValue();
+	double dUclass, dUcal;
+	if (Uclass.ToDouble(&dUclass) && Ucal.ToDouble(&dUcal)) {
+		double Urad = sqrt(pow(dUclass, 2) + pow(dUcal, 2));
+		GHIradUncert->SetValue(wxString::Format("%g",Urad));
+	}
+}
+
+void MainWindow::UpdateDNIUncertainty(wxCommandEvent&)
+{
+	auto Uclass = DNIclassUncert->GetValue();
+	auto Ucal = DNIcalUncert->GetValue();
+	double dUclass, dUcal;
+	if (Uclass.ToDouble(&dUclass) && Ucal.ToDouble(&dUcal)) {
+		double Urad = sqrt(pow(dUclass, 2) + pow(dUcal, 2));
+		DNIradUncert->SetValue(wxString::Format("%g", Urad));
+	}
+}
+
+void MainWindow::UpdateDHIUncertainty(wxCommandEvent&)
+{
+	auto Uclass = DHIclassUncert->GetValue();
+	auto Ucal = DHIcalUncert->GetValue();
+	double dUclass, dUcal;
+	if (Uclass.ToDouble(&dUclass) && Ucal.ToDouble(&dUcal)) {
+		double Urad = sqrt(pow(dUclass, 2) + pow(dUcal, 2));
+		DHIradUncert->SetValue(wxString::Format("%g", Urad));
+	}
 }
 
 
@@ -803,6 +844,16 @@ std::string MainWindow::CallPythonModule(const std::string& input_dict_as_text) 
 		throw std::runtime_error("python handler error. Python process timed out.");
 }
 
+
+void MainWindow::replaceBackslash(std::string& str)
+{
+	// Regex pattern to match all backslashes in string
+	std::regex regexPattern("\\");
+	// Replace all occurrenecs of substrings that
+	// matches the given regex pattern
+	str = std::regex_replace(str, regexPattern, "\\");
+}
+
 #ifdef __WINDOWS__
 std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as_text) {
 	STARTUPINFO si;
@@ -822,6 +873,7 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
 	size_t pos = pythonarg.find("<input>");
 	pythonarg.replace(pos, 7, input_dict_as_text);
+	replaceBackslash(pythonarg);
 	CA2T programargs(pythonarg.c_str());
 
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -1112,7 +1164,9 @@ bool MainWindow::InvokePython()
 		try {
 			LoadConfig();
 #ifdef __WINDOWS__
-			std::string output_json = CallPythonModuleWindows(m_projectFileName.ToStdString());
+			std::string str = m_projectFileName.ToStdString();
+//			replaceBackslash(str);
+			std::string output_json = CallPythonModuleWindows(str);
 #else
 			std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
 #endif

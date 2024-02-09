@@ -707,7 +707,17 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 			dir = wxDirSelector("Choose folder SERI QC Path");
 			if (!dir.empty()) {
 				SERIQCpath->SetValue(dir);
-				// TODO - populate SERI QC Station ID with list of file in folder
+				// populate SERI QC Station ID with list of file in folder
+				// search folder for all qc0 files and list names - filenames?, Site Identifier name(s)?
+				wxDir folder(dir);
+				wxArrayString files;
+				folder.GetAllFiles(dir, &files, "*.qc0");
+				wxArrayString filenames;
+				for (auto& f : files) {
+					wxFileName fn = f;
+					filenames.push_back(fn.GetName());
+				}
+				StationID->Set(filenames);
 			}
 		}
 		break;

@@ -203,21 +203,23 @@ bool CheckPythonPackageInstalled(const std::string& package, const PythonConfig&
 int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig& package, const std::string& local_path){
 	std::string args = " install " + package.name + "==" + package.version;
     if (!package.localPackage.empty())
-        args = "install " + local_path + package.localPackage;
+        args = " install " + local_path + package.localPackage;
 	PROCESS_INFORMATION p_info;
 	STARTUPINFO s_info;
 	DWORD ReturnValue;
 	CA2T programpath(pip_exec.c_str());
-    std::replace(args.begin(), args.end(), '\\', '/');
+ //   std::replace(args.begin(), args.end(), '\\', '/');
 	CA2T programargs(args.c_str());
+    CA2T programdirectory(local_path.c_str());
+
 
 	memset(&s_info, 0, sizeof(s_info));
 	memset(&p_info, 0, sizeof(p_info));
 	s_info.cb = sizeof(s_info);
 
-//    if (CreateProcess(programpath, programargs, NULL, NULL, 0, CREATE_NO_WINDOW, NULL, NULL, &s_info, &p_info)) {
-        if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, 0, NULL, NULL, &s_info, &p_info)) {
-            WaitForSingleObject(p_info.hProcess, INFINITE);
+    if (CreateProcess(programpath, programargs, NULL, NULL, 0, CREATE_NO_WINDOW, NULL, NULL, &s_info, &p_info)) {
+//        if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, 0, NULL, NULL, &s_info, &p_info)) {
+        WaitForSingleObject(p_info.hProcess, INFINITE);
 		GetExitCodeProcess(p_info.hProcess, &ReturnValue);
 		CloseHandle(p_info.hProcess);
 		CloseHandle(p_info.hThread);

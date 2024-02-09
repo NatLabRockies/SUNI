@@ -889,12 +889,14 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	memset(out_buf, 0, sizeof(out_buf));
 
 	std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
-	std::replace(pythonpath.begin(), pythonpath.end(), '\\', '/');
+//	std::replace(pythonpath.begin(), pythonpath.end(), '\\', '/');
 	CA2T programpath(pythonpath.c_str());
 	std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
 	size_t pos = pythonarg.find("<input>");
-	pythonarg.replace(pos, 7, input_dict_as_text);
-	std::replace(pythonarg.begin(), pythonarg.end(), '\\', '/');
+	std::string str = input_dict_as_text;
+	std::replace(str.begin(), str.end(), '\\', '/');
+	pythonarg.replace(pos, 7, str);
+//	std::replace(pythonarg.begin(), pythonarg.end(), '\\', '/');
 
 	// testing - works
 //	pythonarg = " -c \"print('some output');print('something else')\"";
@@ -908,7 +910,7 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 //	pythonarg = "-c \" import json; fh = open('C:\\Projects\\GithubNREL\\SolarResourceGUI\\SUNI\\python\\python_config.json'); cfg = json.load(fh); print(cfg)\"";
 //	pythonarg = "-c \" import json; fh = open(\"C:\\Projects\\GithubNREL\\SolarResourceGUI\\SUNI\\python\\python_config.json\"); cfg = json.load(fh); print(cfg)\"";
 //	pythonarg = "-c \"fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json');print(fh)\"";
-	pythonarg = "-c \"fh = \"python_config.json\";print(fh)\"";
+//	pythonarg = "-c \"fh = \"python_config.json\";print(fh)\"";
 	CA2T programargs(pythonarg.c_str());
 
 //	CA2T programdirectory(GetPythonConfigPath().c_str());
@@ -949,10 +951,6 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	si.hStdError = stderr_wr;
 	si.hStdInput = stdin_rd;
 
-
-//	ShellExecute(this->GetHWND(), programpath, NULL, programargs, programdirectory, 1);
-	//spawn the child process
-//	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, 0, NULL, programdirectory, &si, &pi)) {
 
 	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,	NULL, NULL, &si, &pi)) {
 		unsigned long bread;   //bytes read
@@ -1076,9 +1074,8 @@ void MainWindow::InstallPythonPackage(const std::string& pip_name) {
 	std::string pip_exec = GetPythonConfigPath() + "/" + pythonConfig.pipPath;
 	bool retval = InstallFromPip(pip_exec, packageConfig, GetPythonConfigPath() + "\\"); // TODO - test
 #endif
-//	if (retval == 0) {
-		if (retval == 1) {
-			pythonConfig.packages.push_back(pip_name);
+	if (retval == 0) {
+		pythonConfig.packages.push_back(pip_name);
 		WritePythonConfig(GetPythonConfigPath() + "/python_config.json", pythonConfig);
 	}
 	else {
@@ -1212,6 +1209,7 @@ bool MainWindow::SetupPython()
 
 		InstallPython();
 //		InstallPythonPackage("landbosse");
+//		InstallPythonPackage("numpy");
 		InstallPythonPackage("suni");
 		dlg.Close();
 		ret = true;

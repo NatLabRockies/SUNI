@@ -1231,6 +1231,8 @@ bool MainWindow::InvokePython()
 
 
 		try {
+			wxBusyCursor wait;
+
 			LoadConfig();
 #ifdef __WINDOWS__
 			std::string str = m_projectFileName.ToStdString();
@@ -1238,15 +1240,11 @@ bool MainWindow::InvokePython()
 #else
 			std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
 #endif
-			//    delete input_json;
-
-			//CleanOutputString(output_json);
 
 			wxMessageBox(wxString(output_json), "Results");
 		}
 		catch (std::future_error& e) {
 			throw std::runtime_error(e.what());
-			//			delete input_json;
 		}
 
 		return true;

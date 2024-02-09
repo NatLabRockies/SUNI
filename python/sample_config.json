@@ -1,7 +1,7 @@
 {
-    "InputFile": "/Projects/Github/NREL/SolarResourceGUI/SUNI/python/SRRL2004_01_testing.csv",
-    "OutputFile": "/Projects/Github/NREL/SolarResourceGUI/SUNI/python/SRRL2004_01_Unc.csv",
-    "SERIQCpath": ".",
+    "InputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\basic_run\\SRRL2004_01_testing.csv",
+    "OutputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\SRRL2004_01_Unc.csv",
+    "SERIQCpath": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\basic_run",
     "StationID": "NRELSR",
     "Interval": 1,
     "GHIid": "14003",
@@ -31,7 +31,7 @@
     "MaxQC": 89,
     "MinDNI": 25.0,
     "MaxZEN": 80.0,
-    "ExtendedRpt": 0,
-    "DateFormat": 1,
+    "ExtendedRpt": 1,
+    "DateFormat": 0,
     "MaxSysUncert": 100.0
 }

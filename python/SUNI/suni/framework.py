@@ -3,11 +3,13 @@
 from attrs import define
 from enum import IntEnum
 
-import numpy as np
-import pandas as pd
-
 from seriqc.exec import seriqc_from_file
+from seriqc.utilities import seri_qc_decode
 from suni.merge import merge, system_uncertainty
+
+
+class SERIQCError(Exception):
+    """Exception to signify SERIQC error"""
 
 
 @define
@@ -327,8 +329,13 @@ def Uprocess(data, **kwargs):
     )
 
     if data.SQCcode != 0:
-        data.uCode = ErrorCode.SERIQC
-        return data
+        msgs = seri_qc_decode(data.SQCcode, print_msg=False)
+        msg = "\n\t- ".join(msgs)
+        msg = (
+            f"Non-zero SERIQC code: {data.SQCcode}. Decoded to the "
+            f"following:\n\t- {msg}"
+        )
+        raise SERIQCError(msg)
 
     if not is_valid_three_component_record(data.qcGHI):
         data.uCode = ErrorCode.THREE_COMP

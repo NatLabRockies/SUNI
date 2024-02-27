@@ -1,4 +1,5 @@
 """SERIQC input utilities and validation functions."""
+
 from enum import IntEnum
 
 import numpy as np
@@ -57,7 +58,7 @@ class ErrorCode(IntEnum):
     KN_MAX = 12
 
 
-def seri_qc_decode(code):  # pragma: no cover
+def seri_qc_decode(code, print_msg=True):  # pragma: no cover
     """Decode the return code from seriqc execution.
 
     The decoded errors are printed to the terminal.
@@ -66,33 +67,44 @@ def seri_qc_decode(code):  # pragma: no cover
     ----------
     code : int
         Return code from exec function.
+    print_msg : bool, optional
+        Option to print message at the end. By default, ``True``.
+
+    Returns
+    -------
+    list
+        List of all decoded sub-messages.
     """
+    msg = []
     if code & (1 << ErrorCode.SITE):
-        print("SQC-decode ==> Site not found")
+        msg.append("Site not found")
     if code & (1 << ErrorCode.MONTH):
-        print("SQC-decode ==> Invalid month")
+        msg.append("Invalid month")
     if code & (1 << ErrorCode.DAY):
-        print("SQC-decode ==> Invalid day")
+        msg.append("Invalid day")
     if code & (1 << ErrorCode.HOUR):
-        print("SQC-decode ==> Invalid hour")
+        msg.append("Invalid hour")
     if code & (1 << ErrorCode.MINUTE):
-        print("SQC-decode ==> Invalid minute")
+        msg.append("Invalid minute")
     if code & (1 << ErrorCode.TIME):
-        print("SQC-decode ==> Invalid time")
+        msg.append("Invalid time")
     if code & (1 << ErrorCode.INTERVAL):
-        print("SQC-decode ==> Invalid interval")
+        msg.append("Invalid interval")
     if code & (1 << ErrorCode.QC0_FILE):
-        print("SQC-decode ==> Cannot open QC-ZERO file")
+        msg.append("Cannot open QC-ZERO file")
     if code & (1 << ErrorCode.QC0_FORMAT):
-        print("SQC-decode ==> Incorrect QC-ZERO file format")
+        msg.append("Incorrect QC-ZERO file format")
     if code & (1 << ErrorCode.R_BOUND):
-        print("SQC-decode ==> Right Gompertz boundary undefined")
+        msg.append("Right Gompertz boundary undefined")
     if code & (1 << ErrorCode.L_BOUND):
-        print("SQC-decode ==> Left Gompertz boundary undefined")
+        msg.append("Left Gompertz boundary undefined")
     if code & (1 << ErrorCode.KT_MAX):
-        print("SQC-decode ==> Kt max undefined")
+        msg.append("Kt max undefined")
     if code & (1 << ErrorCode.KN_MAX):
-        print("SQC-decode ==> Kn max undefined")
+        msg.append("Kn max undefined")
+    if print_msg:
+        print("\n".join([f"SQC-decode ==> {m}" for m in msg]))
+    return msg
 
 
 def validate_site(site):

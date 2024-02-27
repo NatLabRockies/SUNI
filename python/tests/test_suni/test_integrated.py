@@ -5,8 +5,10 @@ import shutil
 from pathlib import Path
 
 import pytest
+import pandas as pd
 
 from suni.cli import main, process_from_config
+from suni.framework import SERIQCError
 import suni.instrument_uncertainty
 
 EXPECTED_GUI_REPORT = """
@@ -141,6 +143,44 @@ def test_gui_report_extended(tmp_cwd, test_data_basic_run_dir):
 
         with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
             assert truth.readlines()[2:] == test.readlines()[2:]
+
+
+def test_raise_seriqc_error(tmp_cwd, test_data_dir):
+    """Test that a non-zero SERIQC code raises an error"""
+
+    df = pd.read_csv(
+        test_data_dir / "SRRL2007_TIME_01.csv",
+        header=0,
+        names=[
+            "DATE",
+            "MST",
+            "GHI",
+            "DNI",
+            "DHI",
+            "C_GHI_FLG",
+            "C_DNI_FLG",
+            "C_DHI_FLG",
+        ],
+    )
+    df[["DATE", "MST", "GHI", "DNI", "DHI"]].to_csv(
+        tmp_cwd / "SRRL2007_TIME_01.csv", index=False
+    )
+    shutil.copy(test_data_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    assert len(list(tmp_cwd.glob("*"))) == 2
+
+    with open(test_data_dir / "basic_run" / "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    cfg["InputFile"] = "SRRL2007_TIME_01.csv"
+    cfg["OutputFile"] = "SRRL2007_TIME_01_Unc.csv"
+    cfg["max_workers"] = 2
+
+    with pytest.raises(SERIQCError) as error:
+        process_from_config(cfg)
+
+    assert "Non-zero SERIQC code: 2. Decoded to the following:" in str(error)
+    assert "Invalid month" in str(error)
 
 
 if __name__ == "__main__":

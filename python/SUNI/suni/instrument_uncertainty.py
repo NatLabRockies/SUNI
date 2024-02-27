@@ -1,16 +1,26 @@
 # -*- coding: utf-8 -*-
 """SUNI instrument uncertainty computations"""
 from math import sqrt
+from pathlib import Path
+
+import pandas as pd
+
+from suni import REPO_DIR
 
 
 class _InstrumentUncertainties:
-    ISO9060_PYRANOMETER_UNCERTAINTY = {"A": 2.4, "B": 5.2, "C": 11.9}
-    ISO9060_PYRANOMETER_CAL_DEFAULT = {"A": 2, "B": 3, "C": 4}
-    ISO9060_PYRHELIOMETER_UNCERTAINTY = {"A": 0.9, "B": 2.2, "C": 7.4}
-    ISO9060_PYRHELIOMETER_CAL_DEFAULT = {"A": 0.8, "B": 1, "C": 3.5}
+    """Helper class to load instrument uncertainty values."""
 
     def __init__(self, db=None):
-        self.db = db
+        """
+
+        Parameters
+        ----------
+        db : path-like, optional
+            Path to directory containing the "Upyranometer.csv" and
+            "Upyrheliometer.csv" files. By default, ``None``.
+        """
+        self.db = Path(db or REPO_DIR.parent / "instrument_database")
         self.pyranometer_uncertainty = None
         self.pyranometer_cal_default = None
         self.pyrheliometer_uncertainty = None
@@ -18,13 +28,13 @@ class _InstrumentUncertainties:
         self._load_values()
 
     def _load_values(self):
-        if self.db is not None:
-            raise NotImplementedError("Implementation is TODO!")
-
-        self.pyranometer_uncertainty = self.ISO9060_PYRANOMETER_UNCERTAINTY
-        self.pyranometer_cal_default = self.ISO9060_PYRANOMETER_CAL_DEFAULT
-        self.pyrheliometer_uncertainty = self.ISO9060_PYRHELIOMETER_UNCERTAINTY
-        self.pyrheliometer_cal_default = self.ISO9060_PYRHELIOMETER_CAL_DEFAULT
+        """Load uncertainty values from teh database."""
+        self.pyranometer_uncertainty, self.pyranometer_cal_default = (
+            _read_instrument_data_from_file(self.db / "Upyranometer.csv")
+        )
+        self.pyrheliometer_uncertainty, self.pyrheliometer_cal_default = (
+            _read_instrument_data_from_file(self.db / "Upyrheliometer.csv")
+        )
 
     def __iter__(self):
         yield (
@@ -42,6 +52,19 @@ class _InstrumentUncertainties:
             self.pyranometer_uncertainty,
             self.pyranometer_cal_default,
         )
+
+
+def _read_instrument_data_from_file(fp):
+    """read instrument data csv file."""
+    if not fp.exists():
+        raise FileNotFoundError(
+            f"Did not find valid file in instrument database: {str(fp)}"
+        )
+    instrument_data = pd.read_csv(fp).set_index("Class")
+    return (
+        instrument_data["Uclass"].to_dict(),
+        instrument_data["Ucal"].to_dict(),
+    )
 
 
 def add_instrument_uncertainties(config):
@@ -66,7 +89,8 @@ def add_instrument_uncertainties(config):
         Input config that definitely contains the "GHIradUncert",
         "DNIradUncert", and "DHIradUncert" keys.
     """
-    for param, uncert, defaults in _InstrumentUncertainties():
+    iu = _InstrumentUncertainties(db=config.get("InstrumentDatabasePath"))
+    for param, uncert, defaults in iu:
         rad_uncertainty_key = f"{param}radUncert"
         if rad_uncertainty_key in config:
             continue

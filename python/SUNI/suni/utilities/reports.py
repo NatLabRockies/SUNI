@@ -145,8 +145,8 @@ def compile_standard_report(results, cfg, proc_start_time):
         inst_class = cfg[f"{param}class"]
         class_uncertainty = float(cfg[f"{param}classUncert"])
         cal_uncertainty = float(cfg[f"{param}calUncert"])
-        cal_due = cfg[f"{param}calDate"]
-        due = cfg[f"{param}dueDate"]
+        cal_due = cfg.get(f"{param}calDate") or "Not specified"
+        due = cfg.get(f"{param}dueDate") or "Not specified"
         rad_uncertainty = float(cfg[f"{param}radUncert"])
         line = " | ".join(
             [

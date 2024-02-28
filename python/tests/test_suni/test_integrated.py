@@ -145,6 +145,33 @@ def test_gui_report_extended(tmp_cwd, test_data_basic_run_dir):
             assert truth.readlines()[2:] == test.readlines()[2:]
 
 
+def test_report_no_cal_date(tmp_cwd, test_data_basic_run_dir):
+    """Test that the report shows non-specified cal dates correctly"""
+
+    shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
+    shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    assert len(list(tmp_cwd.glob("*"))) == 2
+
+    with open(test_data_basic_run_dir / "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    cfg["ExtendedRpt"] = 1
+    cfg["DateFormat"] = 1
+    cfg["GHIcalDate"] = None
+    cfg["GHIdueDate"] = ""
+    out = process_from_config(cfg)
+    assert isinstance(out, dict)
+    assert out["report"] == EXPECTED_EXTENDED_GUI_REPORT.strip("\n")
+
+    test_fp = tmp_cwd / "SRRL2004_01_testing_Report.txt"
+    with open(test_fp, "r") as test:
+        report_text = test.read()
+
+    assert "Cal Date: Not specified" in report_text
+    assert "Due Date: Not specified" in report_text
+
+
 def test_raise_seriqc_error(tmp_cwd, test_data_dir):
     """Test that a non-zero SERIQC code raises an error"""
 

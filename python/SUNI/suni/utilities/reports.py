@@ -51,10 +51,10 @@ def _add_irradiance_stats(results, lines, sun_up_count, n_valid, fn=2):
     return lines
 
 
-def _start_end_time(results):
+def _start_end_time(results, date_format):
     """Extract start and end times from the data"""
-    start_time = extract_time_from_input_data(results.iloc[0])
-    end_time = extract_time_from_input_data(results.iloc[-1])
+    start_time = extract_time_from_input_data(results.iloc[0], date_format)
+    end_time = extract_time_from_input_data(results.iloc[-1], date_format)
     return start_time, end_time
 
 
@@ -75,8 +75,8 @@ def compile_popup_report(results, cfg):
     """
     input_fn = Path(cfg["InputFile"]).name
 
-    start_time, end_time = _start_end_time(results)
     date_format = int(cfg.get("DateFormat", 0))
+    start_time, end_time = _start_end_time(results, date_format)
     counts, sun_up_count, n_valid = _counts_from_results(results)
     sq_max = counts[ErrorCode.QC_MAX]
 
@@ -120,8 +120,8 @@ def compile_standard_report(results, cfg, proc_start_time):
     """
 
     input_fn = Path(cfg["InputFile"]).name
-    start_time, end_time = _start_end_time(results)
     date_format = int(cfg.get("DateFormat", 0))
+    start_time, end_time = _start_end_time(results, date_format)
     proc_date = proc_start_time.strftime(
         "%Y-%m-%d %H:%M" if date_format else "%m/%d/%Y %H:%M"
     )

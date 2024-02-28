@@ -9,6 +9,7 @@ import pandas as pd
 
 from suni.cli import main, process_from_config
 from suni.framework import SERIQCError
+from suni.utilities import convert_to_year_first
 import suni.instrument_uncertainty
 
 EXPECTED_GUI_REPORT = """
@@ -117,7 +118,13 @@ def test_gui_report(tmp_cwd, test_data_basic_run_dir):
 def test_gui_report_extended(tmp_cwd, test_data_basic_run_dir):
     """Test that the extended GUI report is as expected"""
 
-    shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
+    input_data = pd.read_csv(
+        test_data_basic_run_dir / "SRRL2004_01_testing.csv",
+        header=0,
+        names=["DATE", "MST", "GHI", "DNI", "DHI"],
+    )
+    input_data["DATE"] = input_data["DATE"].map(convert_to_year_first)
+    input_data.to_csv(tmp_cwd / "SRRL2004_01_testing.csv", index=False)
     shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
@@ -145,10 +152,36 @@ def test_gui_report_extended(tmp_cwd, test_data_basic_run_dir):
             assert truth.readlines()[2:] == test.readlines()[2:]
 
 
+def test_incompatible_data_format(tmp_cwd, test_data_basic_run_dir):
+    """Test that the extended GUI report is as expected"""
+
+    shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
+    shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    assert len(list(tmp_cwd.glob("*"))) == 2
+
+    with open(test_data_basic_run_dir / "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    cfg["ExtendedRpt"] = 1
+    cfg["DateFormat"] = 1
+    with pytest.raises(ValueError) as error:
+        process_from_config(cfg)
+
+    assert "Input date" in str(error)
+    assert "incompatible with data format (1: YYYY-MM-DD)" in str(error)
+
+
 def test_report_no_cal_date(tmp_cwd, test_data_basic_run_dir):
     """Test that the report shows non-specified cal dates correctly"""
 
-    shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
+    input_data = pd.read_csv(
+        test_data_basic_run_dir / "SRRL2004_01_testing.csv",
+        header=0,
+        names=["DATE", "MST", "GHI", "DNI", "DHI"],
+    )
+    input_data["DATE"] = input_data["DATE"].map(convert_to_year_first)
+    input_data.to_csv(tmp_cwd / "SRRL2004_01_testing.csv", index=False)
     shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2

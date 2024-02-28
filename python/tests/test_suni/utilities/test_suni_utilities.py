@@ -37,18 +37,22 @@ def test_compute_parameter_stats():
 
 
 @pytest.mark.parametrize(
-    "time_in, expected",
+    "data_in, expected",
     (
-        (("1/1/2021", "0:1"), (2021, 1, 1, 0, 1)),
-        (("10/10/2020", "24:01"), (2020, 10, 10, 24, 1)),
-        (("31/30/1998", "5:15"), (1998, 31, 30, 5, 15)),
+        (("1/1/2021", "0:1", 0), (2021, 1, 1, 0, 1)),
+        (("10/10/2020", "24:01", 0), (2020, 10, 10, 24, 1)),
+        (("31/30/1998", "5:15", 0), (1998, 31, 30, 5, 15)),
+        (("2021-1-1", "0:1", 1), (2021, 1, 1, 0, 1)),
+        (("2020-10-10", "24:01", 1), (2020, 10, 10, 24, 1)),
+        (("1998-31-30", "5:15", 1), (1998, 31, 30, 5, 15)),
     ),
 )
-def test_extract_time_from_input_data(time_in, expected):
+def test_extract_time_from_input_data(data_in, expected):
     """Test the `extract_time_from_input_data` function"""
 
-    time_in = {"DATE": time_in[0], "MST": time_in[1]}
-    assert extract_time_from_input_data(time_in) == expected
+    time = {"DATE": data_in[0], "MST": data_in[1]}
+    date_format = data_in[-1]
+    assert extract_time_from_input_data(time, date_format) == expected
 
 
 @pytest.mark.parametrize(

@@ -4,7 +4,7 @@ from math import sqrt
 
 
 def format_date(year, month, day, year_first=False):
-    """For mat date into string.
+    """Format date into string.
 
     Depending on the ``year_first``, the outputs will be
     `{year}-{month}-{day}` (``year_first = True``) or
@@ -72,7 +72,7 @@ def compute_parameter_stats(param_sum, param_sum_sq, sun_up_count, n_valid):
     return mean, std
 
 
-def extract_time_from_input_data(row):
+def extract_time_from_input_data(row, date_format):
     """Convert DATE+MST to integer date components.
 
     Parameters
@@ -81,6 +81,10 @@ def extract_time_from_input_data(row):
         A series instance containing a "DATE" and "MST" column. "DATE"
         must have the format MM/DD/YYYY and "MST" must have the format
         HH:MM.
+    date_format : int
+        Integer representing the expected date format in the data.
+        0: MM/DD/YYYY; 1: YYYY-MM-DD.
+
 
     Returns
     -------
@@ -89,7 +93,20 @@ def extract_time_from_input_data(row):
         (year, month, day, hour, minute) represented by "DATE" and "MST"
         in the `row` input.
     """
-    month, day, year = map(int, row["DATE"].split("/"))
+    date = row["DATE"]
+    try:
+        if date_format:
+            year, month, day = map(int, date.split("-"))
+        else:
+            month, day, year = map(int, date.split("/"))
+    except ValueError:
+        date_fmt_msg = {0: "0: MM/DD/YYYY", 1: "1: YYYY-MM-DD"}
+        msg = (
+            f"Input date ({date}) incompatible with data format "
+            f"({date_fmt_msg[date_format]})"
+        )
+        raise ValueError(msg) from None
+
     hour, minute = map(int, row["MST"].split(":"))
     return year, month, day, hour, minute
 

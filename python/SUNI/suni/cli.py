@@ -151,7 +151,6 @@ def process_from_config(cfg, from_gui=True):
 
 def _finalize_format(results, cfg):
     if int(cfg.get("DateFormat", 0)):
-        results["DATE"] = results["DATE"].map(convert_to_year_first)
         date_col = "Date (YYYY-MM-DD)"
     else:
         date_col = "Date (MM/DD/YYYY)"
@@ -202,7 +201,8 @@ def _finalize_format(results, cfg):
 
 
 def _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u):
-    year, month, day, hour, minute = extract_time_from_input_data(row)
+    d_fmt = int(cfg.get("DateFormat", 0))
+    year, month, day, hour, minute = extract_time_from_input_data(row, d_fmt)
     ghi, dni, dhi = extract_irradiance_from_input_data(row)
     return uDat(
         cfg["StationID"],

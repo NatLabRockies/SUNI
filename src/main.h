@@ -149,6 +149,12 @@ private:
 
 	std::string m_pythonExecPath, m_pythonRunCmd;
 
+#ifdef __WINDOWS__
+	PROCESS_INFORMATION m_pi;
+#endif
+
+
+
 	DECLARE_EVENT_TABLE();
 };
 

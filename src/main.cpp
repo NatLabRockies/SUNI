@@ -686,6 +686,17 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 			wxMessageBox(e.what(), "Python Error");
 		}
 		break;
+	case ID_BTN_CANCEL: // enable after running
+		try {
+			// Send Ctrl+C to the child process.
+#ifdef __WINDOWS__
+			GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId);
+#endif
+		}
+		catch (std::runtime_error e) {
+			wxMessageBox(e.what(), "Python Error");
+		}
+		break;
 	case ID_BTN_INPUTFILE:
 		{
 			wxFileDialog dlg(this, "Open Input File", wxEmptyString, wxEmptyString, "Input Files (*.csv)|*.csv", wxFD_OPEN);
@@ -874,7 +885,7 @@ void MainWindow::replaceBackslash(std::string& str)
 std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as_text) {
 	STARTUPINFO si;
 	SECURITY_ATTRIBUTES sa;
-	PROCESS_INFORMATION pi;
+//	PROCESS_INFORMATION pi;
 	HANDLE stdin_rd = NULL;
 	HANDLE stdout_wr = NULL;
 	HANDLE stdout_rd = NULL;
@@ -952,7 +963,7 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	si.hStdInput = stdin_rd;
 
 
-	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,	NULL, NULL, &si, &pi)) {
+	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,	NULL, NULL, &si, &m_pi)) {
 		unsigned long bread;   //bytes read
 		unsigned long bread_last = 0;
 		unsigned long avail;   //bytes available
@@ -999,8 +1010,8 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 			}
 		}
 
-		CloseHandle(pi.hThread);
-		CloseHandle(pi.hProcess);
+		CloseHandle(m_pi.hThread);
+		CloseHandle(m_pi.hProcess);
 
 		if (i >= n_timeout_max) {
 			throw std::runtime_error("SUNI error. Timeout while running.");

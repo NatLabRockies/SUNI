@@ -103,7 +103,7 @@ def main(config, max_workers):
 
 def process_from_config(cfg, from_gui=True):
     proc_start_time = datetime.now()
-    max_workers = cfg.get("max_workers", 1)
+    max_workers = cfg.get("max_workers")
     input_file = Path(cfg["InputFile"])
     of = cfg.get("OutputFile", f"{input_file.stem}_Unc.csv")
     input_data = pd.read_csv(
@@ -118,9 +118,9 @@ def process_from_config(cfg, from_gui=True):
     #     f"using {max_workers:d} process(es)"
     # )
     if max_workers > 1:
-        results = run_mp(input_data, cfg, max_workers)
+        results = run_mp(input_data, cfg, max_workers, from_gui=from_gui)
     else:
-        results = run_sp(input_data, cfg)
+        results = run_sp(input_data, cfg, from_gui=from_gui)
 
     int_cols = ["qcGHI", "qcDNI", "qcDHI", "uCode", "SQCcode"]
     results[int_cols] = results[int_cols].astype(int)
@@ -226,7 +226,7 @@ def _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u):
     )
 
 
-def run_mp(input_data, cfg, max_workers):
+def run_mp(input_data, cfg, max_workers, from_gui):
 
     future_to_row = {}
     results = {}
@@ -243,25 +243,30 @@ def run_mp(input_data, cfg, max_workers):
         # print("Collecting outputs...")
         nun_to_run = len(future_to_row)
         # for future in tqdm(as_completed(future_to_row), total=nun_to_run):
-        for future in as_completed(future_to_row):
+        for ind, future in enumerate(as_completed(future_to_row), start=1):
             row_ind = future_to_row.pop(future)
             data = future.result()
             results[row_ind] = data.as_result_dict()
+            if from_gui:
+                print(int(ind / nun_to_run * 100))
 
     results = pd.DataFrame(results).T.sort_index()
     return results
 
 
-def run_sp(input_data, cfg):
+def run_sp(input_data, cfg, from_gui):
     results = {}
     ghi_rad_u, dni_rad_u, dhi_rad_u = extract_rad_uncertainty(cfg)
     # for row_ind, row in tqdm(
     #     input_data.iterrows(), total=len(input_data), desc=input_file.stem
     # ):
-    for row_ind, row in input_data.iterrows():
+    nun_to_run = len(input_data)
+    for ind, (row_ind, row) in enumerate(input_data.iterrows(), start=1):
         data = _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u)
         data = Uprocess(data, pressure=820, temp=11)
         results[row_ind] = data.as_result_dict()
+        if from_gui:
+            print(int(ind / nun_to_run * 100))
 
     results = pd.DataFrame(results).T.sort_index()
     return results

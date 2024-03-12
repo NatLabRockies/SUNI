@@ -63,6 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wx/platform.h>
 #include <wx/txtstrm.h>
 #include <wx/filename.h>
+#include <wx/textfile.h>
 
 #include "main.h"
 #include "pythonhandler.h"
@@ -430,6 +431,8 @@ MainWindow::MainWindow()
 	// testing progress bar
 	m_gProgress->Pulse();
 
+	m_bCancel->Enable(false);
+
 	p->SetSizer(sizerTop);
 	sizerTop->SetSizeHints(this);
 }
@@ -679,12 +682,14 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		Close();
 		break;
 	case ID_BTN_START:
+		m_bCancel->Enable(true);
 		try {
 			InvokePython();
 		}
 		catch (std::runtime_error e) {
 			wxMessageBox(e.what(), "Python Error");
 		}
+		m_bCancel->Enable(false);
 		break;
 	case ID_BTN_CANCEL: // enable after running
 		try {
@@ -1251,8 +1256,23 @@ bool MainWindow::InvokePython()
 #else
 			std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
 #endif
-
-			wxMessageBox(wxString(output_json), "Results");
+			// testing raw output
+			//wxMessageBox(wxString(output_json), "Results");
+			// file retrieved to [Input File name]_Report.txt
+			wxFileName fnInputFile = InputFile->GetValue();
+			wxFileName fnOutputFile = OutputFile->GetValue();
+			if (wxFileExists(fnOutputFile.GetFullPath())) {
+				wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
+				if (wxFileExists(sfn)) {
+					wxString str;
+					wxTextFile tFile;
+					tFile.Open(sfn);
+					str = tFile.GetFirstLine() + "\n";
+					while (!tFile.Eof())
+						str += tFile.GetNextLine() + "\n";
+					wxMessageBox(str, "Report");
+				}
+			}
 		}
 		catch (std::future_error& e) {
 			throw std::runtime_error(e.what());

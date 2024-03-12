@@ -1,22 +1,18 @@
+# -*- coding: utf-8 -*-
+"""SUNI CLI"""
 import os
-import json
-import configparser
-from math import sqrt
+import logging
 from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import click
-
 from tqdm import tqdm
 import pandas as pd
 
-from suni.framework import Uprocess, uDat, ErrorCode
+from suni.framework import Uprocess, uDat
 from suni.instrument_uncertainty import extract_rad_uncertainty
 from suni.utilities import (
-    format_date,
-    convert_to_year_first,
-    compute_parameter_stats,
     extract_time_from_input_data,
     extract_irradiance_from_input_data,
 )
@@ -25,6 +21,9 @@ from suni.utilities.reports import (
     compile_standard_report,
 )
 from suni.utilities.configs import data_from_ini, data_from_json
+
+
+logger = logging.getLogger(__name__)
 
 
 @click.command(no_args_is_help=True)
@@ -37,6 +36,11 @@ from suni.utilities.configs import data_from_ini, data_from_json
     help="Number of processes to use. Default uses all available CPU cores",
 )
 def main(config, max_workers):
+    handler = logging.StreamHandler()
+    handler.setLevel("INFO")
+    logger.addHandler(handler)
+    logger.setLevel("INFO")
+
     if Path(config).suffix.casefold() == ".ini":
         cfg = data_from_ini(config)
     else:
@@ -57,14 +61,17 @@ def process_from_config(cfg, from_gui=True):
     )
 
     max_workers = os.cpu_count() if max_workers is None else max_workers
-    # print(
-    #     f"Kicking off SUNI for {len(input_data):,d} records "
-    #     f"using {max_workers:d} process(es)"
-    # )
+    logger.info(
+        "Kicking off SUNI for %d records using %d process(es)",
+        len(input_data),
+        max_workers,
+    )
     if max_workers > 1:
-        results = run_mp(input_data, cfg, max_workers, from_gui=from_gui)
+        results = run_mp(
+            input_file, input_data, cfg, max_workers, from_gui=from_gui
+        )
     else:
-        results = run_sp(input_data, cfg, from_gui=from_gui)
+        results = run_sp(input_file, input_data, cfg, from_gui=from_gui)
 
     int_cols = ["qcGHI", "qcDNI", "qcDHI", "uCode", "SQCcode"]
     results[int_cols] = results[int_cols].astype(int)
@@ -75,22 +82,22 @@ def process_from_config(cfg, from_gui=True):
 
     results = _finalize_format(results, cfg)
     results.to_csv(of, index=False, float_format="%.1f")
-    # print(f"Results written to {str(of)}")
+    logger.info("Results written to %s", str(of))
 
     rf = Path(of).parent / f"{input_file.stem}_Report.txt"
     with open(rf, "w") as fh:
         fh.write(standard_report)
-    # print(standard_report)
-    # print(f"Report written to {str(rf)}")
+    logger.info("\n---")
+    logger.info(standard_report)
+    logger.info("---\n")
+    logger.info("Report written to %s", str(rf))
 
     return_dict = {
         "out_file": str(of),
         # "report_file": str(rf),
         "report": popup_report,
     }
-    # print(return_dict["report"])
     return return_dict
-    # return json.dumps(return_dict)
 
 
 def _finalize_format(results, cfg):
@@ -170,42 +177,37 @@ def _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u):
     )
 
 
-def run_mp(input_data, cfg, max_workers, from_gui):
-
+def run_mp(input_file, input_data, cfg, max_workers, from_gui):
     future_to_row = {}
     results = {}
     ghi_rad_u, dni_rad_u, dhi_rad_u = extract_rad_uncertainty(cfg)
+    progress_denom = len(input_data) + len(input_data) // 4
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        # for row_ind, row in tqdm(
-        #     input_data.iterrows(), total=len(input_data), desc=input_file.stem
-        # ):
-        for row_ind, row in input_data.iterrows():
+        for ind, row_ind, row in _iter_df(input_file, input_data, from_gui):
             data = _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u)
             future = executor.submit(Uprocess, data, pressure=820, temp=11)
             future_to_row[future] = row_ind
+            if from_gui:
+                ind = ind // 4
+                print(int(ind / progress_denom * 100))
 
-        # print("Collecting outputs...")
-        nun_to_run = len(future_to_row)
-        # for future in tqdm(as_completed(future_to_row), total=nun_to_run):
-        for ind, future in enumerate(as_completed(future_to_row), start=1):
+        logger.info("Collecting outputs...")
+        for collect_ind, future in _iter_futures(future_to_row, from_gui):
             row_ind = future_to_row.pop(future)
             data = future.result()
             results[row_ind] = data.as_result_dict()
             if from_gui:
-                print(int(ind / nun_to_run * 100))
+                print(int((ind + collect_ind) / progress_denom * 100))
 
     results = pd.DataFrame(results).T.sort_index()
     return results
 
 
-def run_sp(input_data, cfg, from_gui):
+def run_sp(input_file, input_data, cfg, from_gui):
     results = {}
     ghi_rad_u, dni_rad_u, dhi_rad_u = extract_rad_uncertainty(cfg)
-    # for row_ind, row in tqdm(
-    #     input_data.iterrows(), total=len(input_data), desc=input_file.stem
-    # ):
     nun_to_run = len(input_data)
-    for ind, (row_ind, row) in enumerate(input_data.iterrows(), start=1):
+    for ind, row_ind, row in _iter_df(input_file, input_data, from_gui):
         data = _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u)
         data = Uprocess(data, pressure=820, temp=11)
         results[row_ind] = data.as_result_dict()
@@ -214,6 +216,38 @@ def run_sp(input_data, cfg, from_gui):
 
     results = pd.DataFrame(results).T.sort_index()
     return results
+
+
+def _iter_df(input_file, input_data, from_gui):
+    if from_gui:
+        yield from _iter_enumerated_df(input_data)
+
+    else:
+        for out in tqdm(
+            _iter_enumerated_df(input_data),
+            total=len(input_data),
+            desc=input_file.stem,
+        ):
+            yield out
+
+
+def _iter_enumerated_df(input_data):
+    for ind, (row_ind, row) in enumerate(input_data.iterrows(), start=1):
+        yield ind, row_ind, row
+
+
+def _iter_futures(futures, from_gui):
+    if from_gui:
+        yield from _iter_enumerated_futures(futures)
+
+    else:
+        for out in tqdm(_iter_enumerated_futures(futures), total=len(futures)):
+            yield out
+
+
+def _iter_enumerated_futures(futures):
+    for ind, future in enumerate(as_completed(futures), start=1):
+        yield ind, future
 
 
 # python -c "import json; from suni.cli import process_from_config; fh = open('sample_config.json'); cfg = json.load(fh); fh.close(); process_from_config(cfg)"

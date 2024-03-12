@@ -24,62 +24,7 @@ from suni.utilities.reports import (
     compile_popup_report,
     compile_standard_report,
 )
-
-CONFIG_KEYS = [
-    "StationID",
-    "InputFile",
-    "OutputFile",
-    "SERIQCpath",
-    "Interval",
-    "GHIid",
-    "GHImodel",
-    "GHIclass",
-    "GHIclassUncert",
-    "GHIcalUncert",
-    "GHIcalDate",
-    "GHIdueDate",
-    "GHIradUncert",
-    "DNIid",
-    "DNImodel",
-    "DNIclass",
-    "DNIclassUncert",
-    "DNIcalUncert",
-    "DNIcalDate",
-    "DNIdueDate",
-    "DNIradUncert",
-    "DHIid",
-    "DHImodel",
-    "DHIclass",
-    "DHIclassUncert",
-    "DHIcalUncert",
-    "DHIcalDate",
-    "DHIdueDate",
-    "DHIradUncert",
-    "MaxSysUncert",
-    "MaxQC",
-    "MinDNI",
-    "MaxZEN",
-    "DateFormat",
-    "ExtendedRpt",
-]
-
-
-def _data_from_ini(fp):
-    cfg = configparser.ConfigParser()
-    cfg.read(fp)
-    config = dict(cfg.items("SUNI"))
-
-    return {
-        key: config[key.lower()]
-        for key in CONFIG_KEYS
-        if key.lower() in config
-    }
-
-
-def _data_from_json(fp):
-    with open(fp, "r") as fh:
-        data = json.load(fh)
-    return data
+from suni.utilities.configs import data_from_ini, data_from_json
 
 
 @click.command(no_args_is_help=True)
@@ -93,10 +38,9 @@ def _data_from_json(fp):
 )
 def main(config, max_workers):
     if Path(config).suffix.casefold() == ".ini":
-        cfg = _data_from_ini(config)
+        cfg = data_from_ini(config)
     else:
-        cfg = _data_from_json(config)
-    # cfg = _format_config_data(cfg)
+        cfg = data_from_json(config)
     cfg["max_workers"] = max_workers
     return process_from_config(cfg, from_gui=False)
 

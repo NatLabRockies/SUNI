@@ -148,11 +148,7 @@ private:
 	void replaceBackslash(std::string& str);
 
 	std::string m_pythonExecPath, m_pythonRunCmd;
-
-#ifdef __WINDOWS__
-	PROCESS_INFORMATION m_pi;
-#endif
-
+	bool m_cancelled;
 
 
 	DECLARE_EVENT_TABLE();

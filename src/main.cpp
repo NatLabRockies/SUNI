@@ -429,9 +429,10 @@ MainWindow::MainWindow()
 	sizerTop->AddGrowableCol(1);
 
 	// testing progress bar
-	m_gProgress->Pulse();
+	//m_gProgress->Pulse();
 
 	m_bCancel->Enable(false);
+	m_cancelled = false;
 
 	p->SetSizer(sizerTop);
 	sizerTop->SetSizeHints(this);
@@ -692,15 +693,18 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		m_bCancel->Enable(false);
 		break;
 	case ID_BTN_CANCEL: // enable after running
+		m_cancelled = true;
+		/*
 		try {
 			// Send Ctrl+C to the child process.
 #ifdef __WINDOWS__
-			GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId);
+//			GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId);
 #endif
 		}
 		catch (std::runtime_error e) {
 			wxMessageBox(e.what(), "Python Error");
 		}
+		*/
 		break;
 	case ID_BTN_INPUTFILE:
 		{
@@ -886,11 +890,269 @@ void MainWindow::replaceBackslash(std::string& str)
 	str = std::regex_replace(str, regexPattern, "\\");
 }
 
+
+
+class SimulationThreadWindows : public wxThread
+{
+	wxMutex m_currentLock, m_cancelLock, m_nokLock, m_logLock, m_percentLock;
+	size_t m_current;
+	bool m_canceled;
+	size_t m_nok;
+	wxArrayString m_messages;
+	wxString m_update;
+	wxString m_curName;
+	float m_percent;
+	int m_threadId;
+	std::string m_pythonpath, m_pythonargs;
+
+	PROCESS_INFORMATION m_pi;
+	char m_buf[BUFSIZE];           //i/o buffer
+
+	unsigned long m_bread;   //bytes read
+
+public:
+
+	SimulationThreadWindows(int id)
+		: wxThread(wxTHREAD_JOINABLE) {
+		m_canceled = false;
+		m_threadId = id;
+		m_nok = 0;
+		m_percent = 0;
+		m_current = 0;
+	}
+
+	void Add(const std::string& pythonpath, const std::string& pythonargs) {
+		m_pythonpath = pythonpath;
+		m_pythonargs = pythonargs;
+	}
+
+	size_t Size() { return 1; }
+	size_t Current() {
+		wxMutexLocker _lock(m_currentLock);
+		return m_current;
+	}
+	float GetPercent(wxString* update = 0) {
+		wxString ret = wxString::FromUTF8(m_buf);
+		ret.Replace("\n", "");
+		ret.Replace("\r", "");
+		ret = ret.Trim().Right(2);
+		if (update)
+			*update = ret;
+		double dret;
+		if (ret.ToDouble(&dret))
+			return (float)dret;
+		else
+			return 0;
+	}
+
+	void Cancel()
+	{
+		GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId);
+		wxMutexLocker _lock(m_cancelLock);
+		m_canceled = true;
+	}
+
+	size_t NOk() {
+		wxMutexLocker _lock(m_nokLock);
+		return m_nok;
+	}
+
+	void Message(const wxString& text)
+	{
+		wxMutexLocker _lock(m_logLock);
+		wxString L(m_curName);
+		if (!L.IsEmpty()) L += ": ";
+		m_messages.Add(L + text);
+	}
+
+	virtual void Warn(const wxString& text)
+	{
+		Message(text);
+	}
+
+	virtual void Error(const wxString& text)
+	{
+		Message(text);
+	}
+
+	virtual void Update(float percent, const wxString& text)
+	{
+		wxMutexLocker _lock(m_percentLock);
+		m_percent = percent;
+		m_update = text;
+	}
+
+
+	virtual bool IsCancelled() {
+		wxMutexLocker _lock(m_cancelLock);
+		return m_canceled;
+	}
+
+	wxArrayString GetNewMessages()
+	{
+		wxMutexLocker _lock(m_logLock);
+		wxArrayString list = m_messages;
+		m_messages.Clear();
+		return list;
+	}
+
+	virtual void* Entry()
+	{
+		m_canceled = false;
+
+		STARTUPINFO si;
+		SECURITY_ATTRIBUTES sa;
+		HANDLE stdin_rd = NULL;
+		HANDLE stdout_wr = NULL;
+		HANDLE stdout_rd = NULL;
+		HANDLE stdin_wr = NULL;
+		HANDLE stderr_rd = NULL;
+		HANDLE stderr_wr = NULL;  //pipe handles
+		memset(m_buf, 0, sizeof(m_buf));
+		char err_buf[BUFSIZE];           //i/o buffer
+		memset(err_buf, 0, sizeof(err_buf));
+		char out_buf[BUFSIZE];           //i/o buffer
+		memset(out_buf, 0, sizeof(out_buf));
+
+		CA2T programpath(m_pythonpath.c_str());
+		CA2T programargs(m_pythonargs.c_str());
+
+		sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+		sa.bInheritHandle = TRUE;
+		sa.lpSecurityDescriptor = NULL;
+
+		if (!CreatePipe(&stdin_rd, &stdin_wr, &sa, 0)) {
+//			goto done;
+		}
+		if (!SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0)) {
+//			goto done;
+		}
+		if (!CreatePipe(&stdout_rd, &stdout_wr, &sa, 0)) {
+//			goto done;
+		}
+		if (!SetHandleInformation(stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
+//			goto done;
+		}
+		if (!CreatePipe(&stderr_rd, &stderr_wr, &sa, 0)) {
+//			goto done;
+		}
+		if (!SetHandleInformation(stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
+//			goto done;
+		}
+
+		//set startupinfo for the spawned process
+		/*The dwFlags member tells CreateProcess how to make the process.
+		STARTF_USESTDHANDLES: validates the hStd* members.
+		STARTF_USESHOWWINDOW: validates the wShowWindow member*/
+		GetStartupInfo(&si);
+
+		si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+		si.wShowWindow = SW_HIDE;
+		//set the new handles for the child process
+		si.hStdOutput = stdout_wr;
+		si.hStdError = stderr_wr;
+		si.hStdInput = stdin_rd;
+
+
+		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &m_pi)) {
+			unsigned long bread_last = 0;
+			unsigned long avail;   //bytes available
+			unsigned long err_bread;   //bytes read
+			unsigned long err_bread_last = 0;
+			unsigned long err_avail;   //bytes available
+			unsigned long out_bread;   //bytes read
+			unsigned long out_bread_last = 0;
+			unsigned long out_avail;   //bytes available
+			size_t i = 0;
+			size_t n_timeout_max = 100000000; // timeout
+			//		size_t n_timeout_max = 1000000000; // timeout
+			//for (i = 0; i < n_timeout_max; i++) {
+			while(1) {
+				PeekNamedPipe(stdout_rd, m_buf, BUFSIZE - 1, &m_bread, &avail, NULL);
+				PeekNamedPipe(stderr_rd, err_buf, BUFSIZE - 1, &err_bread, &err_avail, NULL);
+				PeekNamedPipe(stdin_rd, out_buf, BUFSIZE - 1, &out_bread, &out_avail, NULL);
+				//check to see if there is any data to read from stdout
+				if (m_bread != 0) {
+					if (ReadFile(stdout_rd, m_buf, BUFSIZE - 1, &m_bread, NULL)) {
+						bread_last = m_bread;
+					}
+				}
+				else if (bread_last > 0)
+				{
+					break;
+				}
+				if (err_bread != 0) {
+					if (ReadFile(stderr_rd, err_buf, BUFSIZE - 1, &err_bread, NULL)) {
+						err_bread_last = err_bread;
+					}
+				}
+				else if (err_bread_last > 0)
+				{
+					break;
+				}
+				if (out_bread != 0) {
+					if (ReadFile(stdin_rd, out_buf, BUFSIZE - 1, &out_bread, NULL)) {
+						out_bread_last = out_bread;
+					}
+				}
+				else if (out_bread_last > 0)
+				{
+					break;
+				}
+				::wxMilliSleep(100);
+			}
+
+			CloseHandle(m_pi.hThread);
+			CloseHandle(m_pi.hProcess);
+
+			if (i >= n_timeout_max) {
+				throw std::runtime_error("SUNI error. Timeout while running.");
+			}
+
+			wxMutexLocker _lock(m_nokLock);
+			m_nok++;
+		}
+
+
+		m_currentLock.Lock();
+		m_current++;
+		m_currentLock.Unlock();
+
+		wxMutexLocker _lock(m_cancelLock);
+		if (m_canceled) return (void*)1;
+
+//	done:
+		std::vector<HANDLE> handles = { stdin_rd, stdin_wr, stdout_rd, stdout_wr, stderr_rd, stderr_wr };
+		for (HANDLE handle : handles) {
+			if (handle && handle != INVALID_HANDLE_VALUE) {
+				CloseHandle(handle);
+			}
+		}
+		if (m_buf[0] == '\0') {
+			if (err_buf[0] == '\0')
+				throw std::runtime_error("SUNI error. Function did not return a response and no error.");
+			else
+				return err_buf;
+			throw std::runtime_error("SUNI error. Function did not return a response.");
+		}
+//		return buf;
+
+
+
+		return 0;
+	}
+
+
+};
+
+
+
+
 #ifdef __WINDOWS__
 std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as_text) {
 	STARTUPINFO si;
 	SECURITY_ATTRIBUTES sa;
-//	PROCESS_INFORMATION pi;
+	PROCESS_INFORMATION pi;
 	HANDLE stdin_rd = NULL;
 	HANDLE stdout_wr = NULL;
 	HANDLE stdout_rd = NULL;
@@ -905,31 +1167,13 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	memset(out_buf, 0, sizeof(out_buf));
 
 	std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
-//	std::replace(pythonpath.begin(), pythonpath.end(), '\\', '/');
 	CA2T programpath(pythonpath.c_str());
 	std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
 	size_t pos = pythonarg.find("<input>");
 	std::string str = input_dict_as_text;
 	std::replace(str.begin(), str.end(), '\\', '/');
 	pythonarg.replace(pos, 7, str);
-//	std::replace(pythonarg.begin(), pythonarg.end(), '\\', '/');
-
-	// testing - works
-//	pythonarg = " -c \"print('some output');print('something else')\"";
-	// Testing - fails
-//	pythonarg = "-c \" import json; from suni.cli import process_from_config; fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json'); cfg = json.load(fh); print(cfg)\"";
-	// Testing - fails
-//	pythonarg = "-c \" import json; fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json'); cfg = json.load(fh); print(cfg)\"";
-	// Testing - fails
-//	pythonarg = "-c \" import json; fh = open('/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json'); cfg = json.load(fh); print(cfg)\"";
-	// Testing - fails
-//	pythonarg = "-c \" import json; fh = open('C:\\Projects\\GithubNREL\\SolarResourceGUI\\SUNI\\python\\python_config.json'); cfg = json.load(fh); print(cfg)\"";
-//	pythonarg = "-c \" import json; fh = open(\"C:\\Projects\\GithubNREL\\SolarResourceGUI\\SUNI\\python\\python_config.json\"); cfg = json.load(fh); print(cfg)\"";
-//	pythonarg = "-c \"fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json');print(fh)\"";
-//	pythonarg = "-c \"fh = \"python_config.json\";print(fh)\"";
 	CA2T programargs(pythonarg.c_str());
-
-//	CA2T programdirectory(GetPythonConfigPath().c_str());
 
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sa.bInheritHandle = TRUE;
@@ -968,7 +1212,7 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	si.hStdInput = stdin_rd;
 
 
-	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,	NULL, NULL, &si, &m_pi)) {
+	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,	NULL, NULL, &si, &pi)) {
 		unsigned long bread;   //bytes read
 		unsigned long bread_last = 0;
 		unsigned long avail;   //bytes available
@@ -1013,10 +1257,11 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 			{
 				break;
 			}
+			wxMilliSleep(1000);
 		}
 
-		CloseHandle(m_pi.hThread);
-		CloseHandle(m_pi.hProcess);
+		CloseHandle(pi.hThread);
+		CloseHandle(pi.hProcess);
 
 		if (i >= n_timeout_max) {
 			throw std::runtime_error("SUNI error. Timeout while running.");
@@ -1224,8 +1469,6 @@ bool MainWindow::SetupPython()
 		wxGetApp().Yield(true);
 
 		InstallPython();
-//		InstallPythonPackage("landbosse");
-//		InstallPythonPackage("numpy");
 		InstallPythonPackage("suni");
 		dlg.Close();
 		ret = true;
@@ -1252,7 +1495,36 @@ bool MainWindow::InvokePython()
 			LoadConfig();
 #ifdef __WINDOWS__
 			std::string str = m_projectFileName.ToStdString();
-			std::string output_json = CallPythonModuleWindows(str);
+			std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
+
+			std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
+			size_t pos = pythonarg.find("<input>");
+			//std::string str = input_dict_as_text;
+			std::replace(str.begin(), str.end(), '\\', '/');
+			pythonarg.replace(pos, 7, str);
+
+			std::unique_ptr<SimulationThreadWindows> sth = std::make_unique<SimulationThreadWindows>(1);
+			sth->Add(pythonpath, pythonarg);
+			sth->Create();
+			sth->Run();
+
+			while (sth->IsRunning()) {
+				wxString update;
+				float per = sth->GetPercent(&update);
+				m_gProgress->SetValue((int)per);
+
+				wxGetApp().Yield();
+
+				if (m_cancelled) {
+					sth->Cancel();
+					m_cancelled = false;
+				}
+
+				::wxMilliSleep(10);
+			}
+			m_gProgress->SetValue(100);
+
+//			std::string output_json = CallPythonModuleWindows(str);
 #else
 			std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
 #endif
@@ -1273,6 +1545,7 @@ bool MainWindow::InvokePython()
 					wxMessageBox(str, "Report");
 				}
 			}
+			m_gProgress->SetValue(0);
 		}
 		catch (std::future_error& e) {
 			throw std::runtime_error(e.what());

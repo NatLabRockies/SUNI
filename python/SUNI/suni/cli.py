@@ -50,6 +50,31 @@ def main(config, max_workers):
 
 
 def process_from_config(cfg, from_gui=True):
+    if not from_gui:
+        return _process(cfg, from_gui=from_gui)
+
+    try:
+        out = _process(cfg, from_gui=from_gui)
+    except KeyboardInterrupt as cancel:
+        raise cancel
+    except Exception as err:
+        out_err_file = _err_fp(cfg)
+        msg = f"{type(err).__name__}:\n{err}"
+        with open(out_err_file, "w") as fh:
+            fh.write(msg)
+        out = {"err_fp": str(out_err_file)}
+    return out
+
+
+def _err_fp(cfg):
+    err_fn = f"error_SUNI_{datetime.now():%Y%m%d%H%M%S}.txt"
+    of = cfg.get("OutputFile")
+    if not of:
+        of = cfg.get("InputFile", "./dne.csv")
+    return Path(of).parent / err_fn
+
+
+def _process(cfg, from_gui=True):
     proc_start_time = datetime.now()
     max_workers = cfg.get("max_workers")
     input_file = Path(cfg["InputFile"])

@@ -89,7 +89,7 @@ def test_basic_suni_run(
             assert truth.readlines()[2:] == test.readlines()[2:]
 
 
-def test_gui_report(tmp_cwd, test_data_basic_run_dir):
+def test_gui_report(tmp_cwd, test_data_basic_run_dir, capsys):
     """Test that the GUI report is as expected"""
 
     shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
@@ -101,6 +101,12 @@ def test_gui_report(tmp_cwd, test_data_basic_run_dir):
         cfg = json.load(fh)
 
     out = process_from_config(cfg)
+
+    captured = capsys.readouterr()
+    assert captured.out.startswith("0\n")
+    for percent in range(101):
+        assert f"{percent}\n" in captured.out, f"{percent} pct not printed"
+
     assert isinstance(out, dict)
     assert out["report"] == EXPECTED_GUI_REPORT.strip("\n")
 

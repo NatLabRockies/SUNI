@@ -172,7 +172,7 @@ def test_incompatible_data_format(tmp_cwd, test_data_basic_run_dir):
     cfg["ExtendedRpt"] = 1
     cfg["DateFormat"] = 1
     with pytest.raises(ValueError) as error:
-        process_from_config(cfg)
+        process_from_config(cfg, from_gui=False)
 
     assert "Input date" in str(error)
     assert "incompatible with data format (1: YYYY-MM-DD)" in str(error)

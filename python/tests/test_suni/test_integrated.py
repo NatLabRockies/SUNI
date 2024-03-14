@@ -172,7 +172,7 @@ def test_incompatible_data_format(tmp_cwd, test_data_basic_run_dir):
     cfg["ExtendedRpt"] = 1
     cfg["DateFormat"] = 1
     with pytest.raises(ValueError) as error:
-        process_from_config(cfg)
+        process_from_config(cfg, from_gui=False)
 
     assert "Input date" in str(error)
     assert "incompatible with data format (1: YYYY-MM-DD)" in str(error)
@@ -243,10 +243,56 @@ def test_raise_seriqc_error(tmp_cwd, test_data_dir):
     cfg["max_workers"] = 2
 
     with pytest.raises(SERIQCError) as error:
-        process_from_config(cfg)
+        process_from_config(cfg, from_gui=False)
 
     assert "Non-zero SERIQC code: 2. Decoded to the following:" in str(error)
     assert "Invalid month" in str(error)
+
+
+def test_seriqc_error_from_gui(tmp_cwd, test_data_dir):
+    """Test that a non-zero SERIQC code writes error to file for GUI"""
+
+    df = pd.read_csv(
+        test_data_dir / "SRRL2007_TIME_01.csv",
+        header=0,
+        names=[
+            "DATE",
+            "MST",
+            "GHI",
+            "DNI",
+            "DHI",
+            "C_GHI_FLG",
+            "C_DNI_FLG",
+            "C_DHI_FLG",
+        ],
+    )
+    df[["DATE", "MST", "GHI", "DNI", "DHI"]].to_csv(
+        tmp_cwd / "SRRL2007_TIME_01.csv", index=False
+    )
+    shutil.copy(test_data_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    assert len(list(tmp_cwd.glob("*"))) == 2
+
+    with open(test_data_dir / "basic_run" / "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    cfg["InputFile"] = "SRRL2007_TIME_01.csv"
+    cfg["OutputFile"] = "SRRL2007_TIME_01_Unc.csv"
+    cfg["max_workers"] = 2
+
+    out = process_from_config(cfg, from_gui=True)
+
+    assert "err_fp" in out
+
+    fp = out["err_fp"]
+    with open(fp, "r") as fh:
+        msg = fh.read()
+
+    expected_message = (
+        "SERIQCError:\nNon-zero SERIQC code: 2. Decoded to the following:"
+        "\n\t- Invalid month"
+    )
+    assert msg == expected_message
 
 
 if __name__ == "__main__":

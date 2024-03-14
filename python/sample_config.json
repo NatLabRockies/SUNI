@@ -1,6 +1,6 @@
 {
-    "InputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\basic_run\\SRRL2004_01_testing.csv",
-    "OutputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\SRRL2004_01_Unc.csv",
+    "InputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\SRRL1987_05.csv",
+    "OutputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\SRRL1987_05_Unc.csv",
     "SERIQCpath": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\basic_run",
     "StationID": "NRELSR",
     "Interval": 1,

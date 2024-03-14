@@ -745,7 +745,7 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 	}
 }
 
-const size_t BUFSIZE = 4096;
+const size_t BUFSIZE = 409600;
 
 wxString MainWindow::GetAppPath()
 {
@@ -894,7 +894,7 @@ void MainWindow::replaceBackslash(std::string& str)
 
 class SimulationThreadWindows : public wxThread
 {
-	wxMutex m_currentLock, m_cancelLock, m_nokLock, m_logLock, m_percentLock;
+//	wxMutex m_currentLock, m_cancelLock, m_nokLock, m_logLock, m_percentLock;
 	size_t m_current;
 	bool m_canceled;
 	size_t m_nok;
@@ -906,32 +906,97 @@ class SimulationThreadWindows : public wxThread
 	std::string m_pythonpath, m_pythonargs;
 
 	PROCESS_INFORMATION m_pi;
+	STARTUPINFO m_si;
+	SECURITY_ATTRIBUTES m_sa;
+	HANDLE m_stdin_rd = NULL;
+	HANDLE m_stdout_wr = NULL;
+	HANDLE m_stdout_rd = NULL;
+	HANDLE m_stdin_wr = NULL;
+	HANDLE m_stderr_rd = NULL;
+	HANDLE m_stderr_wr = NULL;  //pipe handles
+
 	char m_buf[BUFSIZE];           //i/o buffer
+	char m_err_buf[BUFSIZE];           //i/o buffer
+	char m_out_buf[BUFSIZE];           //i/o buffer
 
 	unsigned long m_bread;   //bytes read
+	unsigned long m_bread_last = 0;
+	unsigned long m_avail;   //bytes available
+	unsigned long m_err_bread;   //bytes read
+	unsigned long m_err_bread_last = 0;
+	unsigned long m_err_avail;   //bytes available
+	unsigned long m_out_bread;   //bytes read
+	unsigned long m_out_bread_last = 0;
+	unsigned long m_out_avail;   //bytes available
 
 public:
 
-	SimulationThreadWindows(int id)
+	SimulationThreadWindows(const std::string& pythonpath, const std::string& pythonargs)
 		: wxThread(wxTHREAD_JOINABLE) {
 		m_canceled = false;
-		m_threadId = id;
 		m_nok = 0;
 		m_percent = 0;
 		m_current = 0;
-	}
-
-	void Add(const std::string& pythonpath, const std::string& pythonargs) {
 		m_pythonpath = pythonpath;
 		m_pythonargs = pythonargs;
+
+		m_canceled = false;
+
+		memset(m_buf, 0, sizeof(m_buf));
+		memset(m_err_buf, 0, sizeof(m_err_buf));
+		memset(m_out_buf, 0, sizeof(m_out_buf));
+
+		m_sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+		m_sa.bInheritHandle = TRUE;
+		m_sa.lpSecurityDescriptor = NULL;
+		/*
+		if (!CreatePipe(&m_stdin_rd, &m_stdin_wr, &m_sa, 0)) {
+//			goto done;
+		}
+		if (!SetHandleInformation(m_stdin_wr, HANDLE_FLAG_INHERIT, 0)) {
+//			goto done;
+		}
+		*/
+		if (!CreatePipe(&m_stdout_rd, &m_stdout_wr, &m_sa, 0)) {
+			//			goto done;
+		}
+		if (!SetHandleInformation(m_stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
+			//			goto done;
+		}
+		/*
+		if (!CreatePipe(&m_stderr_rd, &m_stderr_wr, &m_sa, 0)) {
+//			goto done;
+		}
+		if (!SetHandleInformation(m_stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
+//			goto done;
+		}
+		*/
+		//set startupinfo for the spawned process
+		/*The dwFlags member tells CreateProcess how to make the process.
+		STARTF_USESTDHANDLES: validates the hStd* members.
+		STARTF_USESHOWWINDOW: validates the wShowWindow member*/
+		GetStartupInfo(&m_si);
+
+		m_si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+		m_si.wShowWindow = SW_HIDE; // for production
+//		m_si.wShowWindow = SW_SHOW; // for debugging
+		//set the new handles for the child process
+		m_si.hStdOutput = m_stdout_wr;
+		//		m_si.hStdError = m_stderr_wr;
+		//		m_si.hStdInput = m_stdin_rd;
+
+
 	}
+
 
 	size_t Size() { return 1; }
 	size_t Current() {
-		wxMutexLocker _lock(m_currentLock);
+		//wxMutexLocker _lock(m_currentLock);
 		return m_current;
 	}
 	float GetPercent(wxString* update = 0) {
+		//wxMutexLocker _lock(m_percentLock);
+		//PeekNamedPipe(m_stdout_rd, m_buf, BUFSIZE - 1, &m_bread, &m_avail, NULL);
 		wxString ret = wxString::FromUTF8(m_buf);
 		ret.Replace("\n", "");
 		ret.Replace("\r", "");
@@ -947,19 +1012,22 @@ public:
 
 	void Cancel()
 	{
-		GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId);
-		wxMutexLocker _lock(m_cancelLock);
+		//GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+		//wxMutexLocker _lock(m_cancelLock);
+		GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId); // does nothing
+		//GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwThreadId); // does nothing
+		//TerminateProcess(m_pi.hProcess,0); //leaves all python instances running and kills console. 
 		m_canceled = true;
 	}
 
 	size_t NOk() {
-		wxMutexLocker _lock(m_nokLock);
+		//wxMutexLocker _lock(m_nokLock);
 		return m_nok;
 	}
 
 	void Message(const wxString& text)
 	{
-		wxMutexLocker _lock(m_logLock);
+		//wxMutexLocker _lock(m_logLock);
 		wxString L(m_curName);
 		if (!L.IsEmpty()) L += ": ";
 		m_messages.Add(L + text);
@@ -977,20 +1045,20 @@ public:
 
 	virtual void Update(float percent, const wxString& text)
 	{
-		wxMutexLocker _lock(m_percentLock);
+		//wxMutexLocker _lock(m_percentLock);
 		m_percent = percent;
 		m_update = text;
 	}
 
 
 	virtual bool IsCancelled() {
-		wxMutexLocker _lock(m_cancelLock);
+		//wxMutexLocker _lock(m_cancelLock);
 		return m_canceled;
 	}
 
 	wxArrayString GetNewMessages()
 	{
-		wxMutexLocker _lock(m_logLock);
+		//wxMutexLocker _lock(m_logLock);
 		wxArrayString list = m_messages;
 		m_messages.Clear();
 		return list;
@@ -998,147 +1066,103 @@ public:
 
 	virtual void* Entry()
 	{
-		m_canceled = false;
 
-		STARTUPINFO si;
-		SECURITY_ATTRIBUTES sa;
-		HANDLE stdin_rd = NULL;
-		HANDLE stdout_wr = NULL;
-		HANDLE stdout_rd = NULL;
-		HANDLE stdin_wr = NULL;
-		HANDLE stderr_rd = NULL;
-		HANDLE stderr_wr = NULL;  //pipe handles
-		memset(m_buf, 0, sizeof(m_buf));
-		char err_buf[BUFSIZE];           //i/o buffer
-		memset(err_buf, 0, sizeof(err_buf));
-		char out_buf[BUFSIZE];           //i/o buffer
-		memset(out_buf, 0, sizeof(out_buf));
+		DWORD ReturnValue;
 
 		CA2T programpath(m_pythonpath.c_str());
 		CA2T programargs(m_pythonargs.c_str());
 
-		sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-		sa.bInheritHandle = TRUE;
-		sa.lpSecurityDescriptor = NULL;
-
-		if (!CreatePipe(&stdin_rd, &stdin_wr, &sa, 0)) {
-//			goto done;
-		}
-		if (!SetHandleInformation(stdin_wr, HANDLE_FLAG_INHERIT, 0)) {
-//			goto done;
-		}
-		if (!CreatePipe(&stdout_rd, &stdout_wr, &sa, 0)) {
-//			goto done;
-		}
-		if (!SetHandleInformation(stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
-//			goto done;
-		}
-		if (!CreatePipe(&stderr_rd, &stderr_wr, &sa, 0)) {
-//			goto done;
-		}
-		if (!SetHandleInformation(stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
-//			goto done;
-		}
-
-		//set startupinfo for the spawned process
-		/*The dwFlags member tells CreateProcess how to make the process.
-		STARTF_USESTDHANDLES: validates the hStd* members.
-		STARTF_USESHOWWINDOW: validates the wShowWindow member*/
-		GetStartupInfo(&si);
-
-		si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-		si.wShowWindow = SW_HIDE;
-		//set the new handles for the child process
-		si.hStdOutput = stdout_wr;
-		si.hStdError = stderr_wr;
-		si.hStdInput = stdin_rd;
-
-
-		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &m_pi)) {
-			unsigned long bread_last = 0;
-			unsigned long avail;   //bytes available
-			unsigned long err_bread;   //bytes read
-			unsigned long err_bread_last = 0;
-			unsigned long err_avail;   //bytes available
-			unsigned long out_bread;   //bytes read
-			unsigned long out_bread_last = 0;
-			unsigned long out_avail;   //bytes available
+		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &m_si, &m_pi)) { // production
+//		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &m_si, &m_pi)) { // debugging FALSE instead of TRUE shows console output but cannot capture buffer
+			AttachConsole(m_pi.dwProcessId);
+			SetConsoleCtrlHandler(NULL, true);
+			/*
 			size_t i = 0;
 			size_t n_timeout_max = 100000000; // timeout
 			//		size_t n_timeout_max = 1000000000; // timeout
 			//for (i = 0; i < n_timeout_max; i++) {
+			*/
 			while(1) {
-				PeekNamedPipe(stdout_rd, m_buf, BUFSIZE - 1, &m_bread, &avail, NULL);
-				PeekNamedPipe(stderr_rd, err_buf, BUFSIZE - 1, &err_bread, &err_avail, NULL);
-				PeekNamedPipe(stdin_rd, out_buf, BUFSIZE - 1, &out_bread, &out_avail, NULL);
+				PeekNamedPipe(m_stdout_rd, m_buf, BUFSIZE - 1, &m_bread, &m_avail, NULL);
+//				PeekNamedPipe(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, &m_err_avail, NULL);
+//				PeekNamedPipe(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, &m_out_avail, NULL);
 				//check to see if there is any data to read from stdout
 				if (m_bread != 0) {
-					if (ReadFile(stdout_rd, m_buf, BUFSIZE - 1, &m_bread, NULL)) {
-						bread_last = m_bread;
+					if (ReadFile(m_stdout_rd, m_buf, BUFSIZE - 1, &m_bread, NULL)) {
+						m_bread_last = m_bread;
 					}
 				}
-				else if (bread_last > 0)
+				else if (m_bread_last > 0)
 				{
 					break;
 				}
-				if (err_bread != 0) {
-					if (ReadFile(stderr_rd, err_buf, BUFSIZE - 1, &err_bread, NULL)) {
-						err_bread_last = err_bread;
+				/*
+				if (m_err_bread != 0) {
+					if (ReadFile(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, NULL)) {
+						m_err_bread_last = m_err_bread;
 					}
 				}
-				else if (err_bread_last > 0)
+				else if (m_err_bread_last > 0)
 				{
 					break;
 				}
-				if (out_bread != 0) {
-					if (ReadFile(stdin_rd, out_buf, BUFSIZE - 1, &out_bread, NULL)) {
-						out_bread_last = out_bread;
+				if (m_out_bread != 0) {
+					if (ReadFile(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, NULL)) {
+						m_out_bread_last = m_out_bread;
 					}
 				}
-				else if (out_bread_last > 0)
+				else if (m_out_bread_last > 0)
 				{
 					break;
 				}
-				::wxMilliSleep(100);
+				*/
+				this->Sleep(10);
+//				::wxMilliSleep(10);
+				
 			}
+//			WaitForSingleObject(m_pi.hProcess, INFINITE);
+//			GetExitCodeProcess(m_pi.hProcess, &ReturnValue);
+
+			SetConsoleCtrlHandler(NULL, false);
+			FreeConsole();
 
 			CloseHandle(m_pi.hThread);
 			CloseHandle(m_pi.hProcess);
-
+/*
 			if (i >= n_timeout_max) {
 				throw std::runtime_error("SUNI error. Timeout while running.");
 			}
-
-			wxMutexLocker _lock(m_nokLock);
+*/
+//			wxMutexLocker _lock(m_nokLock);
 			m_nok++;
 		}
 
 
-		m_currentLock.Lock();
-		m_current++;
-		m_currentLock.Unlock();
+//		m_currentLock.Lock();
+//		m_current++;
+//		m_currentLock.Unlock();
 
-		wxMutexLocker _lock(m_cancelLock);
-		if (m_canceled) return (void*)1;
+//		wxMutexLocker _lock(m_cancelLock);
 
 //	done:
-		std::vector<HANDLE> handles = { stdin_rd, stdin_wr, stdout_rd, stdout_wr, stderr_rd, stderr_wr };
+		std::vector<HANDLE> handles = { m_stdin_rd, m_stdin_wr, m_stdout_rd, m_stdout_wr, m_stderr_rd, m_stderr_wr };
 		for (HANDLE handle : handles) {
 			if (handle && handle != INVALID_HANDLE_VALUE) {
 				CloseHandle(handle);
 			}
 		}
 		if (m_buf[0] == '\0') {
-			if (err_buf[0] == '\0')
+			if (m_err_buf[0] == '\0')
 				throw std::runtime_error("SUNI error. Function did not return a response and no error.");
 			else
-				return err_buf;
+				return m_err_buf;
 			throw std::runtime_error("SUNI error. Function did not return a response.");
 		}
 //		return buf;
 
+		FreeConsole();
 
-
+		if (m_canceled) return (void*)1;
 		return 0;
 	}
 
@@ -1479,6 +1503,8 @@ bool MainWindow::SetupPython()
 
 bool MainWindow::InvokePython()
 {
+	if (m_projectFileName.empty())
+		return false;
 	// Save current configuration for use later or to test from command line	
 	if (SaveConfiguration(m_projectFileName)) {
 
@@ -1503,8 +1529,9 @@ bool MainWindow::InvokePython()
 			std::replace(str.begin(), str.end(), '\\', '/');
 			pythonarg.replace(pos, 7, str);
 
-			std::unique_ptr<SimulationThreadWindows> sth = std::make_unique<SimulationThreadWindows>(1);
-			sth->Add(pythonpath, pythonarg);
+
+			std::unique_ptr<SimulationThreadWindows> sth = std::make_unique<SimulationThreadWindows>(pythonpath, pythonarg);
+//			sth->Add(pythonpath, pythonarg);
 			sth->Create();
 			sth->Run();
 
@@ -1512,6 +1539,8 @@ bool MainWindow::InvokePython()
 				wxString update;
 				float per = sth->GetPercent(&update);
 				m_gProgress->SetValue((int)per);
+				m_gProgress->Refresh();
+				m_gProgress->Layout();
 
 				wxGetApp().Yield();
 
@@ -1523,6 +1552,7 @@ bool MainWindow::InvokePython()
 				::wxMilliSleep(10);
 			}
 			m_gProgress->SetValue(100);
+
 
 //			std::string output_json = CallPythonModuleWindows(str);
 #else

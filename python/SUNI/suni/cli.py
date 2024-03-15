@@ -26,6 +26,10 @@ from suni.utilities.configs import data_from_ini, data_from_json
 logger = logging.getLogger(__name__)
 
 
+class SUNIInputDataError(ValueError):
+    """SUNI input data error"""
+
+
 @click.command(no_args_is_help=True)
 @click.argument("config", type=click.Path(exists=True))
 @click.option(
@@ -74,16 +78,29 @@ def _err_fp(cfg):
     return Path(of).parent / err_fn
 
 
-def _process(cfg, from_gui=True):
-    proc_start_time = datetime.now()
-    max_workers = cfg.get("max_workers")
-    input_file = Path(cfg["InputFile"])
-    of = cfg.get("OutputFile", f"{input_file.stem}_Unc.csv")
+def _read_data(input_file):
     input_data = pd.read_csv(
         input_file,
         header=0,
         names=["DATE", "MST", "GHI", "DNI", "DHI"],
     )
+    if isinstance(input_data.index, pd.MultiIndex):
+        msg = (
+            "Found incorrect number of columns in input data! Ensure your "
+            "input data has exactly the following columns: "
+            '["DATE", "TIME", "GHI", "DNI", "DHI"]'
+        )
+        logger.error(msg)
+        raise SUNIInputDataError(msg)
+    return input_data
+
+
+def _process(cfg, from_gui=True):
+    proc_start_time = datetime.now()
+    max_workers = cfg.get("max_workers")
+    input_file = Path(cfg["InputFile"])
+    of = cfg.get("OutputFile", f"{input_file.stem}_Unc.csv")
+    input_data = _read_data(input_file)
 
     max_workers = os.cpu_count() if max_workers is None else max_workers
     logger.info(

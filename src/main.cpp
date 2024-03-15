@@ -67,6 +67,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "main.h"
 #include "pythonhandler.h"
+#include "csv.h"
 
 
 #include "rapidjson/writer.h"
@@ -127,11 +128,14 @@ BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_BUTTON(ID_BTN_OUTPUTFILE, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_SERIQCPATH, MainWindow::OnCommand)
 	EVT_TEXT(ID_GHIclassUncert, MainWindow::UpdateGHIUncertainty)
-	EVT_TEXT(ID_GHIcalUncert, MainWindow::UpdateGHIUncertainty)
+	EVT_TEXT(ID_GHIcalUncert, MainWindow::OnGHICalUncertainty)
 	EVT_TEXT(ID_DNIclassUncert, MainWindow::UpdateDNIUncertainty)
-	EVT_TEXT(ID_DNIcalUncert, MainWindow::UpdateDNIUncertainty)
+	EVT_TEXT(ID_DNIcalUncert, MainWindow::OnDNICalUncertainty)
 	EVT_TEXT(ID_DHIclassUncert, MainWindow::UpdateDHIUncertainty)
-	EVT_TEXT(ID_DHIcalUncert, MainWindow::UpdateDHIUncertainty)
+	EVT_TEXT(ID_DHIcalUncert, MainWindow::OnDHICalUncertainty)
+	EVT_COMBOBOX(ID_GHIclass, MainWindow::UpdateClassCalGHIUncertainty)
+	EVT_COMBOBOX(ID_DHIclass, MainWindow::UpdateClassCalDHIUncertainty)
+	EVT_COMBOBOX(ID_DNIclass, MainWindow::UpdateClassCalDNIUncertainty)
 	END_EVENT_TABLE()
 
 static std::unique_ptr<std::string> s_python_path;
@@ -268,10 +272,10 @@ MainWindow::MainWindow()
 	GHIid = new wxTextCtrl(p, ID_GHIid, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIid");
 	GHIid->SetSizeHints(150, 24);
 	GHImodel = new wxTextCtrl(p, ID_GHImodel, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHImodel");
-	GHImodel->SetSizeHints(75, 24);
+	GHImodel->SetSizeHints(150, 24);
 	GHIclass = new wxComboBox(p, ID_GHIclass, "A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "GHIclass");
 	GHIclass->SetSizeHints(50, 24);
-	GHIclassUncert = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIclassUncert");
+	GHIclassUncert = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "GHIclassUncert");
 	GHIclassUncert->SetSizeHints(50, 24);
 	GHIcalUncert = new wxTextCtrl(p, ID_GHIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIcalUncert");
 	GHIcalUncert->SetSizeHints(50, 24);
@@ -293,10 +297,10 @@ MainWindow::MainWindow()
 	DNIid = new wxTextCtrl(p, ID_DNIid, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIid");
 	DNIid->SetSizeHints(150, 24);
 	DNImodel = new wxTextCtrl(p, ID_DNImodel,wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNImodel");
-	DNImodel->SetSizeHints(75, 24);
+	DNImodel->SetSizeHints(150, 24);
 	DNIclass = new wxComboBox(p, ID_DNIclass,"A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "DNIclass");
 	DNIclass->SetSizeHints(50, 24);
-	DNIclassUncert = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIclassUncert");
+	DNIclassUncert = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DNIclassUncert");
 	DNIclassUncert->SetSizeHints(50, 24);
 	DNIcalUncert = new wxTextCtrl(p, ID_DNIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIcalUncert");
 	DNIcalUncert->SetSizeHints(50, 24);
@@ -318,10 +322,10 @@ MainWindow::MainWindow()
 	DHIid = new wxTextCtrl(p, ID_DHIid, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIid");
 	DHIid->SetSizeHints(150, 24);
 	DHImodel = new wxTextCtrl(p, ID_DHImodel, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHImodel");
-	DHImodel->SetSizeHints(75, 24);
+	DHImodel->SetSizeHints(150, 24);
 	DHIclass = new wxComboBox(p, ID_DHIclass, "A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "DHIclass");
 	DHIclass->SetSizeHints(50, 24);
-	DHIclassUncert = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIclassUncert");
+	DHIclassUncert = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIclassUncert");
 	DHIclassUncert->SetSizeHints(50, 24);
 	DHIcalUncert = new wxTextCtrl(p, ID_DHIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIcalUncert");
 	DHIcalUncert->SetSizeHints(50, 24);
@@ -433,6 +437,7 @@ MainWindow::MainWindow()
 
 	m_bCancel->Enable(false);
 	m_cancelled = false;
+
 
 	p->SetSizer(sizerTop);
 	sizerTop->SetSizeHints(this);
@@ -619,6 +624,86 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 	return ret;
 }
 
+void MainWindow::GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert )
+{
+	wxCSVData csv;
+	wxFileName path(GetAppPath() + "/python/SUNI/instrument_database/Upyranometer.csv");
+	path.Normalize();
+	if (!csv.ReadFile(path.GetFullPath())) {
+		wxMessageBox("Error opening instrument file:\n\n" + path.GetFullPath() + "\n\n", "Notice", wxOK, this);
+		return;
+	}
+	size_t nr = csv.NumRows();
+	size_t nc = csv.NumCols();
+	if ((nr != 4) || (nc != 3)) {
+		wxMessageBox("Error with instrument file:\n\n" + path.GetFullPath() + "\nnumber of (row, cols) incorrect - should be (4,3)\n", "Notice", wxOK, this);
+		return;
+	}
+	for (size_t r = 0; r < nr; r++) {
+		if (csv(r, 0).Lower() == instClass.Lower()) {
+			*classUncert = csv(r, 1);
+			*calUncert = csv(r, 2);
+		}
+	}
+}
+
+
+void MainWindow::UpdateClassCalGHIUncertainty(wxCommandEvent& evt)
+{
+	wxString instClass = GHIclass->GetValue();
+	wxString classUncert = "";
+	wxString calUncert = "";
+	GetInstrumentDataBaseUncertainties(instClass, &classUncert, &calUncert);
+	GHIclassUncert->SetValue(classUncert);
+	GHIcalUncert->ChangeValue(calUncert);
+	GHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
+	UpdateGHIUncertainty(evt);
+}
+
+void MainWindow::UpdateClassCalDHIUncertainty(wxCommandEvent& evt)
+{
+	wxString instClass = DHIclass->GetValue();
+	wxString classUncert = "";
+	wxString calUncert = "";
+	GetInstrumentDataBaseUncertainties(instClass, &classUncert, &calUncert);
+	DHIclassUncert->SetValue(classUncert);
+	DHIcalUncert->ChangeValue(calUncert);
+	DHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
+	UpdateDHIUncertainty(evt);
+}
+
+void MainWindow::UpdateClassCalDNIUncertainty(wxCommandEvent& evt)
+{
+	wxString instClass = DNIclass->GetValue();
+	wxString classUncert = "";
+	wxString calUncert = "";
+	GetInstrumentDataBaseUncertainties(instClass, &classUncert, &calUncert);
+	DNIclassUncert->SetValue(classUncert);
+	DNIcalUncert->ChangeValue(calUncert);
+	DNIcalUncert->SetBackgroundColour(*wxGREEN); // Database
+	UpdateDNIUncertainty(evt);
+}
+
+
+void MainWindow::OnGHICalUncertainty(wxCommandEvent& evt)
+{
+	GHIcalUncert->SetBackgroundColour(*wxWHITE);
+	UpdateGHIUncertainty(evt);
+}
+
+void MainWindow::OnDNICalUncertainty(wxCommandEvent& evt)
+{
+	DNIcalUncert->SetBackgroundColour(*wxWHITE);
+	UpdateDNIUncertainty(evt);
+}
+
+void MainWindow::OnDHICalUncertainty(wxCommandEvent& evt)
+{
+	DHIcalUncert->SetBackgroundColour(*wxWHITE);
+	UpdateDHIUncertainty(evt);
+}
+
+
 void MainWindow::UpdateGHIUncertainty(wxCommandEvent&)
 {
 	auto Uclass = GHIclassUncert->GetValue();
@@ -626,7 +711,7 @@ void MainWindow::UpdateGHIUncertainty(wxCommandEvent&)
 	double dUclass, dUcal;
 	if (Uclass.ToDouble(&dUclass) && Ucal.ToDouble(&dUcal)) {
 		double Urad = sqrt(pow(dUclass, 2) + pow(dUcal, 2));
-		GHIradUncert->SetValue(wxString::Format("%g",Urad));
+		GHIradUncert->SetValue(wxString::Format("%.2f",Urad));
 	}
 }
 
@@ -637,7 +722,7 @@ void MainWindow::UpdateDNIUncertainty(wxCommandEvent&)
 	double dUclass, dUcal;
 	if (Uclass.ToDouble(&dUclass) && Ucal.ToDouble(&dUcal)) {
 		double Urad = sqrt(pow(dUclass, 2) + pow(dUcal, 2));
-		DNIradUncert->SetValue(wxString::Format("%g", Urad));
+		DNIradUncert->SetValue(wxString::Format("%.2f", Urad));
 	}
 }
 
@@ -648,7 +733,7 @@ void MainWindow::UpdateDHIUncertainty(wxCommandEvent&)
 	double dUclass, dUcal;
 	if (Uclass.ToDouble(&dUclass) && Ucal.ToDouble(&dUcal)) {
 		double Urad = sqrt(pow(dUclass, 2) + pow(dUcal, 2));
-		DHIradUncert->SetValue(wxString::Format("%g", Urad));
+		DHIradUncert->SetValue(wxString::Format("%.2f", Urad));
 	}
 }
 
@@ -1116,7 +1201,7 @@ public:
 					break;
 				}
 				*/
-				this->Sleep(10);
+				this->Sleep(100);
 //				::wxMilliSleep(10);
 				
 			}
@@ -1162,8 +1247,14 @@ public:
 
 		FreeConsole();
 
-		if (m_canceled) return (void*)1;
-		return 0;
+		if (m_canceled) {
+			m_messages.Add("Process cancelled by user.");
+		}
+		else {
+			wxString str(m_buf);
+			m_messages = wxSplit(str, '\n');
+		}
+		return m_buf;
 	}
 
 
@@ -1554,25 +1645,59 @@ bool MainWindow::InvokePython()
 			m_gProgress->SetValue(100);
 
 
+
 //			std::string output_json = CallPythonModuleWindows(str);
 #else
 			std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
 #endif
+
+
 			// testing raw output
 			//wxMessageBox(wxString(output_json), "Results");
-			// file retrieved to [Input File name]_Report.txt
-			wxFileName fnInputFile = InputFile->GetValue();
-			wxFileName fnOutputFile = OutputFile->GetValue();
-			if (wxFileExists(fnOutputFile.GetFullPath())) {
-				wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
-				if (wxFileExists(sfn)) {
-					wxString str;
-					wxTextFile tFile;
-					tFile.Open(sfn);
-					str = tFile.GetFirstLine() + "\n";
-					while (!tFile.Eof())
-						str += tFile.GetNextLine() + "\n";
-					wxMessageBox(str, "Report");
+			
+			auto strMessages = sth->GetNewMessages();
+			bool bError = false;
+			wxString sError = "";
+
+			if (strMessages.GetCount() > 0) {
+				for (size_t i = 0; i < strMessages.GetCount(); i++) {
+					bError = strMessages[i].Lower().Find("error") != wxNOT_FOUND;
+					if (bError) {
+						sError += strMessages[i] + "\n";
+						if ((i+1) < strMessages.GetCount())
+							sError += strMessages[i+1] + "\n"; // assumption is that error is one line
+					}
+				}
+			}
+			
+			if (sError.length() > 0) {
+				wxMessageBox(sError , "Error", wxICON_ERROR);
+			}
+			else {
+				// file retrieved to [Input File name]_Report.txt
+				wxFileName fnInputFile = InputFile->GetValue();
+				wxFileName fnOutputFile = OutputFile->GetValue();
+				if (wxFileExists(fnOutputFile.GetFullPath())) {
+					wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
+					if (wxFileExists(sfn)) {
+						wxLaunchDefaultApplication(sfn);
+						wxString str;
+						wxTextFile tFile;
+						tFile.Open(sfn);
+						str = tFile.GetFirstLine() + "\n";
+						while (!tFile.Eof())
+							str += tFile.GetNextLine() + "\n";
+						wxMessageBox(str, "Report", wxICON_NONE);
+					}
+				}
+				else {
+					sError = "Python run unsuccessful \n" + pythonpath + pythonarg;
+					wxMessageBox(sError, "Error", wxICON_ERROR);
+					wxString sfn = GetAppPath() + "/python/error.txt";
+					wxTextFile tFile(sfn);
+					tFile.AddLine(pythonpath + pythonarg);
+					tFile.Write();
+					wxLaunchDefaultApplication(sfn);
 				}
 			}
 			m_gProgress->SetValue(0);

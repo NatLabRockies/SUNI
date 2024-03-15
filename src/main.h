@@ -91,6 +91,12 @@ protected:
 	void OnClose( wxCloseEvent & );
 	void OnCommand( wxCommandEvent & );
 	void OnInternalCommand( wxCommandEvent & );
+	void OnGHICalUncertainty(wxCommandEvent&);
+	void OnDHICalUncertainty(wxCommandEvent&);
+	void OnDNICalUncertainty(wxCommandEvent&);
+	void UpdateClassCalGHIUncertainty(wxCommandEvent&);
+	void UpdateClassCalDNIUncertainty(wxCommandEvent&);
+	void UpdateClassCalDHIUncertainty(wxCommandEvent&);
 	void UpdateGHIUncertainty(wxCommandEvent&);
 	void UpdateDNIUncertainty(wxCommandEvent&);
 	void UpdateDHIUncertainty(wxCommandEvent&);
@@ -136,6 +142,8 @@ private:
 	bool CheckPythonPackage(const std::string& pip_name);
 	void InstallPython();
 	void InstallPythonPackage(const std::string& pip_name);
+
+	void GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert);
 
 	bool SetupPython();
 	bool InvokePython();

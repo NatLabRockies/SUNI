@@ -1,0 +1,2 @@
+SUNIInputDataError:
+Found incorrect number of columns in input data! Ensure your input data has exactly the following columns: ["DATE", "TIME", "GHI", "DNI", "DHI"]

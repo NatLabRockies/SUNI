@@ -1,0 +1,2 @@
+ValueError:
+math domain error

@@ -66,7 +66,10 @@ def compute_parameter_stats(param_sum, param_sum_sq, sun_up_count, n_valid):
     """
     mean = (param_sum / sun_up_count) if sun_up_count > 0 else -9900
     if (divisor := (n_valid - 1)) > 0:
-        std = sqrt((param_sum_sq - param_sum**2 / n_valid) / divisor)
+        std = sqrt(
+            (round(param_sum_sq, 4) - round(param_sum**2 / n_valid, 4))
+            / divisor
+        )
     else:
         std = -9900
     return mean, std

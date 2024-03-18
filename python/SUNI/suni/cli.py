@@ -26,6 +26,10 @@ from suni.utilities.configs import data_from_ini, data_from_json
 logger = logging.getLogger(__name__)
 
 
+MIN_RECORDS_PER_PROCESS = 5
+CHUNK_SIZE = 50
+
+
 class SUNIInputDataError(ValueError):
     """SUNI input data error"""
 
@@ -104,7 +108,7 @@ def _process(cfg, from_gui=True):
 
     max_workers = os.cpu_count() if max_workers is None else max_workers
     logger.info(
-        "Kicking off SUNI for %d records using %d process(es)",
+        "Running SUNI for %d records using %d process(es)",
         len(input_data),
         max_workers,
     )
@@ -220,26 +224,30 @@ def _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u):
 
 
 def run_mp(input_file, input_data, cfg, max_workers, from_gui):
-    future_to_row = {}
     results = {}
     ghi_rad_u, dni_rad_u, dhi_rad_u = extract_rad_uncertainty(cfg)
-    progress_denom = len(input_data) + len(input_data) // 4
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        for ind, row_ind, row in _iter_df(input_file, input_data, from_gui):
-            data = _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u)
-            future = executor.submit(Uprocess, data, pressure=820, temp=11)
-            future_to_row[future] = row_ind
-            if from_gui:
-                ind = ind // 4
-                print(int(ind / progress_denom * 100))
+    chunk_size = max(CHUNK_SIZE, MIN_RECORDS_PER_PROCESS * max_workers)
 
-        logger.info("Collecting outputs...")
-        for collect_ind, future in _iter_futures(future_to_row, from_gui):
-            row_ind = future_to_row.pop(future)
-            data = future.result()
-            results[row_ind] = data.as_result_dict()
-            if from_gui:
-                print(int((ind + collect_ind) / progress_denom * 100))
+    progress_count = 0
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+
+        for out in _iter_mp_chunks(
+            input_file, input_data, from_gui, chunk_size=chunk_size
+        ):
+            chunk, pbar = (out, None) if from_gui else out
+            futures = _submit_for_processing(
+                executor, chunk, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u
+            )
+
+            for future in as_completed(futures):
+                row_ind = futures.pop(future)
+                data = future.result()
+                results[row_ind] = data.as_result_dict()
+                progress_count += 1
+                if from_gui:
+                    print(int(progress_count / len(input_data) * 100))
+                else:
+                    pbar.update(1)
 
     results = pd.DataFrame(results).T.sort_index()
     return results
@@ -278,18 +286,30 @@ def _iter_enumerated_df(input_data):
         yield ind, row_ind, row
 
 
-def _iter_futures(futures, from_gui):
+def _iter_mp_chunks(input_file, data, from_gui, chunk_size):
     if from_gui:
-        yield from _iter_enumerated_futures(futures)
+        yield from _chunked_data(data, chunk_size=chunk_size)
 
     else:
-        for out in tqdm(_iter_enumerated_futures(futures), total=len(futures)):
-            yield out
+        with tqdm(total=len(data), desc=input_file.stem) as pbar:
+            for chunk in _chunked_data(data, chunk_size=chunk_size):
+                yield chunk, pbar
 
 
-def _iter_enumerated_futures(futures):
-    for ind, future in enumerate(as_completed(futures), start=1):
-        yield ind, future
+def _chunked_data(data, chunk_size):
+    for start in range(0, len(data), chunk_size):
+        yield data[start : start + chunk_size]
+
+
+def _submit_for_processing(
+    executor, data_chunk, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u
+):
+    future_to_row = {}
+    for row_ind, row in data_chunk.iterrows():
+        data = _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u)
+        future = executor.submit(Uprocess, data, pressure=820, temp=11)
+        future_to_row[future] = row_ind
+    return future_to_row
 
 
 # python -c "import json; from suni.cli import process_from_config; fh = open('sample_config.json'); cfg = json.load(fh); fh.close(); process_from_config(cfg)"

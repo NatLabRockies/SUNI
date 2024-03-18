@@ -325,5 +325,33 @@ def test_seriqc_error_bad_input_data(tmp_cwd, test_data_dir):
     assert msg == expected_message
 
 
+def test_basic_run_new_instrument_uncertainty(
+    tmp_cwd, test_data_basic_run_dir
+):
+    """Test basic run with user-input Instrument class and uncertainty."""
+    shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
+    shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    assert len(list(tmp_cwd.glob("*"))) == 2
+
+    with open(test_data_basic_run_dir / "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    cfg["GHIcalUncert"] = 2
+    cfg["GHIradUncert"] = 3.12
+
+    cfg["DNIclassUncert"] = 5.2
+    cfg["DNIcalUncert"] = 3
+    cfg["DNIradUncert"] = 6
+
+    cfg["DHIclass"] = "C"
+    cfg["DHIclassUncert"] = 11.9
+    cfg["DHIcalUncert"] = 4
+    cfg["DHIradUncert"] = 12.55
+
+    out = process_from_config(cfg, from_gui=True)
+    assert "err_fp" not in out
+
+
 if __name__ == "__main__":
     pytest.main(["-q", "--show-capture=all", Path(__file__), "-rapP"])

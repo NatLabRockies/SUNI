@@ -816,16 +816,39 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 				// search folder for all qc0 files and list names - filenames?, Site Identifier name(s)?
 				wxDir folder(dir);
 				wxArrayString files;
-				folder.GetAllFiles(dir, &files, "*.qc0");
+				folder.GetAllFiles(dir, &files, "s_*.qc0");
 				wxArrayString filenames;
 				for (auto& f : files) {
-					//TODO - parse and get valid Station ID
 					wxFileName fn = f;
-					wxString str = fn.GetName();
-					str = str.Right(str.length() - 2);
-					filenames.push_back(fn.GetName());
+					wxString fnStationID = fn.GetName();
+					fnStationID = fnStationID.Right(fnStationID.length() - 2);
+					wxTextFile tf(f);
+					tf.Open();
+					auto &str = tf.GetFirstLine();
+					wxString stationID;
+					int n_colon = str.Find(':');
+					if (n_colon != wxNOT_FOUND) {
+						stationID = str.SubString((size_t)n_colon + 1, str.length() - 1);
+						int n_comma = stationID.Find(',');
+						if (n_comma != wxNOT_FOUND) {
+							stationID = stationID.SubString(0, (size_t)n_comma - 1);
+							stationID = stationID.Trim(false);
+							stationID = stationID.Trim(true);
+						}
+					}
+					if (fnStationID == stationID)
+						filenames.push_back(stationID);
+					else
+						wxMessageBox("SERI QC file " + fn.GetFullPath() + " has suspect station ID " + stationID, "SERI QC Error", wxICON_ERROR);
+					tf.Close();
+
 				}
-				StationID->Set(filenames);
+				if (filenames.GetCount() > 0) {
+					StationID->Set(filenames);
+					StationID->SetSelection(0);
+				}
+				else
+					wxMessageBox("No valid SERI QC files found in " + dir, "SERI QC Error", wxICON_ERROR);
 			}
 		}
 		break;
@@ -1663,12 +1686,10 @@ bool MainWindow::InvokePython()
 			wxString sError = "";
 
 			if (strMessages.GetCount() > 0) {
+				bError = strMessages[0].Lower().Find("error") != wxNOT_FOUND;
 				for (size_t i = 0; i < strMessages.GetCount(); i++) {
-					bError = strMessages[i].Lower().Find("error") != wxNOT_FOUND;
 					if (bError) {
 						sError += strMessages[i] + "\n";
-						if ((i+1) < strMessages.GetCount())
-							sError += strMessages[i+1] + "\n"; // assumption is that error is one line
 					}
 				}
 			}

@@ -819,7 +819,10 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 				folder.GetAllFiles(dir, &files, "*.qc0");
 				wxArrayString filenames;
 				for (auto& f : files) {
+					//TODO - parse and get valid Station ID
 					wxFileName fn = f;
+					wxString str = fn.GetName();
+					str = str.Right(str.length() - 2);
 					filenames.push_back(fn.GetName());
 				}
 				StationID->Set(filenames);
@@ -1669,6 +1672,7 @@ bool MainWindow::InvokePython()
 					}
 				}
 			}
+
 			
 			if (sError.length() > 0) {
 				wxMessageBox(sError , "Error", wxICON_ERROR);

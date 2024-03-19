@@ -1,2 +1,0 @@
-OSError:
-[Errno 22] Invalid argument

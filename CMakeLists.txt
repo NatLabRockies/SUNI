@@ -187,8 +187,6 @@ if (UNIX)
                 TARGET ${SAM_EXE}
                 POST_BUILD
                 COMMAND rsync -a -v ${CMAKE_CURRENT_SOURCE_DIR}/deploy/* ${SUI_APP}
-                COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/Sandia/linux/lhs.bin ${SUI_APP}/runtime/bin
-                COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/Sandia/linux/stepwise.bin ${SUI_APP}/runtime/bin
                 COMMAND cp ${SSC_SO} ${SUI_APP}/linux_64
         )
 
@@ -199,6 +197,7 @@ else()
     file(TO_CMAKE_PATH $ENV{SUINRELDIR} SUINRELDIR)
  
     set( DEPLOY_FOLDERS
+        "Instrument Files"
         python
     )
 
@@ -208,7 +207,7 @@ else()
         TARGET ${SUI_EXE}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_directory ${SUINRELDIR}/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Debug/${folder_i}
+        ARGS -E copy_directory ${SUINRELDIR}/deploy/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Debug/${folder_i}
     )
    endforeach( folder_i )
    foreach( folder_i ${DEPLOY_FOLDERS})
@@ -216,7 +215,7 @@ else()
         TARGET ${SUI_EXE}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_directory ${SUINRELDIR}/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Release/${folder_i}
+        ARGS -E copy_directory ${SUINRELDIR}/deploy/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Release/${folder_i}
     )
     endforeach( folder_i )
 

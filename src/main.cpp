@@ -628,7 +628,7 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 void MainWindow::GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert )
 {
 	wxCSVData csv;
-	wxFileName path(GetAppPath() + "/python/SUNI/instrument_database/Upyranometer.csv");
+	wxFileName path(GetAppPath() + "/Instrument Files/Upyranometer.csv");
 	path.Normalize();
 	if (!csv.ReadFile(path.GetFullPath())) {
 		wxMessageBox("Error opening instrument file:\n\n" + path.GetFullPath() + "\n\n", "Notice", wxOK, this);

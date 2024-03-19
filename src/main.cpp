@@ -895,7 +895,7 @@ wxString MainWindow::GetAppPath()
 
 std::string MainWindow::GetPythonConfigPath() 
 {
-	wxFileName path(GetAppPath() + "/python");
+	wxFileName path(GetAppPath() + "/System Files");
 	path.Normalize();
 	return path.GetFullPath().ToStdString();
 }

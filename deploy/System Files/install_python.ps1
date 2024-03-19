@@ -87,7 +87,7 @@ function Get-Pip {
     if (!(Test-Path $filename)) {
         Invoke-WebRequestExitOnError https://bootstrap.pypa.io/${filename} $filename
     }
-    Invoke-CommandExitOnError ".\python.exe $filename --prefix=$path --no-warn-script-location"
+    Invoke-CommandExitOnError ".\python.exe $filename --prefix=`"$path`" --no-warn-script-location"
     if ($FORCE_DOWNLOAD -eq 1) {
         Remove-Item $filename
     }

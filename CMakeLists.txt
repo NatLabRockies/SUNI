@@ -197,8 +197,9 @@ else()
     file(TO_CMAKE_PATH $ENV{SUINRELDIR} SUINRELDIR)
  
     set( DEPLOY_FOLDERS
+        "System Files"
+        "configuration Files"
         "Instrument Files"
-        python
     )
 
     #CMAKE requires extra manipulation with Debug and Release builds

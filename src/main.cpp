@@ -127,6 +127,7 @@ BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_BUTTON(ID_BTN_INPUTFILE, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_OUTPUTFILE, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_SERIQCPATH, MainWindow::OnCommand)
+	EVT_TEXT(ID_TXT_SERIQCPATH, MainWindow::OnCommand)
 	EVT_TEXT(ID_GHIclassUncert, MainWindow::UpdateGHIUncertainty)
 	EVT_TEXT(ID_GHIcalUncert, MainWindow::OnGHICalUncertainty)
 	EVT_TEXT(ID_DNIclassUncert, MainWindow::UpdateDNIUncertainty)
@@ -238,9 +239,7 @@ MainWindow::MainWindow()
 	wxGridSizer* grdFiles = new wxGridSizer(2, 2, 2, 5);
 	grdFiles->Add(new wxStaticText(p, wxID_ANY, "SERI QC Station ID"));
 	grdFiles->Add(new wxStaticText(p, wxID_ANY, "Interval (minutes)"),1, wxALIGN_RIGHT);
-	// TODO - populate StationID
 	wxArrayString asStationID;
-	asStationID.Add("NRELSR");
 	StationID = new wxComboBox(p, ID_CMB_SERI_QC, "NRELSR", wxDefaultPosition, wxDefaultSize, asStationID, wxCB_READONLY, wxDefaultValidator, "StationID");
 	StationID->SetSizeHints(350, 24);
 	wxArrayString asInterval;
@@ -737,6 +736,58 @@ void MainWindow::UpdateDHIUncertainty(wxCommandEvent&)
 	}
 }
 
+bool MainWindow::UpdateStationIDs(const wxString& dir)
+{
+	bool ret = true;
+
+	if (!wxDirExists(dir)) {
+		wxMessageBox("SERI QC path " + dir +  " does not exist.", "SERI QC Error", wxICON_ERROR);
+		ret = false;
+	}
+	else {
+		wxDir folder(dir);
+		wxArrayString files;
+		folder.GetAllFiles(dir, &files, "s_*.qc0");
+		wxArrayString filenames;
+		for (auto& f : files) {
+			wxFileName fn = f;
+			wxString fnStationID = fn.GetName();
+			fnStationID = fnStationID.Right(fnStationID.length() - 2);
+			wxTextFile tf(f);
+			tf.Open();
+			auto& str = tf.GetFirstLine();
+			wxString stationID;
+			int n_colon = str.Find(':');
+			if (n_colon != wxNOT_FOUND) {
+				stationID = str.SubString((size_t)n_colon + 1, str.length() - 1);
+				int n_comma = stationID.Find(',');
+				if (n_comma != wxNOT_FOUND) {
+					stationID = stationID.SubString(0, (size_t)n_comma - 1);
+					stationID = stationID.Trim(false);
+					stationID = stationID.Trim(true);
+				}
+			}
+			if (fnStationID == stationID) {
+				filenames.push_back(stationID);
+			}
+			else {
+				wxMessageBox("SERI QC file " + fn.GetFullPath() + " has suspect station ID " + stationID, "SERI QC Error", wxICON_ERROR);
+			}
+			tf.Close();
+		}
+		if (filenames.GetCount() > 0) {
+			StationID->Set(filenames);
+			StationID->SetSelection(0);
+		}
+		else {
+			wxMessageBox("No valid SERI QC files found in " + dir, "SERI QC Error", wxICON_ERROR);
+			ret = false;
+		}
+	}
+	return ret;
+}
+
+
 
 void MainWindow::OnCommand( wxCommandEvent &evt )
 {
@@ -809,50 +860,23 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		break;
 	case ID_BTN_SERIQCPATH:
 		{
+			StationID->Clear();
 			dir = wxDirSelector("Choose folder SERI QC Path");
 			if (!dir.empty()) {
-				SERIQCpath->SetValue(dir);
-				// populate SERI QC Station ID with list of file in folder
-				// search folder for all qc0 files and list names - filenames?, Site Identifier name(s)?
-				wxDir folder(dir);
-				wxArrayString files;
-				folder.GetAllFiles(dir, &files, "s_*.qc0");
-				wxArrayString filenames;
-				for (auto& f : files) {
-					wxFileName fn = f;
-					wxString fnStationID = fn.GetName();
-					fnStationID = fnStationID.Right(fnStationID.length() - 2);
-					wxTextFile tf(f);
-					tf.Open();
-					auto &str = tf.GetFirstLine();
-					wxString stationID;
-					int n_colon = str.Find(':');
-					if (n_colon != wxNOT_FOUND) {
-						stationID = str.SubString((size_t)n_colon + 1, str.length() - 1);
-						int n_comma = stationID.Find(',');
-						if (n_comma != wxNOT_FOUND) {
-							stationID = stationID.SubString(0, (size_t)n_comma - 1);
-							stationID = stationID.Trim(false);
-							stationID = stationID.Trim(true);
-						}
-					}
-					if (fnStationID == stationID)
-						filenames.push_back(stationID);
-					else
-						wxMessageBox("SERI QC file " + fn.GetFullPath() + " has suspect station ID " + stationID, "SERI QC Error", wxICON_ERROR);
-					tf.Close();
-
-				}
-				if (filenames.GetCount() > 0) {
-					StationID->Set(filenames);
-					StationID->SetSelection(0);
-				}
-				else
-					wxMessageBox("No valid SERI QC files found in " + dir, "SERI QC Error", wxICON_ERROR);
+				SERIQCpath->ChangeValue(dir);
+				// populate SERI QC Station ID with list of valid files in folder
+				UpdateStationIDs(dir);
 			}
 		}
 		break;
-
+	case ID_TXT_SERIQCPATH:
+		{
+			StationID->Clear();
+			dir = SERIQCpath->GetValue();
+			if (wxDirExists(dir))
+				UpdateStationIDs(dir);
+		}
+		break;
 	}
 }
 

@@ -136,6 +136,7 @@ private:
 
 	bool OpenConfiguration(const wxString& filename);
 	bool SaveConfiguration(const wxString& filename);
+	bool UpdateStationIDs(const wxString& dir);
 	
 	// Python specific functions
 	void LoadPythonConfig();

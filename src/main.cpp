@@ -510,6 +510,8 @@ bool MainWindow::OpenConfiguration(const wxString& filename)
 						//	ret = false;// throw error?
 						if (((wxTextCtrl*)widget)->IsEditable())
 							((wxTextCtrl*)widget)->SetValue(val);
+						else
+							((wxTextCtrl*)widget)->ChangeValue(val);
 					}
 					else if (typeName == "wxComboBox") {
 						wxString val; // to handle "Interval" as integer in JSON

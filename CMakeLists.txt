@@ -25,6 +25,7 @@ endif()
 
 set(SUI_SRC 
     src/main.cpp                    src/main.h
+    src/csv.cpp                     src/csv.h
     src/pythonhandler.cpp           src/pythonhandler.h
 )
 

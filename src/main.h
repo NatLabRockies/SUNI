@@ -91,6 +91,12 @@ protected:
 	void OnClose( wxCloseEvent & );
 	void OnCommand( wxCommandEvent & );
 	void OnInternalCommand( wxCommandEvent & );
+	void OnGHICalUncertainty(wxCommandEvent&);
+	void OnDHICalUncertainty(wxCommandEvent&);
+	void OnDNICalUncertainty(wxCommandEvent&);
+	void UpdateClassCalGHIUncertainty(wxCommandEvent&);
+	void UpdateClassCalDNIUncertainty(wxCommandEvent&);
+	void UpdateClassCalDHIUncertainty(wxCommandEvent&);
 	void UpdateGHIUncertainty(wxCommandEvent&);
 	void UpdateDNIUncertainty(wxCommandEvent&);
 	void UpdateDHIUncertainty(wxCommandEvent&);
@@ -130,12 +136,15 @@ private:
 
 	bool OpenConfiguration(const wxString& filename);
 	bool SaveConfiguration(const wxString& filename);
+	bool UpdateStationIDs(const wxString& dir);
 	
 	// Python specific functions
 	void LoadPythonConfig();
 	bool CheckPythonPackage(const std::string& pip_name);
 	void InstallPython();
 	void InstallPythonPackage(const std::string& pip_name);
+
+	void GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert);
 
 	bool SetupPython();
 	bool InvokePython();
@@ -148,11 +157,7 @@ private:
 	void replaceBackslash(std::string& str);
 
 	std::string m_pythonExecPath, m_pythonRunCmd;
-
-#ifdef __WINDOWS__
-	PROCESS_INFORMATION m_pi;
-#endif
-
+	bool m_cancelled;
 
 
 	DECLARE_EVENT_TABLE();

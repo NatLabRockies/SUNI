@@ -1,0 +1,3 @@
+SERIQCError:
+Non-zero SERIQC code: 256. Decoded to the following:
+	- Incorrect QC-ZERO file format

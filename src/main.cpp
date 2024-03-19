@@ -67,6 +67,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "main.h"
 #include "pythonhandler.h"
+#include "csv.h"
 
 
 #include "rapidjson/writer.h"
@@ -126,12 +127,16 @@ BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_BUTTON(ID_BTN_INPUTFILE, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_OUTPUTFILE, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_SERIQCPATH, MainWindow::OnCommand)
+	EVT_TEXT(ID_TXT_SERIQCPATH, MainWindow::OnCommand)
 	EVT_TEXT(ID_GHIclassUncert, MainWindow::UpdateGHIUncertainty)
-	EVT_TEXT(ID_GHIcalUncert, MainWindow::UpdateGHIUncertainty)
+	EVT_TEXT(ID_GHIcalUncert, MainWindow::OnGHICalUncertainty)
 	EVT_TEXT(ID_DNIclassUncert, MainWindow::UpdateDNIUncertainty)
-	EVT_TEXT(ID_DNIcalUncert, MainWindow::UpdateDNIUncertainty)
+	EVT_TEXT(ID_DNIcalUncert, MainWindow::OnDNICalUncertainty)
 	EVT_TEXT(ID_DHIclassUncert, MainWindow::UpdateDHIUncertainty)
-	EVT_TEXT(ID_DHIcalUncert, MainWindow::UpdateDHIUncertainty)
+	EVT_TEXT(ID_DHIcalUncert, MainWindow::OnDHICalUncertainty)
+	EVT_COMBOBOX(ID_GHIclass, MainWindow::UpdateClassCalGHIUncertainty)
+	EVT_COMBOBOX(ID_DHIclass, MainWindow::UpdateClassCalDHIUncertainty)
+	EVT_COMBOBOX(ID_DNIclass, MainWindow::UpdateClassCalDNIUncertainty)
 	END_EVENT_TABLE()
 
 static std::unique_ptr<std::string> s_python_path;
@@ -234,9 +239,7 @@ MainWindow::MainWindow()
 	wxGridSizer* grdFiles = new wxGridSizer(2, 2, 2, 5);
 	grdFiles->Add(new wxStaticText(p, wxID_ANY, "SERI QC Station ID"));
 	grdFiles->Add(new wxStaticText(p, wxID_ANY, "Interval (minutes)"),1, wxALIGN_RIGHT);
-	// TODO - populate StationID
 	wxArrayString asStationID;
-	asStationID.Add("NRELSR");
 	StationID = new wxComboBox(p, ID_CMB_SERI_QC, "NRELSR", wxDefaultPosition, wxDefaultSize, asStationID, wxCB_READONLY, wxDefaultValidator, "StationID");
 	StationID->SetSizeHints(350, 24);
 	wxArrayString asInterval;
@@ -268,10 +271,10 @@ MainWindow::MainWindow()
 	GHIid = new wxTextCtrl(p, ID_GHIid, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIid");
 	GHIid->SetSizeHints(150, 24);
 	GHImodel = new wxTextCtrl(p, ID_GHImodel, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHImodel");
-	GHImodel->SetSizeHints(75, 24);
+	GHImodel->SetSizeHints(150, 24);
 	GHIclass = new wxComboBox(p, ID_GHIclass, "A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "GHIclass");
 	GHIclass->SetSizeHints(50, 24);
-	GHIclassUncert = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIclassUncert");
+	GHIclassUncert = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "GHIclassUncert");
 	GHIclassUncert->SetSizeHints(50, 24);
 	GHIcalUncert = new wxTextCtrl(p, ID_GHIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIcalUncert");
 	GHIcalUncert->SetSizeHints(50, 24);
@@ -293,10 +296,10 @@ MainWindow::MainWindow()
 	DNIid = new wxTextCtrl(p, ID_DNIid, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIid");
 	DNIid->SetSizeHints(150, 24);
 	DNImodel = new wxTextCtrl(p, ID_DNImodel,wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNImodel");
-	DNImodel->SetSizeHints(75, 24);
+	DNImodel->SetSizeHints(150, 24);
 	DNIclass = new wxComboBox(p, ID_DNIclass,"A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "DNIclass");
 	DNIclass->SetSizeHints(50, 24);
-	DNIclassUncert = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIclassUncert");
+	DNIclassUncert = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DNIclassUncert");
 	DNIclassUncert->SetSizeHints(50, 24);
 	DNIcalUncert = new wxTextCtrl(p, ID_DNIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIcalUncert");
 	DNIcalUncert->SetSizeHints(50, 24);
@@ -318,10 +321,10 @@ MainWindow::MainWindow()
 	DHIid = new wxTextCtrl(p, ID_DHIid, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIid");
 	DHIid->SetSizeHints(150, 24);
 	DHImodel = new wxTextCtrl(p, ID_DHImodel, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHImodel");
-	DHImodel->SetSizeHints(75, 24);
+	DHImodel->SetSizeHints(150, 24);
 	DHIclass = new wxComboBox(p, ID_DHIclass, "A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "DHIclass");
 	DHIclass->SetSizeHints(50, 24);
-	DHIclassUncert = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIclassUncert");
+	DHIclassUncert = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIclassUncert");
 	DHIclassUncert->SetSizeHints(50, 24);
 	DHIcalUncert = new wxTextCtrl(p, ID_DHIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIcalUncert");
 	DHIcalUncert->SetSizeHints(50, 24);
@@ -429,9 +432,11 @@ MainWindow::MainWindow()
 	sizerTop->AddGrowableCol(1);
 
 	// testing progress bar
-	m_gProgress->Pulse();
+	//m_gProgress->Pulse();
 
 	m_bCancel->Enable(false);
+	m_cancelled = false;
+
 
 	p->SetSizer(sizerTop);
 	sizerTop->SetSizeHints(this);
@@ -505,6 +510,8 @@ bool MainWindow::OpenConfiguration(const wxString& filename)
 						//	ret = false;// throw error?
 						if (((wxTextCtrl*)widget)->IsEditable())
 							((wxTextCtrl*)widget)->SetValue(val);
+						else
+							((wxTextCtrl*)widget)->ChangeValue(val);
 					}
 					else if (typeName == "wxComboBox") {
 						wxString val; // to handle "Interval" as integer in JSON
@@ -618,6 +625,86 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 	return ret;
 }
 
+void MainWindow::GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert )
+{
+	wxCSVData csv;
+	wxFileName path(GetAppPath() + "/python/SUNI/instrument_database/Upyranometer.csv");
+	path.Normalize();
+	if (!csv.ReadFile(path.GetFullPath())) {
+		wxMessageBox("Error opening instrument file:\n\n" + path.GetFullPath() + "\n\n", "Notice", wxOK, this);
+		return;
+	}
+	size_t nr = csv.NumRows();
+	size_t nc = csv.NumCols();
+	if ((nr != 4) || (nc != 3)) {
+		wxMessageBox("Error with instrument file:\n\n" + path.GetFullPath() + "\nnumber of (row, cols) incorrect - should be (4,3)\n", "Notice", wxOK, this);
+		return;
+	}
+	for (size_t r = 0; r < nr; r++) {
+		if (csv(r, 0).Lower() == instClass.Lower()) {
+			*classUncert = csv(r, 1);
+			*calUncert = csv(r, 2);
+		}
+	}
+}
+
+
+void MainWindow::UpdateClassCalGHIUncertainty(wxCommandEvent& evt)
+{
+	wxString instClass = GHIclass->GetValue();
+	wxString classUncert = "";
+	wxString calUncert = "";
+	GetInstrumentDataBaseUncertainties(instClass, &classUncert, &calUncert);
+	GHIclassUncert->SetValue(classUncert);
+	GHIcalUncert->ChangeValue(calUncert);
+	GHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
+	UpdateGHIUncertainty(evt);
+}
+
+void MainWindow::UpdateClassCalDHIUncertainty(wxCommandEvent& evt)
+{
+	wxString instClass = DHIclass->GetValue();
+	wxString classUncert = "";
+	wxString calUncert = "";
+	GetInstrumentDataBaseUncertainties(instClass, &classUncert, &calUncert);
+	DHIclassUncert->SetValue(classUncert);
+	DHIcalUncert->ChangeValue(calUncert);
+	DHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
+	UpdateDHIUncertainty(evt);
+}
+
+void MainWindow::UpdateClassCalDNIUncertainty(wxCommandEvent& evt)
+{
+	wxString instClass = DNIclass->GetValue();
+	wxString classUncert = "";
+	wxString calUncert = "";
+	GetInstrumentDataBaseUncertainties(instClass, &classUncert, &calUncert);
+	DNIclassUncert->SetValue(classUncert);
+	DNIcalUncert->ChangeValue(calUncert);
+	DNIcalUncert->SetBackgroundColour(*wxGREEN); // Database
+	UpdateDNIUncertainty(evt);
+}
+
+
+void MainWindow::OnGHICalUncertainty(wxCommandEvent& evt)
+{
+	GHIcalUncert->SetBackgroundColour(*wxWHITE);
+	UpdateGHIUncertainty(evt);
+}
+
+void MainWindow::OnDNICalUncertainty(wxCommandEvent& evt)
+{
+	DNIcalUncert->SetBackgroundColour(*wxWHITE);
+	UpdateDNIUncertainty(evt);
+}
+
+void MainWindow::OnDHICalUncertainty(wxCommandEvent& evt)
+{
+	DHIcalUncert->SetBackgroundColour(*wxWHITE);
+	UpdateDHIUncertainty(evt);
+}
+
+
 void MainWindow::UpdateGHIUncertainty(wxCommandEvent&)
 {
 	auto Uclass = GHIclassUncert->GetValue();
@@ -625,7 +712,7 @@ void MainWindow::UpdateGHIUncertainty(wxCommandEvent&)
 	double dUclass, dUcal;
 	if (Uclass.ToDouble(&dUclass) && Ucal.ToDouble(&dUcal)) {
 		double Urad = sqrt(pow(dUclass, 2) + pow(dUcal, 2));
-		GHIradUncert->SetValue(wxString::Format("%g",Urad));
+		GHIradUncert->SetValue(wxString::Format("%.2f",Urad));
 	}
 }
 
@@ -636,7 +723,7 @@ void MainWindow::UpdateDNIUncertainty(wxCommandEvent&)
 	double dUclass, dUcal;
 	if (Uclass.ToDouble(&dUclass) && Ucal.ToDouble(&dUcal)) {
 		double Urad = sqrt(pow(dUclass, 2) + pow(dUcal, 2));
-		DNIradUncert->SetValue(wxString::Format("%g", Urad));
+		DNIradUncert->SetValue(wxString::Format("%.2f", Urad));
 	}
 }
 
@@ -647,9 +734,61 @@ void MainWindow::UpdateDHIUncertainty(wxCommandEvent&)
 	double dUclass, dUcal;
 	if (Uclass.ToDouble(&dUclass) && Ucal.ToDouble(&dUcal)) {
 		double Urad = sqrt(pow(dUclass, 2) + pow(dUcal, 2));
-		DHIradUncert->SetValue(wxString::Format("%g", Urad));
+		DHIradUncert->SetValue(wxString::Format("%.2f", Urad));
 	}
 }
+
+bool MainWindow::UpdateStationIDs(const wxString& dir)
+{
+	bool ret = true;
+
+	if (!wxDirExists(dir)) {
+		wxMessageBox("SERI QC path " + dir +  " does not exist.", "SERI QC Error", wxICON_ERROR);
+		ret = false;
+	}
+	else {
+		wxDir folder(dir);
+		wxArrayString files;
+		folder.GetAllFiles(dir, &files, "s_*.qc0");
+		wxArrayString filenames;
+		for (auto& f : files) {
+			wxFileName fn = f;
+			wxString fnStationID = fn.GetName();
+			fnStationID = fnStationID.Right(fnStationID.length() - 2);
+			wxTextFile tf(f);
+			tf.Open();
+			auto& str = tf.GetFirstLine();
+			wxString stationID;
+			int n_colon = str.Find(':');
+			if (n_colon != wxNOT_FOUND) {
+				stationID = str.SubString((size_t)n_colon + 1, str.length() - 1);
+				int n_comma = stationID.Find(',');
+				if (n_comma != wxNOT_FOUND) {
+					stationID = stationID.SubString(0, (size_t)n_comma - 1);
+					stationID = stationID.Trim(false);
+					stationID = stationID.Trim(true);
+				}
+			}
+			if (fnStationID == stationID) {
+				filenames.push_back(stationID);
+			}
+			else {
+				wxMessageBox("SERI QC file " + fn.GetFullPath() + " has suspect station ID " + stationID, "SERI QC Error", wxICON_ERROR);
+			}
+			tf.Close();
+		}
+		if (filenames.GetCount() > 0) {
+			StationID->Set(filenames);
+			StationID->SetSelection(0);
+		}
+		else {
+			wxMessageBox("No valid SERI QC files found in " + dir, "SERI QC Error", wxICON_ERROR);
+			ret = false;
+		}
+	}
+	return ret;
+}
+
 
 
 void MainWindow::OnCommand( wxCommandEvent &evt )
@@ -692,15 +831,18 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		m_bCancel->Enable(false);
 		break;
 	case ID_BTN_CANCEL: // enable after running
+		m_cancelled = true;
+		/*
 		try {
 			// Send Ctrl+C to the child process.
 #ifdef __WINDOWS__
-			GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId);
+//			GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId);
 #endif
 		}
 		catch (std::runtime_error e) {
 			wxMessageBox(e.what(), "Python Error");
 		}
+		*/
 		break;
 	case ID_BTN_INPUTFILE:
 		{
@@ -720,28 +862,27 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		break;
 	case ID_BTN_SERIQCPATH:
 		{
+			StationID->Clear();
 			dir = wxDirSelector("Choose folder SERI QC Path");
 			if (!dir.empty()) {
-				SERIQCpath->SetValue(dir);
-				// populate SERI QC Station ID with list of file in folder
-				// search folder for all qc0 files and list names - filenames?, Site Identifier name(s)?
-				wxDir folder(dir);
-				wxArrayString files;
-				folder.GetAllFiles(dir, &files, "*.qc0");
-				wxArrayString filenames;
-				for (auto& f : files) {
-					wxFileName fn = f;
-					filenames.push_back(fn.GetName());
-				}
-				StationID->Set(filenames);
+				SERIQCpath->ChangeValue(dir);
+				// populate SERI QC Station ID with list of valid files in folder
+				UpdateStationIDs(dir);
 			}
 		}
 		break;
-
+	case ID_TXT_SERIQCPATH:
+		{
+			StationID->Clear();
+			dir = SERIQCpath->GetValue();
+			if (wxDirExists(dir))
+				UpdateStationIDs(dir);
+		}
+		break;
 	}
 }
 
-const size_t BUFSIZE = 4096;
+const size_t BUFSIZE = 409600;
 
 wxString MainWindow::GetAppPath()
 {
@@ -886,11 +1027,299 @@ void MainWindow::replaceBackslash(std::string& str)
 	str = std::regex_replace(str, regexPattern, "\\");
 }
 
+
+
+class SimulationThreadWindows : public wxThread
+{
+//	wxMutex m_currentLock, m_cancelLock, m_nokLock, m_logLock, m_percentLock;
+	size_t m_current;
+	bool m_canceled;
+	size_t m_nok;
+	wxArrayString m_messages;
+	wxString m_update;
+	wxString m_curName;
+	float m_percent;
+	int m_threadId;
+	std::string m_pythonpath, m_pythonargs;
+
+	PROCESS_INFORMATION m_pi;
+	STARTUPINFO m_si;
+	SECURITY_ATTRIBUTES m_sa;
+	HANDLE m_stdin_rd = NULL;
+	HANDLE m_stdout_wr = NULL;
+	HANDLE m_stdout_rd = NULL;
+	HANDLE m_stdin_wr = NULL;
+	HANDLE m_stderr_rd = NULL;
+	HANDLE m_stderr_wr = NULL;  //pipe handles
+
+	char m_buf[BUFSIZE];           //i/o buffer
+	char m_err_buf[BUFSIZE];           //i/o buffer
+	char m_out_buf[BUFSIZE];           //i/o buffer
+
+	unsigned long m_bread;   //bytes read
+	unsigned long m_bread_last = 0;
+	unsigned long m_avail;   //bytes available
+	unsigned long m_err_bread;   //bytes read
+	unsigned long m_err_bread_last = 0;
+	unsigned long m_err_avail;   //bytes available
+	unsigned long m_out_bread;   //bytes read
+	unsigned long m_out_bread_last = 0;
+	unsigned long m_out_avail;   //bytes available
+
+public:
+
+	SimulationThreadWindows(const std::string& pythonpath, const std::string& pythonargs)
+		: wxThread(wxTHREAD_JOINABLE) {
+		m_canceled = false;
+		m_nok = 0;
+		m_percent = 0;
+		m_current = 0;
+		m_pythonpath = pythonpath;
+		m_pythonargs = pythonargs;
+
+		m_canceled = false;
+
+		memset(m_buf, 0, sizeof(m_buf));
+		memset(m_err_buf, 0, sizeof(m_err_buf));
+		memset(m_out_buf, 0, sizeof(m_out_buf));
+
+		m_sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+		m_sa.bInheritHandle = TRUE;
+		m_sa.lpSecurityDescriptor = NULL;
+		/*
+		if (!CreatePipe(&m_stdin_rd, &m_stdin_wr, &m_sa, 0)) {
+//			goto done;
+		}
+		if (!SetHandleInformation(m_stdin_wr, HANDLE_FLAG_INHERIT, 0)) {
+//			goto done;
+		}
+		*/
+		if (!CreatePipe(&m_stdout_rd, &m_stdout_wr, &m_sa, 0)) {
+			//			goto done;
+		}
+		if (!SetHandleInformation(m_stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
+			//			goto done;
+		}
+		/*
+		if (!CreatePipe(&m_stderr_rd, &m_stderr_wr, &m_sa, 0)) {
+//			goto done;
+		}
+		if (!SetHandleInformation(m_stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
+//			goto done;
+		}
+		*/
+		//set startupinfo for the spawned process
+		/*The dwFlags member tells CreateProcess how to make the process.
+		STARTF_USESTDHANDLES: validates the hStd* members.
+		STARTF_USESHOWWINDOW: validates the wShowWindow member*/
+		GetStartupInfo(&m_si);
+
+		m_si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+		m_si.wShowWindow = SW_HIDE; // for production
+//		m_si.wShowWindow = SW_SHOW; // for debugging
+		//set the new handles for the child process
+		m_si.hStdOutput = m_stdout_wr;
+		//		m_si.hStdError = m_stderr_wr;
+		//		m_si.hStdInput = m_stdin_rd;
+
+
+	}
+
+
+	size_t Size() { return 1; }
+	size_t Current() {
+		//wxMutexLocker _lock(m_currentLock);
+		return m_current;
+	}
+	float GetPercent(wxString* update = 0) {
+		//wxMutexLocker _lock(m_percentLock);
+		//PeekNamedPipe(m_stdout_rd, m_buf, BUFSIZE - 1, &m_bread, &m_avail, NULL);
+		wxString ret = wxString::FromUTF8(m_buf);
+		ret.Replace("\n", "");
+		ret.Replace("\r", "");
+		ret = ret.Trim().Right(2);
+		if (update)
+			*update = ret;
+		double dret;
+		if (ret.ToDouble(&dret))
+			return (float)dret;
+		else
+			return 0;
+	}
+
+	void Cancel()
+	{
+		//GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+		//wxMutexLocker _lock(m_cancelLock);
+		GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId); // does nothing
+		//GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwThreadId); // does nothing
+		//TerminateProcess(m_pi.hProcess,0); //leaves all python instances running and kills console. 
+		m_canceled = true;
+	}
+
+	size_t NOk() {
+		//wxMutexLocker _lock(m_nokLock);
+		return m_nok;
+	}
+
+	void Message(const wxString& text)
+	{
+		//wxMutexLocker _lock(m_logLock);
+		wxString L(m_curName);
+		if (!L.IsEmpty()) L += ": ";
+		m_messages.Add(L + text);
+	}
+
+	virtual void Warn(const wxString& text)
+	{
+		Message(text);
+	}
+
+	virtual void Error(const wxString& text)
+	{
+		Message(text);
+	}
+
+	virtual void Update(float percent, const wxString& text)
+	{
+		//wxMutexLocker _lock(m_percentLock);
+		m_percent = percent;
+		m_update = text;
+	}
+
+
+	virtual bool IsCancelled() {
+		//wxMutexLocker _lock(m_cancelLock);
+		return m_canceled;
+	}
+
+	wxArrayString GetNewMessages()
+	{
+		//wxMutexLocker _lock(m_logLock);
+		wxArrayString list = m_messages;
+		m_messages.Clear();
+		return list;
+	}
+
+	virtual void* Entry()
+	{
+
+		DWORD ReturnValue;
+
+		CA2T programpath(m_pythonpath.c_str());
+		CA2T programargs(m_pythonargs.c_str());
+
+		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &m_si, &m_pi)) { // production
+//		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &m_si, &m_pi)) { // debugging FALSE instead of TRUE shows console output but cannot capture buffer
+			AttachConsole(m_pi.dwProcessId);
+			SetConsoleCtrlHandler(NULL, true);
+			/*
+			size_t i = 0;
+			size_t n_timeout_max = 100000000; // timeout
+			//		size_t n_timeout_max = 1000000000; // timeout
+			//for (i = 0; i < n_timeout_max; i++) {
+			*/
+			while(1) {
+				PeekNamedPipe(m_stdout_rd, m_buf, BUFSIZE - 1, &m_bread, &m_avail, NULL);
+//				PeekNamedPipe(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, &m_err_avail, NULL);
+//				PeekNamedPipe(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, &m_out_avail, NULL);
+				//check to see if there is any data to read from stdout
+				if (m_bread != 0) {
+					if (ReadFile(m_stdout_rd, m_buf, BUFSIZE - 1, &m_bread, NULL)) {
+						m_bread_last = m_bread;
+					}
+				}
+				else if (m_bread_last > 0)
+				{
+					break;
+				}
+				/*
+				if (m_err_bread != 0) {
+					if (ReadFile(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, NULL)) {
+						m_err_bread_last = m_err_bread;
+					}
+				}
+				else if (m_err_bread_last > 0)
+				{
+					break;
+				}
+				if (m_out_bread != 0) {
+					if (ReadFile(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, NULL)) {
+						m_out_bread_last = m_out_bread;
+					}
+				}
+				else if (m_out_bread_last > 0)
+				{
+					break;
+				}
+				*/
+				this->Sleep(100);
+//				::wxMilliSleep(10);
+				
+			}
+//			WaitForSingleObject(m_pi.hProcess, INFINITE);
+//			GetExitCodeProcess(m_pi.hProcess, &ReturnValue);
+
+			SetConsoleCtrlHandler(NULL, false);
+			FreeConsole();
+
+			CloseHandle(m_pi.hThread);
+			CloseHandle(m_pi.hProcess);
+/*
+			if (i >= n_timeout_max) {
+				throw std::runtime_error("SUNI error. Timeout while running.");
+			}
+*/
+//			wxMutexLocker _lock(m_nokLock);
+			m_nok++;
+		}
+
+
+//		m_currentLock.Lock();
+//		m_current++;
+//		m_currentLock.Unlock();
+
+//		wxMutexLocker _lock(m_cancelLock);
+
+//	done:
+		std::vector<HANDLE> handles = { m_stdin_rd, m_stdin_wr, m_stdout_rd, m_stdout_wr, m_stderr_rd, m_stderr_wr };
+		for (HANDLE handle : handles) {
+			if (handle && handle != INVALID_HANDLE_VALUE) {
+				CloseHandle(handle);
+			}
+		}
+		if (m_buf[0] == '\0') {
+			if (m_err_buf[0] == '\0')
+				throw std::runtime_error("SUNI error. Function did not return a response and no error.");
+			else
+				return m_err_buf;
+			throw std::runtime_error("SUNI error. Function did not return a response.");
+		}
+//		return buf;
+
+		FreeConsole();
+
+		if (m_canceled) {
+			m_messages.Add("Process cancelled by user.");
+		}
+		else {
+			wxString str(m_buf);
+			m_messages = wxSplit(str, '\n');
+		}
+		return m_buf;
+	}
+
+
+};
+
+
+
+
 #ifdef __WINDOWS__
 std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as_text) {
 	STARTUPINFO si;
 	SECURITY_ATTRIBUTES sa;
-//	PROCESS_INFORMATION pi;
+	PROCESS_INFORMATION pi;
 	HANDLE stdin_rd = NULL;
 	HANDLE stdout_wr = NULL;
 	HANDLE stdout_rd = NULL;
@@ -905,31 +1334,13 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	memset(out_buf, 0, sizeof(out_buf));
 
 	std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
-//	std::replace(pythonpath.begin(), pythonpath.end(), '\\', '/');
 	CA2T programpath(pythonpath.c_str());
 	std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
 	size_t pos = pythonarg.find("<input>");
 	std::string str = input_dict_as_text;
 	std::replace(str.begin(), str.end(), '\\', '/');
 	pythonarg.replace(pos, 7, str);
-//	std::replace(pythonarg.begin(), pythonarg.end(), '\\', '/');
-
-	// testing - works
-//	pythonarg = " -c \"print('some output');print('something else')\"";
-	// Testing - fails
-//	pythonarg = "-c \" import json; from suni.cli import process_from_config; fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json'); cfg = json.load(fh); print(cfg)\"";
-	// Testing - fails
-//	pythonarg = "-c \" import json; fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json'); cfg = json.load(fh); print(cfg)\"";
-	// Testing - fails
-//	pythonarg = "-c \" import json; fh = open('/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json'); cfg = json.load(fh); print(cfg)\"";
-	// Testing - fails
-//	pythonarg = "-c \" import json; fh = open('C:\\Projects\\GithubNREL\\SolarResourceGUI\\SUNI\\python\\python_config.json'); cfg = json.load(fh); print(cfg)\"";
-//	pythonarg = "-c \" import json; fh = open(\"C:\\Projects\\GithubNREL\\SolarResourceGUI\\SUNI\\python\\python_config.json\"); cfg = json.load(fh); print(cfg)\"";
-//	pythonarg = "-c \"fh = open('C:/Projects/Github/NREL/SolarResourceGUI/SUNI/python/python_config.json');print(fh)\"";
-//	pythonarg = "-c \"fh = \"python_config.json\";print(fh)\"";
 	CA2T programargs(pythonarg.c_str());
-
-//	CA2T programdirectory(GetPythonConfigPath().c_str());
 
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sa.bInheritHandle = TRUE;
@@ -968,7 +1379,7 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 	si.hStdInput = stdin_rd;
 
 
-	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,	NULL, NULL, &si, &m_pi)) {
+	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW,	NULL, NULL, &si, &pi)) {
 		unsigned long bread;   //bytes read
 		unsigned long bread_last = 0;
 		unsigned long avail;   //bytes available
@@ -1013,10 +1424,11 @@ std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as
 			{
 				break;
 			}
+			wxMilliSleep(1000);
 		}
 
-		CloseHandle(m_pi.hThread);
-		CloseHandle(m_pi.hProcess);
+		CloseHandle(pi.hThread);
+		CloseHandle(pi.hProcess);
 
 		if (i >= n_timeout_max) {
 			throw std::runtime_error("SUNI error. Timeout while running.");
@@ -1224,8 +1636,6 @@ bool MainWindow::SetupPython()
 		wxGetApp().Yield(true);
 
 		InstallPython();
-//		InstallPythonPackage("landbosse");
-//		InstallPythonPackage("numpy");
 		InstallPythonPackage("suni");
 		dlg.Close();
 		ret = true;
@@ -1236,6 +1646,8 @@ bool MainWindow::SetupPython()
 
 bool MainWindow::InvokePython()
 {
+	if (m_projectFileName.empty())
+		return false;
 	// Save current configuration for use later or to test from command line	
 	if (SaveConfiguration(m_projectFileName)) {
 
@@ -1252,27 +1664,94 @@ bool MainWindow::InvokePython()
 			LoadConfig();
 #ifdef __WINDOWS__
 			std::string str = m_projectFileName.ToStdString();
-			std::string output_json = CallPythonModuleWindows(str);
+			std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
+
+			std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
+			size_t pos = pythonarg.find("<input>");
+			//std::string str = input_dict_as_text;
+			std::replace(str.begin(), str.end(), '\\', '/');
+			pythonarg.replace(pos, 7, str);
+
+
+			std::unique_ptr<SimulationThreadWindows> sth = std::make_unique<SimulationThreadWindows>(pythonpath, pythonarg);
+//			sth->Add(pythonpath, pythonarg);
+			sth->Create();
+			sth->Run();
+
+			while (sth->IsRunning()) {
+				wxString update;
+				float per = sth->GetPercent(&update);
+				m_gProgress->SetValue((int)per);
+				m_gProgress->Refresh();
+				m_gProgress->Layout();
+
+				wxGetApp().Yield();
+
+				if (m_cancelled) {
+					sth->Cancel();
+					m_cancelled = false;
+				}
+
+				::wxMilliSleep(10);
+			}
+			m_gProgress->SetValue(100);
+
+
+
+//			std::string output_json = CallPythonModuleWindows(str);
 #else
 			std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
 #endif
+
+
 			// testing raw output
 			//wxMessageBox(wxString(output_json), "Results");
-			// file retrieved to [Input File name]_Report.txt
-			wxFileName fnInputFile = InputFile->GetValue();
-			wxFileName fnOutputFile = OutputFile->GetValue();
-			if (wxFileExists(fnOutputFile.GetFullPath())) {
-				wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
-				if (wxFileExists(sfn)) {
-					wxString str;
-					wxTextFile tFile;
-					tFile.Open(sfn);
-					str = tFile.GetFirstLine() + "\n";
-					while (!tFile.Eof())
-						str += tFile.GetNextLine() + "\n";
-					wxMessageBox(str, "Report");
+			
+			auto strMessages = sth->GetNewMessages();
+			bool bError = false;
+			wxString sError = "";
+
+			if (strMessages.GetCount() > 0) {
+				bError = strMessages[0].Lower().Find("error") != wxNOT_FOUND;
+				for (size_t i = 0; i < strMessages.GetCount(); i++) {
+					if (bError) {
+						sError += strMessages[i] + "\n";
+					}
 				}
 			}
+
+			
+			if (sError.length() > 0) {
+				wxMessageBox(sError , "Error", wxICON_ERROR);
+			}
+			else {
+				// file retrieved to [Input File name]_Report.txt
+				wxFileName fnInputFile = InputFile->GetValue();
+				wxFileName fnOutputFile = OutputFile->GetValue();
+				if (wxFileExists(fnOutputFile.GetFullPath())) {
+					wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
+					if (wxFileExists(sfn)) {
+						wxLaunchDefaultApplication(sfn);
+						wxString str;
+						wxTextFile tFile;
+						tFile.Open(sfn);
+						str = tFile.GetFirstLine() + "\n";
+						while (!tFile.Eof())
+							str += tFile.GetNextLine() + "\n";
+						wxMessageBox(str, "Report", wxICON_NONE);
+					}
+				}
+				else {
+					sError = "Python run unsuccessful \n" + pythonpath + pythonarg;
+					wxMessageBox(sError, "Error", wxICON_ERROR);
+					wxString sfn = GetAppPath() + "/python/error.txt";
+					wxTextFile tFile(sfn);
+					tFile.AddLine(pythonpath + pythonarg);
+					tFile.Write();
+					wxLaunchDefaultApplication(sfn);
+				}
+			}
+			m_gProgress->SetValue(0);
 		}
 		catch (std::future_error& e) {
 			throw std::runtime_error(e.what());

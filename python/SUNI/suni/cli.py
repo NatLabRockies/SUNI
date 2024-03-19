@@ -71,7 +71,7 @@ def process_from_config(cfg, from_gui=True):
         with open(out_err_file, "w") as fh:
             fh.write(msg)
         out = {"err_fp": str(out_err_file)}
-    return out
+    return msg
 
 
 def _err_fp(cfg):

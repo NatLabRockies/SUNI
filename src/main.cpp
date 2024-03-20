@@ -30,10 +30,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <set>
 #include <regex>
-//#include <chrono>
 
 #include <wx/wx.h>
 #include <wx/frame.h>
@@ -854,7 +852,9 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		break;
 	case ID_BTN_OUTPUTFILE:
 		{
-			wxFileDialog dlg(this, "Open Output File", wxEmptyString, wxEmptyString, "Output Files (*.csv)|*.csv", wxFD_OPEN);
+			wxFileName fn = InputFile->GetValue();
+			wxString outfn = fn.GetName() + "_output.csv";
+			wxFileDialog dlg(this, "Open Output File", wxEmptyString, outfn, "Output Files (*.csv)|*.csv", wxFD_OPEN);
 			if (dlg.ShowModal() == wxID_OK) {
 				OutputFile->SetValue(dlg.GetPath());
 			}

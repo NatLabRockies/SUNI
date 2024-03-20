@@ -85,6 +85,16 @@ public:
 
 	wxString GetProjectDisplayName();
 	wxString GetProjectFileName();
+	void SetProjectFileName(const wxString& fn);
+	bool OpenConfiguration(const wxString& filename);
+	bool SaveConfiguration(const wxString& filename);
+	bool UpdateStationIDs(const wxString& dir);
+
+	// Python specific functions
+	void LoadPythonConfig();
+	bool CheckPythonPackage(const std::string& pip_name);
+	void InstallPython();
+	void InstallPythonPackage(const std::string& pip_name);
 
 
 protected:
@@ -134,15 +144,6 @@ private:
 	// initialize in constructor (can be a settings file)
 	wxArrayString m_typeInt, m_typeDouble;
 
-	bool OpenConfiguration(const wxString& filename);
-	bool SaveConfiguration(const wxString& filename);
-	bool UpdateStationIDs(const wxString& dir);
-	
-	// Python specific functions
-	void LoadPythonConfig();
-	bool CheckPythonPackage(const std::string& pip_name);
-	void InstallPython();
-	void InstallPythonPackage(const std::string& pip_name);
 
 	void GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert);
 

@@ -453,6 +453,11 @@ wxString MainWindow::GetProjectFileName()
 	return m_projectFileName;
 }
 
+void MainWindow::SetProjectFileName(const wxString& fn)
+{
+	m_projectFileName = fn;
+}
+
 void MainWindow::OnInternalCommand( wxCommandEvent &evt )
 {
 	switch (evt.GetId())
@@ -813,6 +818,10 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 			if (dlg.ShowModal() == wxID_OK)
 				if (!SaveConfiguration(dlg.GetPath()))
 					wxMessageBox("Error saving configuration file:\n\n" + dlg.GetPath() + "\n\n", "Notice", wxOK, this);
+				else {
+					m_projectFileName = dlg.GetPath();
+					SetTitle(m_projectFileName);
+				}
 		}
 		break;
 	case wxID_EXIT:
@@ -1446,7 +1455,7 @@ done:
 			throw std::runtime_error("SUNI error. Function did not return a response and no error.");
 		else
 			return err_buf;
-		throw std::runtime_error("SUNI error. Function did not return a response.");
+//		throw std::runtime_error("SUNI error. Function did not return a response.");
 	}
 	return buf;
 }
@@ -1648,121 +1657,113 @@ bool MainWindow::InvokePython()
 {
 	if (m_projectFileName.empty())
 		return false;
-	// Save current configuration for use later or to test from command line	
-	if (SaveConfiguration(m_projectFileName)) {
 
-		// Install Python if necessary
-		if (!SetupPython()) {
-			throw std::runtime_error("Python setup failed");
-			return false;
-		}
+	// Install Python if necessary
+	if (!SetupPython()) {
+		throw std::runtime_error("Python setup failed");
+		return false;
+	}
 
 
-		try {
-			wxBusyCursor wait;
+	try {
+		wxBusyCursor wait;
 
-			LoadConfig();
+		LoadConfig();
 #ifdef __WINDOWS__
-			std::string str = m_projectFileName.ToStdString();
-			std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
+		std::string str = m_projectFileName.ToStdString();
+		std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
 
-			std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
-			size_t pos = pythonarg.find("<input>");
-			//std::string str = input_dict_as_text;
-			std::replace(str.begin(), str.end(), '\\', '/');
-			pythonarg.replace(pos, 7, str);
+		std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
+		size_t pos = pythonarg.find("<input>");
+		//std::string str = input_dict_as_text;
+		std::replace(str.begin(), str.end(), '\\', '/');
+		pythonarg.replace(pos, 7, str);
 
 
-			std::unique_ptr<SimulationThreadWindows> sth = std::make_unique<SimulationThreadWindows>(pythonpath, pythonarg);
+		std::unique_ptr<SimulationThreadWindows> sth = std::make_unique<SimulationThreadWindows>(pythonpath, pythonarg);
 //			sth->Add(pythonpath, pythonarg);
-			sth->Create();
-			sth->Run();
+		sth->Create();
+		sth->Run();
 
-			while (sth->IsRunning()) {
-				wxString update;
-				float per = sth->GetPercent(&update);
-				m_gProgress->SetValue((int)per);
-				m_gProgress->Refresh();
-				m_gProgress->Layout();
+		while (sth->IsRunning()) {
+			wxString update;
+			float per = sth->GetPercent(&update);
+			m_gProgress->SetValue((int)per);
+			m_gProgress->Refresh();
+			m_gProgress->Layout();
 
-				wxGetApp().Yield();
+			wxGetApp().Yield();
 
-				if (m_cancelled) {
-					sth->Cancel();
-					m_cancelled = false;
-				}
-
-				::wxMilliSleep(10);
+			if (m_cancelled) {
+				sth->Cancel();
+				m_cancelled = false;
 			}
-			m_gProgress->SetValue(100);
+
+			::wxMilliSleep(10);
+		}
+		m_gProgress->SetValue(100);
 
 
 
 //			std::string output_json = CallPythonModuleWindows(str);
 #else
-			std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
+		std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
 #endif
 
 
-			// testing raw output
-			//wxMessageBox(wxString(output_json), "Results");
+		// testing raw output
+		//wxMessageBox(wxString(output_json), "Results");
 			
-			auto strMessages = sth->GetNewMessages();
-			bool bError = false;
-			wxString sError = "";
+		auto strMessages = sth->GetNewMessages();
+		bool bError = false;
+		wxString sError = "";
 
-			if (strMessages.GetCount() > 0) {
-				bError = strMessages[0].Lower().Find("error") != wxNOT_FOUND;
-				for (size_t i = 0; i < strMessages.GetCount(); i++) {
-					if (bError) {
-						sError += strMessages[i] + "\n";
-					}
+		if (strMessages.GetCount() > 0) {
+			bError = strMessages[0].Lower().Find("error") != wxNOT_FOUND;
+			for (size_t i = 0; i < strMessages.GetCount(); i++) {
+				if (bError) {
+					sError += strMessages[i] + "\n";
 				}
 			}
+		}
 
 			
-			if (sError.length() > 0) {
-				wxMessageBox(sError , "Error", wxICON_ERROR);
+		if (sError.length() > 0) {
+			wxMessageBox(sError , "Error", wxICON_ERROR);
+		}
+		else {
+			// file retrieved to [Input File name]_Report.txt
+			wxFileName fnInputFile = InputFile->GetValue();
+			wxFileName fnOutputFile = OutputFile->GetValue();
+			if (wxFileExists(fnOutputFile.GetFullPath())) {
+				wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
+				if (wxFileExists(sfn)) {
+					wxLaunchDefaultApplication(sfn);
+					wxString str;
+					wxTextFile tFile;
+					tFile.Open(sfn);
+					str = tFile.GetFirstLine() + "\n";
+					while (!tFile.Eof())
+						str += tFile.GetNextLine() + "\n";
+					wxMessageBox(str, "Report", wxICON_NONE);
+				}
 			}
 			else {
-				// file retrieved to [Input File name]_Report.txt
-				wxFileName fnInputFile = InputFile->GetValue();
-				wxFileName fnOutputFile = OutputFile->GetValue();
-				if (wxFileExists(fnOutputFile.GetFullPath())) {
-					wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
-					if (wxFileExists(sfn)) {
-						wxLaunchDefaultApplication(sfn);
-						wxString str;
-						wxTextFile tFile;
-						tFile.Open(sfn);
-						str = tFile.GetFirstLine() + "\n";
-						while (!tFile.Eof())
-							str += tFile.GetNextLine() + "\n";
-						wxMessageBox(str, "Report", wxICON_NONE);
-					}
-				}
-				else {
-					sError = "Python run unsuccessful \n" + pythonpath + pythonarg;
-					wxMessageBox(sError, "Error", wxICON_ERROR);
-					wxString sfn = GetAppPath() + "/python/error.txt";
-					wxTextFile tFile(sfn);
-					tFile.AddLine(pythonpath + pythonarg);
-					tFile.Write();
-					wxLaunchDefaultApplication(sfn);
-				}
+				sError = "Python run unsuccessful \n" + pythonpath + pythonarg;
+				wxMessageBox(sError, "Error", wxICON_ERROR);
+				wxString sfn = GetAppPath() + "/python/error.txt";
+				wxTextFile tFile(sfn);
+				tFile.AddLine(pythonpath + pythonarg);
+				tFile.Write();
+				wxLaunchDefaultApplication(sfn);
 			}
-			m_gProgress->SetValue(0);
 		}
-		catch (std::future_error& e) {
-			throw std::runtime_error(e.what());
-		}
-
-		return true;
+		m_gProgress->SetValue(0);
 	}
-	else {
-		throw std::runtime_error("Issue running SUNI");
-		return false;
+	catch (std::future_error& e) {
+		throw std::runtime_error(e.what());
 	}
+	return true;
 }
 
 void MainWindow::OnClose( wxCloseEvent &evt )
@@ -1775,6 +1776,10 @@ void MainWindow::OnClose( wxCloseEvent &evt )
 		return;
 	}
 	*/
+	// save current configuration
+	SaveConfiguration(m_projectFileName);
+	SUIApp::Settings().Write("configuration_file", m_projectFileName);
+
 	// save window position to settings
 	wxRect rr;
 	GetPosition( &rr.x,&rr.y );
@@ -1963,15 +1968,17 @@ bool SUIApp::OnInit()
 	bool first_load = true;
 	wxString fl_key = wxString::Format("first_load");
 	Settings().Read(fl_key, &first_load, true);
-
+	wxString configurationFile;
 	if (first_load)
 	{
 		// register the first load
 		Settings().Write(fl_key, false);
-
+		configurationFile = GetAppPath() + "/Configuration Files/sample_config.json";
 	}
 	else
 	{
+		Settings().Read("configuration_file", &configurationFile);
+
 		// restore window position
 		bool b_maximize = false;
 		int f_x, f_y, f_width, f_height;
@@ -1997,6 +2004,13 @@ bool SUIApp::OnInit()
 				g_mainWindow->Maximize();
 		}
 	}
+	if (g_mainWindow->OpenConfiguration(configurationFile)) {
+		g_mainWindow->SetProjectFileName(configurationFile);
+		g_mainWindow->SetTitle(configurationFile);
+	}
+	else
+		wxMessageBox("Error loading file: " + configurationFile, "Initialization error", wxICON_ERROR);
+
 /* Currently done in MainWindow - may want to move here.
 	try {
 		LoadPythonConfig();

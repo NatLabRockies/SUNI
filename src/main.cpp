@@ -30,10 +30,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <set>
 #include <regex>
-//#include <chrono>
 
 #include <wx/wx.h>
 #include <wx/frame.h>

@@ -1,8 +1,8 @@
 {
     "InputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\basic_run\\SRRL2004_01_testing.csv",
     "OutputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\SRRL2004_01_Unc.csv",
-    "SERIQCpath": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\basic_run",
-    "StationID": "NRELSR",
+    "SERIQCpath": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\basic_ru",
+    "StationID": "",
     "Interval": 1,
     "GHIid": "14003",
     "GHImodel": "CMP22",

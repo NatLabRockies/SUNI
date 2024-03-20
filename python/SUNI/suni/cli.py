@@ -66,20 +66,8 @@ def process_from_config(cfg, from_gui=True):
     except KeyboardInterrupt as cancel:
         raise cancel
     except Exception as err:
-        out_err_file = _err_fp(cfg)
         msg = f"{type(err).__name__}:\n{err}"
-        with open(out_err_file, "w") as fh:
-            fh.write(msg)
-        out = {"err_fp": str(out_err_file)}
     return msg
-
-
-def _err_fp(cfg):
-    err_fn = f"error_SUNI_{datetime.now():%Y%m%d%H%M%S}.txt"
-    of = cfg.get("OutputFile")
-    if not of:
-        of = cfg.get("InputFile", "./dne.csv")
-    return Path(of).parent / err_fn
 
 
 def _read_data(input_file):

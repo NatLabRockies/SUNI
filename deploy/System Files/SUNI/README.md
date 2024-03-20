@@ -1,2 +1,0 @@
-# SUNI
-Solar UNcertainty Integrator

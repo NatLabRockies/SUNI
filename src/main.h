@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 #include <wx/app.h>
+#include <wx/scrolwin.h>
 #include <wx/frame.h>
 #include <wx/config.h>
 #include <wx/filehistory.h>
@@ -136,7 +137,7 @@ private:
 
 	wxGauge *m_gProgress;
 
-	wxPanel* p;
+	wxScrolledWindow* p;
 
 	wxString m_projectFileName;
 

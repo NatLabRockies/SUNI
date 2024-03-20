@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <regex>
 
 #include <wx/wx.h>
+#include <wx/scrolwin.h>
 #include <wx/frame.h>
 #include <wx/stc/stc.h>
 #include <fstream>
@@ -215,10 +216,11 @@ MainWindow::MainWindow()
 
 	SetMenuBar(m_mainMenuBar);
 
-	p = new wxPanel(this, wxID_ANY);
+//	p = new wxPanel(this, wxID_ANY);
+	p = new wxScrolledWindow(this, wxID_ANY);
 
 	wxStaticBoxSizer* sizer0 = new wxStaticBoxSizer(wxVERTICAL,p, "Files");
-	sizer0->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
+	//sizer0->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
 	m_bInputFile = new wxButton(p, ID_BTN_INPUTFILE, "Input File");
 	sizer0->Add(m_bInputFile,0, wxALIGN_LEFT,5);
 	InputFile = new wxTextCtrl(p, ID_TXT_INPUTFILE, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "InputFile");
@@ -255,7 +257,7 @@ MainWindow::MainWindow()
 	asClass.Add("B");
 	asClass.Add("C");
 	wxStaticBoxSizer* sizer1 = new wxStaticBoxSizer(wxVERTICAL, p, "Instruments and Uncertainty");
-	sizer1->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
+	//sizer1->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
 	wxFlexGridSizer* grdInstruments = new wxFlexGridSizer(4, 9, 25, 15);
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, " ", wxDefaultPosition, wxSize(50, 24)));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument ID",wxDefaultPosition,wxSize(150,72)));
@@ -345,7 +347,7 @@ MainWindow::MainWindow()
 	sizer1->Add(grdInstruments, 1, wxEXPAND | wxALL, 5);
 
 	wxStaticBoxSizer* sizer2 = new wxStaticBoxSizer(wxVERTICAL, p, "Defaults");
-	sizer2->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
+	//sizer2->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
 	wxBoxSizer* szH1 = new wxBoxSizer(wxHORIZONTAL);
 	szH1->Add(new wxStaticText(p, wxID_ANY, "Maximum SERI QC Flag", wxDefaultPosition, wxSize(250, 24),wxALIGN_RIGHT));
 	szH1->AddSpacer(10);
@@ -398,7 +400,7 @@ MainWindow::MainWindow()
 
 
 	wxStaticBoxSizer* sizer3 = new wxStaticBoxSizer(wxVERTICAL, p, "Processing");
-	sizer3->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
+	//sizer3->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
 	wxBoxSizer* szButtons = new wxBoxSizer(wxHORIZONTAL);
 	m_bStart = new wxButton(p, ID_BTN_START, "Start");
 	m_bStart->SetSizeHints(75, 24);
@@ -422,12 +424,17 @@ MainWindow::MainWindow()
 
 
 	// add both columns to grid sizer
-	wxFlexGridSizer* sizerTop = new wxFlexGridSizer(2, 2, wxSize(50, 50));
-	sizerTop->Add(sizer0, 1, wxEXPAND, 30);
-	sizerTop->Add(sizer1, 1, wxEXPAND, 3);
-	sizerTop->Add(sizer2, 1, wxEXPAND, 3);
-	sizerTop->Add(sizer3, 1, wxEXPAND, 3);
-	sizerTop->AddGrowableCol(1);
+//	wxFlexGridSizer* sizerTop = new wxFlexGridSizer(2, 2, wxSize(50, 50));
+	wxBoxSizer* sizerTop = new wxBoxSizer(wxVERTICAL);
+	sizerTop->AddSpacer(10);
+	sizerTop->Add(sizer0, 1, wxEXPAND, 5);
+	sizerTop->AddSpacer(15);
+	sizerTop->Add(sizer1, 1, wxEXPAND, 5);
+	sizerTop->AddSpacer(15);
+	sizerTop->Add(sizer2, 1, wxEXPAND, 5);
+	sizerTop->AddSpacer(15);
+	sizerTop->Add(sizer3, 1, wxEXPAND, 5);
+//	sizerTop->AddGrowableCol(1);
 
 	// testing progress bar
 	//m_gProgress->Pulse();
@@ -437,8 +444,16 @@ MainWindow::MainWindow()
 
 
 	p->SetSizer(sizerTop);
-	sizerTop->SetSizeHints(this);
+	p->FitInside();
+	p->SetScrollRate(5, 5);
+//	sizerTop->SetSizeHints(this);
+
+	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
+	sizer->Add(p, 1, wxEXPAND);
+	this->SetSizer(sizer);
+
 }
+
 
 
 

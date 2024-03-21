@@ -111,6 +111,7 @@ protected:
 	void UpdateGHIUncertainty(wxCommandEvent&);
 	void UpdateDNIUncertainty(wxCommandEvent&);
 	void UpdateDHIUncertainty(wxCommandEvent&);
+	void OnDateClick(wxMouseEvent& event);
 
 private:
 	wxPanel *m_pFiles, *m_pDefaults, *m_pInstruments, *m_pProcessing;

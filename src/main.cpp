@@ -63,6 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wx/txtstrm.h>
 #include <wx/filename.h>
 #include <wx/textfile.h>
+#include <wx/calctrl.h>
 
 #include "main.h"
 #include "pythonhandler.h"
@@ -109,8 +110,58 @@ enum { __idFirst = wxID_HIGHEST+592,
 	ID_GHIid, ID_GHImodel, ID_GHIclass, ID_GHIclassUncert, ID_GHIcalUncert, ID_GHIcalDate, ID_GHIdueDate, ID_GHIradUncert,
 	ID_DNIid, ID_DNImodel, ID_DNIclass, ID_DNIclassUncert, ID_DNIcalUncert, ID_DNIcalDate, ID_DNIdueDate, ID_DNIradUncert,
 	ID_DHIid, ID_DHImodel, ID_DHIclass, ID_DHIclassUncert, ID_DHIcalUncert, ID_DHIcalDate, ID_DHIdueDate, ID_DHIradUncert,
-	ID_MaxQC, ID_MinDNI, ID_MaxZEN, ID_DateFormat1, ID_DateFormat2, ID_ExtendedRpt, ID_BTN_START, ID_BTN_CANCEL, ID_PROGRESS
+	ID_MaxQC, ID_MinDNI, ID_MaxZEN, ID_DateFormat1, ID_DateFormat2, ID_ExtendedRpt, ID_BTN_START, ID_BTN_CANCEL, ID_PROGRESS, ID_CALENDAR, ID_NODATE
 };
+
+
+class CalendarDialog : public wxDialog
+{
+public:
+	CalendarDialog(wxWindow* parent, wxWindowID id, const wxPoint pos, const wxDateTime& dt, const int& dateFormat) : wxDialog(parent, id, "Select Date", pos), m_dt(dt), m_dateFormat(dateFormat)
+	{
+		wxBoxSizer* vs = new wxBoxSizer(wxVERTICAL);
+		m_calendar = new wxCalendarCtrl(this, ID_CALENDAR, m_dt);
+		vs->Add(m_calendar, 1, wxEXPAND | wxALL, 1);
+		wxBoxSizer* bs = new wxBoxSizer(wxHORIZONTAL);
+		bs->Add(new wxButton(this, ID_NODATE, "Blank"), 1, wxALIGN_RIGHT, 1);
+		bs->Add(new wxButton(this, wxID_OK, "OK"), 1, wxALIGN_RIGHT, 1);
+		bs->Add(new wxButton(this, wxID_CANCEL, "Cancel"), 1, wxALIGN_RIGHT, 1);
+		vs->Add(bs);
+		SetSizerAndFit(vs);
+	}
+	const wxString &GetDate() { return m_dtstr; }
+private:
+	wxCalendarCtrl* m_calendar;
+	wxDateTime m_dt;
+	int m_dateFormat;
+	wxString m_dtstr;
+
+	void OnCommand(wxCommandEvent& evt) {
+		switch (evt.GetId()) {
+		case ID_NODATE:
+			m_dtstr = "";
+			break;
+		}
+	};
+	void OnCalendar(wxCalendarEvent& evt) {
+		m_dt = evt.GetDate();
+		if (m_dateFormat == 1)
+			m_dtstr = m_dt.FormatISODate();
+		else
+			m_dtstr = m_dt.Format(wxString::FromAscii("%m/%d/%Y"));
+	}
+
+	DECLARE_EVENT_TABLE();
+};
+
+
+
+BEGIN_EVENT_TABLE(CalendarDialog, wxDialog)
+	EVT_BUTTON(ID_BTN_START, CalendarDialog::OnCommand)
+	EVT_CALENDAR(ID_CALENDAR, CalendarDialog::OnCalendar)
+END_EVENT_TABLE()
+
+
 
 BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_CLOSE( MainWindow::OnClose )
@@ -332,6 +383,7 @@ MainWindow::MainWindow()
 	DHIcalDate->SetSizeHints(100, 24);
 	DHIdueDate = new wxTextCtrl(p, ID_DHIdueDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIdueDate");
 	DHIdueDate->SetSizeHints(100, 24);
+	DHIdueDate->Connect(wxEVT_RIGHT_DOWN, wxMouseEventHandler(MainWindow::OnDateClick), NULL, this);
 	DHIradUncert = new wxTextCtrl(p, ID_DHIradUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIradUncert");
 	DHIradUncert->SetSizeHints(100, 24);
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "DHI", wxDefaultPosition, wxSize(50, 24)), 1, wxALIGN_RIGHT, 2);
@@ -454,7 +506,26 @@ MainWindow::MainWindow()
 
 }
 
+void MainWindow::OnDateClick(wxMouseEvent& event)
+{
+	wxTextCtrl* text = wxStaticCast(event.GetEventObject(), wxTextCtrl);
+	wxDateTime dt;
+	dt.ParseFormat(text->GetValue()); // TODO - verify
 
+	int dateFormat = 0;
+	if (DateFormat1->GetValue()) {
+		dateFormat = 1;
+	}
+	else {
+		dateFormat = 0;
+	}
+
+	CalendarDialog* dlg = new CalendarDialog(this, wxID_ADD, event.GetPosition(), dt, dateFormat);
+	if (dlg->ShowModal() == wxID_OK) {
+		text->SetValue(dlg->GetDate());
+	}
+
+}
 
 
 wxString MainWindow::GetProjectDisplayName()

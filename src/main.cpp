@@ -387,8 +387,8 @@ MainWindow::MainWindow()
 	szH5->Add(new wxStaticText(p, wxID_ANY, "Date format:", wxDefaultPosition, wxSize(150, 24), wxALIGN_RIGHT));
 	szH5->AddSpacer(10);
 	wxArrayString asDateFormat;
-	asDateFormat.Add("YYYY-MM-DD");
 	asDateFormat.Add("MM/DD/YYYY");
+	asDateFormat.Add("YYYY-MM-DD");
 	DateFormat0 = new wxRadioButton(p, ID_DateFormat1, asDateFormat[0], wxDefaultPosition, wxDefaultSize, wxRB_GROUP, wxDefaultValidator, "DateFormat");
 	DateFormat0->SetSizeHints(150, 24);
 	szH5->Add(DateFormat0);

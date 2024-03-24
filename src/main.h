@@ -90,6 +90,8 @@ public:
 	bool OpenConfiguration(const wxString& filename);
 	bool SaveConfiguration(const wxString& filename);
 	bool UpdateStationIDs(const wxString& dir);
+	bool FormatAllDates(const int& dateFormat);
+	bool FormatTextCtrl(wxTextCtrl* tc, const int& dateFormat);
 
 	// Python specific functions
 	void LoadPythonConfig();
@@ -111,7 +113,8 @@ protected:
 	void UpdateGHIUncertainty(wxCommandEvent&);
 	void UpdateDNIUncertainty(wxCommandEvent&);
 	void UpdateDHIUncertainty(wxCommandEvent&);
-	void OnDateClick(wxMouseEvent& event);
+	void OnDateClick(wxMouseEvent& );
+	void OnDateFormat(wxCommandEvent& );
 
 private:
 	wxPanel *m_pFiles, *m_pDefaults, *m_pInstruments, *m_pProcessing;

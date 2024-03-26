@@ -172,7 +172,7 @@ private:
 
 	std::string m_pythonExecPath, m_pythonRunCmd;
 	bool m_cancelled;
-
+	std::string m_pythonpath, m_pythonargs;
 
 	DECLARE_EVENT_TABLE();
 };

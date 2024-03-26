@@ -157,14 +157,14 @@ private:
 
 
 BEGIN_EVENT_TABLE(CalendarDialog, wxDialog)
-	EVT_BUTTON(ID_NODATE, CalendarDialog::OnCommand)
-	EVT_CALENDAR_SEL_CHANGED(ID_CALENDAR, CalendarDialog::OnCalendar)
+EVT_BUTTON(ID_NODATE, CalendarDialog::OnCommand)
+EVT_CALENDAR_SEL_CHANGED(ID_CALENDAR, CalendarDialog::OnCalendar)
 //	EVT_CALENDAR(ID_CALENDAR, CalendarDialog::OnCalendar)
 END_EVENT_TABLE()
 
 
 
-wxDEFINE_EVENT(myEVT_THREAD_UPDATE, wxThreadEvent)
+wxDEFINE_EVENT(SUNI_EVT_THREAD_UPDATE, wxThreadEvent);
 
 BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_CLOSE( MainWindow::OnClose )
@@ -1179,7 +1179,7 @@ void MainWindow::replaceBackslash(std::string& str)
 }
 
 
-
+/*
 class SimulationThreadWindows : public wxThread
 {
 //	wxMutex m_currentLock, m_cancelLock, m_nokLock, m_logLock, m_percentLock;
@@ -1237,32 +1237,13 @@ public:
 		m_sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 		m_sa.bInheritHandle = TRUE;
 		m_sa.lpSecurityDescriptor = NULL;
-		/*
-		if (!CreatePipe(&m_stdin_rd, &m_stdin_wr, &m_sa, 0)) {
-//			goto done;
-		}
-		if (!SetHandleInformation(m_stdin_wr, HANDLE_FLAG_INHERIT, 0)) {
-//			goto done;
-		}
-		*/
 		if (!CreatePipe(&m_stdout_rd, &m_stdout_wr, &m_sa, 0)) {
 			//			goto done;
 		}
 		if (!SetHandleInformation(m_stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
 			//			goto done;
 		}
-		/*
-		if (!CreatePipe(&m_stderr_rd, &m_stderr_wr, &m_sa, 0)) {
-//			goto done;
-		}
-		if (!SetHandleInformation(m_stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
-//			goto done;
-		}
-		*/
 		//set startupinfo for the spawned process
-		/*The dwFlags member tells CreateProcess how to make the process.
-		STARTF_USESTDHANDLES: validates the hStd* members.
-		STARTF_USESHOWWINDOW: validates the wShowWindow member*/
 		GetStartupInfo(&m_si);
 
 		m_si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
@@ -1364,12 +1345,6 @@ public:
 //		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &m_si, &m_pi)) { // debugging FALSE instead of TRUE shows console output but cannot capture buffer
 			AttachConsole(m_pi.dwProcessId);
 			SetConsoleCtrlHandler(NULL, true);
-			/*
-			size_t i = 0;
-			size_t n_timeout_max = 100000000; // timeout
-			//		size_t n_timeout_max = 1000000000; // timeout
-			//for (i = 0; i < n_timeout_max; i++) {
-			*/
 			while(1) {
 				PeekNamedPipe(m_stdout_rd, m_buf, BUFSIZE - 1, &m_bread, &m_avail, NULL);
 //				PeekNamedPipe(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, &m_err_avail, NULL);
@@ -1384,26 +1359,6 @@ public:
 				{
 					break;
 				}
-				/*
-				if (m_err_bread != 0) {
-					if (ReadFile(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, NULL)) {
-						m_err_bread_last = m_err_bread;
-					}
-				}
-				else if (m_err_bread_last > 0)
-				{
-					break;
-				}
-				if (m_out_bread != 0) {
-					if (ReadFile(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, NULL)) {
-						m_out_bread_last = m_out_bread;
-					}
-				}
-				else if (m_out_bread_last > 0)
-				{
-					break;
-				}
-				*/
 				this->Sleep(100);
 //				::wxMilliSleep(10);
 				
@@ -1416,11 +1371,6 @@ public:
 
 			CloseHandle(m_pi.hThread);
 			CloseHandle(m_pi.hProcess);
-/*
-			if (i >= n_timeout_max) {
-				throw std::runtime_error("SUNI error. Timeout while running.");
-			}
-*/
 //			wxMutexLocker _lock(m_nokLock);
 			m_nok++;
 		}
@@ -1462,6 +1412,95 @@ public:
 
 
 };
+*/
+
+
+wxThread::ExitCode MainWindow::Entry()
+{
+
+	size_t offset = 0;
+	unsigned long m_bread;   //bytes read
+	unsigned long m_bread_last = 0;
+	unsigned long m_avail;   //bytes available
+	PROCESS_INFORMATION m_pi;
+	STARTUPINFO m_si;
+	SECURITY_ATTRIBUTES m_sa;
+	HANDLE m_stdin_rd = NULL;
+	HANDLE m_stdout_wr = NULL;
+	HANDLE m_stdout_rd = NULL;
+	HANDLE m_stdin_wr = NULL;
+	HANDLE m_stderr_rd = NULL;
+	HANDLE m_stderr_wr = NULL;  //pipe handles
+
+	CA2T programpath(m_pythonpath.c_str());
+	CA2T programargs(m_pythonargs.c_str());
+
+	m_sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+	m_sa.bInheritHandle = TRUE;
+	m_sa.lpSecurityDescriptor = NULL;
+	if (!CreatePipe(&m_stdout_rd, &m_stdout_wr, &m_sa, 0)) {
+		//			goto done;
+	}
+	char buffer[1024];
+
+	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &m_si, &m_pi)) { // production
+		//		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &m_si, &m_pi)) { // debugging FALSE instead of TRUE shows console output but cannot capture buffer
+		AttachConsole(m_pi.dwProcessId);
+		SetConsoleCtrlHandler(NULL, true);
+		while (!GetThread()->TestDestroy())	{
+			PeekNamedPipe(m_stdout_rd, buffer, 1023, &m_bread, &m_avail, NULL);
+			//				PeekNamedPipe(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, &m_err_avail, NULL);
+			//				PeekNamedPipe(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, &m_out_avail, NULL);
+							//check to see if there is any data to read from stdout
+			if (m_bread != 0) {
+				if (ReadFile(m_stdout_rd, buffer, 1023, &m_bread, NULL)) {
+					m_bread_last = m_bread;
+				}
+			}
+			else if (m_bread_last > 0)
+			{
+				break;
+			}
+			wxSleep(1);
+		}
+		//			WaitForSingleObject(m_pi.hProcess, INFINITE);
+		//			GetExitCodeProcess(m_pi.hProcess, &ReturnValue);
+
+
+		CloseHandle(m_pi.hThread);
+		CloseHandle(m_pi.hProcess);
+	}
+
+
+	std::vector<HANDLE> handles = { m_stdin_rd, m_stdin_wr, m_stdout_rd, m_stdout_wr, m_stderr_rd, m_stderr_wr };
+	for (HANDLE handle : handles) {
+		if (handle && handle != INVALID_HANDLE_VALUE) {
+			CloseHandle(handle);
+		}
+	}
+	/*
+	if (m_buf[0] == '\0') {
+		if (m_err_buf[0] == '\0')
+			throw std::runtime_error("SUNI error. Function did not return a response and no error.");
+		else
+			return m_err_buf;
+		throw std::runtime_error("SUNI error. Function did not return a response.");
+	}
+	//		return buf;
+
+	FreeConsole();
+
+	if (m_canceled) {
+		m_messages.Add("Process cancelled by user.");
+	}
+	else {
+		wxString str(m_buf);
+		m_messages = wxSplit(str, '\n');
+	}
+	return m_buf;
+	*/
+}
+
 
 
 

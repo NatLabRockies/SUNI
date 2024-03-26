@@ -2113,7 +2113,7 @@ bool SUIApp::OnInit()
 	{
 		// register the first load
 		Settings().Write(fl_key, false);
-		configurationFile = GetAppPath() + "/Configuration Files/sample_config.json";
+		configurationFile = GetAppPath() + "/Configuration Files/CfgDefaultsV001.json";
 	}
 	else
 	{

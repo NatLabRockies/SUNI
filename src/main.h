@@ -78,8 +78,9 @@ public:
 	const char *what() const throw() { return (const char*)m_err.c_str(); };
 };
 
+wxDECLARE_EVENT(SUNI_EVT_THREAD_UPDATE, wxThreadEvent);
 
-class MainWindow : public wxFrame
+class MainWindow : public wxFrame, public wxThreadHelper
 {
 public:
 	MainWindow( );
@@ -100,7 +101,14 @@ public:
 	void InstallPythonPackage(const std::string& pip_name);
 
 
+	// thread helper 
+	void OnThreadUpdate(wxThreadEvent& evt);
+
 protected:
+	virtual wxThread::ExitCode Entry();
+	char m_data[1024]; // data from Entry
+	wxCriticalSection m_dataCS; // protects m_data
+
 	void OnClose( wxCloseEvent & );
 	void OnCommand( wxCommandEvent & );
 	void OnInternalCommand( wxCommandEvent & );

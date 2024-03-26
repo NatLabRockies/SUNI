@@ -164,6 +164,8 @@ END_EVENT_TABLE()
 
 
 
+wxDEFINE_EVENT(myEVT_THREAD_UPDATE, wxThreadEvent)
+
 BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_CLOSE( MainWindow::OnClose )
 	EVT_MENU( wxID_ABOUT, MainWindow::OnCommand )
@@ -1811,8 +1813,7 @@ bool MainWindow::InvokePython()
 		LoadConfig();
 #ifdef __WINDOWS__
 		std::string str = m_projectFileName.ToStdString();
-		std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath;
-
+		std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath ;
 		std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
 		size_t pos = pythonarg.find("<input>");
 		//std::string str = input_dict_as_text;
@@ -1891,7 +1892,7 @@ bool MainWindow::InvokePython()
 			else {
 				sError = "Python run unsuccessful \n" + pythonpath + pythonarg;
 				wxMessageBox(sError, "Error", wxICON_ERROR);
-				wxString sfn = GetAppPath() + "/python/error.txt";
+				wxString sfn = GetAppPath() + "/System Files/error.txt";
 				wxTextFile tFile(sfn);
 				tFile.AddLine(pythonpath + pythonarg);
 				tFile.Write();

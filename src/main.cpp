@@ -99,6 +99,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
+
+
 static PythonConfig pythonConfig;
 
 
@@ -167,6 +169,7 @@ END_EVENT_TABLE()
 wxDEFINE_EVENT(SUNI_EVT_THREAD_UPDATE, wxThreadEvent);
 
 BEGIN_EVENT_TABLE( MainWindow, wxFrame )
+	EVT_THREAD(SUNI_EVT_THREAD_UPDATE, MainWindow::OnThreadUpdate)
 	EVT_CLOSE( MainWindow::OnClose )
 	EVT_MENU( wxID_ABOUT, MainWindow::OnCommand )
 	EVT_MENU( wxID_HELP, MainWindow::OnCommand )
@@ -271,6 +274,9 @@ MainWindow::MainWindow()
 	m_mainMenuBar->Append(menu, wxT("&File"));
 
 	SetMenuBar(m_mainMenuBar);
+
+	Bind(SUNI_EVT_THREAD_UPDATE, &MainWindow::OnThreadUpdate, this);
+
 
 //	p = new wxPanel(this, wxID_ANY);
 	p = new wxScrolledWindow(this, wxID_ANY);
@@ -500,6 +506,7 @@ MainWindow::MainWindow()
 
 	// testing progress bar
 	//m_gProgress->Pulse();
+	m_gProgress->SetValue(0);
 
 	m_bCancel->Enable(false);
 	m_cancelled = false;
@@ -1033,7 +1040,6 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 	}
 }
 
-const size_t BUFSIZE = 409600;
 
 wxString MainWindow::GetAppPath()
 {
@@ -1414,6 +1420,36 @@ public:
 };
 */
 
+void MainWindow::OnThreadUpdate(wxThreadEvent& evt)
+{
+	// ...do something... e.g. m_pGauge->Pulse();
+	// read some parts of m_data just for fun:
+	wxCriticalSectionLocker lock(m_dataCS);
+	wxPrintf("%c", m_data[100]);
+}
+
+void MainWindow::UpdateProgressBar()
+{
+	wxCriticalSectionLocker lock(m_dataCS);
+//	wxString ret = wxString::FromUTF8(m_data);
+	wxString ret(m_data);
+	wxArrayString as = wxSplit(ret, '\n');
+//	ret.Replace("\n", "");
+//	ret.Replace("\r", "");
+//	ret = ret.Trim().Right(2); // percent
+	if (as.GetCount() > 2) {// last value is garbled
+		ret = as[as.GetCount() - 2];
+		ret.Replace("\r", "");
+	}
+	double dret;
+	int current = m_gProgress->GetValue();
+	if (current < 0) current = 0;
+	if (ret.ToDouble(&dret)) {
+		if (dret - current > 1)
+			m_gProgress->SetValue((int)dret);
+	}
+
+}
 
 wxThread::ExitCode MainWindow::Entry()
 {
@@ -1441,27 +1477,54 @@ wxThread::ExitCode MainWindow::Entry()
 	if (!CreatePipe(&m_stdout_rd, &m_stdout_wr, &m_sa, 0)) {
 		//			goto done;
 	}
-	char buffer[1024];
+
+
+	if (!CreatePipe(&m_stdout_rd, &m_stdout_wr, &m_sa, 0)) {
+		//			goto done;
+	}
+	if (!SetHandleInformation(m_stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
+		//			goto done;
+	}
+	//set startupinfo for the spawned process
+	GetStartupInfo(&m_si);
+
+	m_si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+	m_si.wShowWindow = SW_HIDE; // for production
+	//		m_si.wShowWindow = SW_SHOW; // for debugging
+			//set the new handles for the child process
+	m_si.hStdOutput = m_stdout_wr;
+
+	char buffer[BUFSIZE];
 
 	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &m_si, &m_pi)) { // production
 		//		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &m_si, &m_pi)) { // debugging FALSE instead of TRUE shows console output but cannot capture buffer
 		AttachConsole(m_pi.dwProcessId);
 		SetConsoleCtrlHandler(NULL, true);
-		while (!GetThread()->TestDestroy())	{
-			PeekNamedPipe(m_stdout_rd, buffer, 1023, &m_bread, &m_avail, NULL);
+//		while (!GetThread()->TestDestroy()) {
+		while (1) {
+			PeekNamedPipe(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, &m_avail, NULL);
 			//				PeekNamedPipe(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, &m_err_avail, NULL);
 			//				PeekNamedPipe(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, &m_out_avail, NULL);
 							//check to see if there is any data to read from stdout
 			if (m_bread != 0) {
-				if (ReadFile(m_stdout_rd, buffer, 1023, &m_bread, NULL)) {
+				if (ReadFile(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, NULL)) {
 					m_bread_last = m_bread;
+					{
+						wxCriticalSectionLocker lock(m_dataCS);
+						memcpy(m_data + offset, buffer, BUFSIZE - 1);
+						if (m_cancelled)
+							break;
+						//wxQueueEvent(this, new wxThreadEvent(SUNI_EVT_THREAD_UPDATE));
+						UpdateProgressBar();
+					}
 				}
 			}
-			else if (m_bread_last > 0)
+			else if (m_bread_last > 3) // 100%
 			{
 				break;
 			}
-			wxSleep(1);
+			wxMilliSleep(500);
+		//	wxGetApp().Yield();
 		}
 		//			WaitForSingleObject(m_pi.hProcess, INFINITE);
 		//			GetExitCodeProcess(m_pi.hProcess, &ReturnValue);
@@ -1489,16 +1552,16 @@ wxThread::ExitCode MainWindow::Entry()
 	//		return buf;
 
 	FreeConsole();
-
-	if (m_canceled) {
+	*/
+	if (m_cancelled) {
 		m_messages.Add("Process cancelled by user.");
 	}
 	else {
-		wxString str(m_buf);
+		wxString str(m_data);
 		m_messages = wxSplit(str, '\n');
 	}
-	return m_buf;
-	*/
+	return  (wxThread::ExitCode)0;
+	
 }
 
 
@@ -1852,16 +1915,35 @@ bool MainWindow::InvokePython()
 		LoadConfig();
 #ifdef __WINDOWS__
 		std::string str = m_projectFileName.ToStdString();
-		std::string pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath ;
-		std::string pythonarg = " -c \"" + m_pythonRunCmd + "\"";
-		size_t pos = pythonarg.find("<input>");
+		m_pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath ;
+		m_pythonargs = " -c \"" + m_pythonRunCmd + "\"";
+		size_t pos = m_pythonargs.find("<input>");
 		//std::string str = input_dict_as_text;
 		std::replace(str.begin(), str.end(), '\\', '/');
-		pythonarg.replace(pos, 7, str);
+		m_pythonargs.replace(pos, 7, str);
+
+		m_messages.clear();
+
+		if (CreateThread(wxTHREAD_JOINABLE) != wxTHREAD_NO_ERROR)
+		{
+			wxMessageBox("Could not create the worker thread!");
+			return false;
+		}
+		// go!
+		if (GetThread()->Run() != wxTHREAD_NO_ERROR)
+		{
+			wxMessageBox("Could not run the worker thread!");
+			return false;
+		}
+
+		while (GetThread() && GetThread()->IsRunning()) {
+			wxGetApp().Yield();
+		}
 
 
+/*
 		std::unique_ptr<SimulationThreadWindows> sth = std::make_unique<SimulationThreadWindows>(pythonpath, pythonarg);
-//			sth->Add(pythonpath, pythonarg);
+			sth->Add(pythonpath, pythonarg);
 		sth->Create();
 		sth->Run();
 
@@ -1884,7 +1966,7 @@ bool MainWindow::InvokePython()
 		m_gProgress->SetValue(100);
 
 
-
+*/
 //			std::string output_json = CallPythonModuleWindows(str);
 #else
 		std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
@@ -1894,7 +1976,7 @@ bool MainWindow::InvokePython()
 		// testing raw output
 		//wxMessageBox(wxString(output_json), "Results");
 			
-		auto strMessages = sth->GetNewMessages();
+		auto& strMessages = m_messages; // sth->GetNewMessages();
 		bool bError = false;
 		wxString sError = "";
 
@@ -1929,11 +2011,11 @@ bool MainWindow::InvokePython()
 				}
 			}
 			else {
-				sError = "Python run unsuccessful \n" + pythonpath + pythonarg;
+				sError = "Python run unsuccessful \n" + m_pythonpath + m_pythonargs;
 				wxMessageBox(sError, "Error", wxICON_ERROR);
 				wxString sfn = GetAppPath() + "/System Files/error.txt";
 				wxTextFile tFile(sfn);
-				tFile.AddLine(pythonpath + pythonarg);
+				tFile.AddLine(m_pythonpath + m_pythonargs);
 				tFile.Write();
 				wxLaunchDefaultApplication(sfn);
 			}
@@ -1973,6 +2055,12 @@ void MainWindow::OnClose( wxCloseEvent &evt )
 	
 	// destroy the window
 	wxGetApp().ScheduleForDestruction( this );
+
+	// clean up running thread if necessary
+	if (GetThread() &&      // DoStartALongTask() may have not been called
+		GetThread()->IsRunning())
+		GetThread()->Wait();
+
 }
 
 

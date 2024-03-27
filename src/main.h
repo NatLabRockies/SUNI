@@ -66,6 +66,9 @@ struct smart_ptr
 #endif
 };
 
+wxDECLARE_EVENT(SUNI_EVT_THREAD_UPDATE, wxThreadEvent);
+
+const size_t BUFSIZE = 4096;
 
 class wxPanel;
 
@@ -78,7 +81,7 @@ public:
 	const char *what() const throw() { return (const char*)m_err.c_str(); };
 };
 
-wxDECLARE_EVENT(SUNI_EVT_THREAD_UPDATE, wxThreadEvent);
+
 
 class MainWindow : public wxFrame, public wxThreadHelper
 {
@@ -100,13 +103,14 @@ public:
 	void InstallPython();
 	void InstallPythonPackage(const std::string& pip_name);
 
+	void UpdateProgressBar();
 
 	// thread helper 
 	void OnThreadUpdate(wxThreadEvent& evt);
 
 protected:
 	virtual wxThread::ExitCode Entry();
-	char m_data[1024]; // data from Entry
+	char m_data[BUFSIZE]; // data from Entry
 	wxCriticalSection m_dataCS; // protects m_data
 
 	void OnClose( wxCloseEvent & );
@@ -173,6 +177,7 @@ private:
 	std::string m_pythonExecPath, m_pythonRunCmd;
 	bool m_cancelled;
 	std::string m_pythonpath, m_pythonargs;
+	wxArrayString m_messages;
 
 	DECLARE_EVENT_TABLE();
 };

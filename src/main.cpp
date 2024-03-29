@@ -166,10 +166,8 @@ END_EVENT_TABLE()
 
 
 
-wxDEFINE_EVENT(SUNI_EVT_THREAD_UPDATE, wxThreadEvent);
 
 BEGIN_EVENT_TABLE( MainWindow, wxFrame )
-	EVT_THREAD(SUNI_EVT_THREAD_UPDATE, MainWindow::OnThreadUpdate)
 	EVT_CLOSE( MainWindow::OnClose )
 	EVT_MENU( wxID_ABOUT, MainWindow::OnCommand )
 	EVT_MENU( wxID_HELP, MainWindow::OnCommand )
@@ -275,10 +273,6 @@ MainWindow::MainWindow()
 
 	SetMenuBar(m_mainMenuBar);
 
-	Bind(SUNI_EVT_THREAD_UPDATE, &MainWindow::OnThreadUpdate, this);
-
-
-//	p = new wxPanel(this, wxID_ANY);
 	p = new wxScrolledWindow(this, wxID_ANY);
 
 	wxStaticBoxSizer* sizer0 = new wxStaticBoxSizer(wxVERTICAL,p, "Files");
@@ -521,6 +515,8 @@ MainWindow::MainWindow()
 	sizer->Add(p, 1, wxEXPAND);
 	this->SetSizer(sizer);
 
+	// long initialization of Python
+	//SetupPython();
 }
 
 void MainWindow::OnDateClick(wxMouseEvent& event)
@@ -1420,14 +1416,6 @@ public:
 };
 */
 
-void MainWindow::OnThreadUpdate(wxThreadEvent& evt)
-{
-	// ...do something... e.g. m_pGauge->Pulse();
-	// read some parts of m_data just for fun:
-	wxCriticalSectionLocker lock(m_dataCS);
-	wxPrintf("%c", m_data[100]);
-}
-
 void MainWindow::UpdateProgressBar()
 {
 	wxCriticalSectionLocker lock(m_dataCS);
@@ -1445,7 +1433,7 @@ void MainWindow::UpdateProgressBar()
 	int current = m_gProgress->GetValue();
 	if (current < 0) current = 0;
 	if (ret.ToDouble(&dret)) {
-		if (dret - current > 1)
+		if (dret - current > 0)
 			m_gProgress->SetValue((int)dret);
 	}
 
@@ -1456,6 +1444,7 @@ wxThread::ExitCode MainWindow::Entry()
 
 	size_t offset = 0;
 	unsigned long m_bread;   //bytes read
+	unsigned long m_breadctrlc;   //bytes read
 	unsigned long m_bread_last = 0;
 	unsigned long m_avail;   //bytes available
 	PROCESS_INFORMATION m_pi;
@@ -1470,6 +1459,11 @@ wxThread::ExitCode MainWindow::Entry()
 
 	CA2T programpath(m_pythonpath.c_str());
 	CA2T programargs(m_pythonargs.c_str());
+
+	char ctrlc[1];
+	ctrlc[0] = 3;
+	CA2T ctrlct(ctrlc);
+
 
 	m_sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	m_sa.bInheritHandle = TRUE;
@@ -1489,17 +1483,18 @@ wxThread::ExitCode MainWindow::Entry()
 	GetStartupInfo(&m_si);
 
 	m_si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-	m_si.wShowWindow = SW_HIDE; // for production
-	//		m_si.wShowWindow = SW_SHOW; // for debugging
+//	m_si.wShowWindow = SW_HIDE; // for production
+	m_si.wShowWindow = SW_SHOW; // for debugging
 			//set the new handles for the child process
 	m_si.hStdOutput = m_stdout_wr;
 
 	char buffer[BUFSIZE];
+	char bufferctrlc[BUFSIZE];
 
 	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &m_si, &m_pi)) { // production
-		//		if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &m_si, &m_pi)) { // debugging FALSE instead of TRUE shows console output but cannot capture buffer
-		AttachConsole(m_pi.dwProcessId);
-		SetConsoleCtrlHandler(NULL, true);
+//	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &m_si, &m_pi)) { // debugging FALSE instead of TRUE shows console output but cannot capture buffer
+//		AttachConsole(m_pi.dwProcessId);
+//		SetConsoleCtrlHandler(NULL, true);
 //		while (!GetThread()->TestDestroy()) {
 		while (1) {
 			PeekNamedPipe(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, &m_avail, NULL);
@@ -1512,9 +1507,34 @@ wxThread::ExitCode MainWindow::Entry()
 					{
 						wxCriticalSectionLocker lock(m_dataCS);
 						memcpy(m_data + offset, buffer, BUFSIZE - 1);
-						if (m_cancelled)
+						if (m_cancelled) {
+						//	TransactNamedPipe(m_stdout_rd, ctrlct, (lstrlen(ctrlct) + 1) * sizeof(TCHAR), bufferctrlc, BUFSIZE - 1, &m_breadctrlc, NULL);
+//							GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0); // does nothing
+						//	break; // kills thread and all running python processes but no Ctrl+C
+						//	SendCtrlC(m_pi.dwProcessId); // does nothing
+//							SendSIGINT(m_pi.hProcess); 
+//							FreeConsole();
+							if (AttachConsole(m_pi.dwProcessId))
+							{
+								// Disable Ctrl-C handling for our program
+								SetConsoleCtrlHandler(NULL, true);
+
+								GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0); // SIGINT
+
+								//Re-enable Ctrl-C handling or any subsequently started
+								//programs will inherit the disabled state.
+//								SetConsoleCtrlHandler(NULL, false);
+//								FreeConsole();
+//								WaitForSingleObject(m_pi.hProcess, 10000);// exception
+								wxMilliSleep(10000);
+								ReadFile(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, NULL);
+							}
+//							wxMilliSleep(500);
 							break;
-						//wxQueueEvent(this, new wxThreadEvent(SUNI_EVT_THREAD_UPDATE));
+							// break or keep reading output
+							//m_cancelled = false; // need to resolve with error messages
+							//ReadFile(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, NULL);
+						}
 						UpdateProgressBar();
 					}
 				}
@@ -1565,6 +1585,41 @@ wxThread::ExitCode MainWindow::Entry()
 }
 
 
+
+void MainWindow::SendSIGINT(HANDLE hProcess)
+{
+	DWORD pid = GetProcessId(hProcess);
+	FreeConsole();
+	if (AttachConsole(pid))
+	{
+		// Disable Ctrl-C handling for our program
+		SetConsoleCtrlHandler(NULL, true);
+
+		GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0); // SIGINT
+
+		//Re-enable Ctrl-C handling or any subsequently started
+		//programs will inherit the disabled state.
+		SetConsoleCtrlHandler(NULL, false);
+
+//		WaitForSingleObject(hProcess, 10000);
+	}
+}
+
+// Function to send a CTRL+C signal to a process
+void MainWindow::SendCtrlC(DWORD dwProcessId)
+{
+	// Get a handle to the process
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessId);
+	if (hProcess == NULL){
+		return;
+	}
+
+	// Generate a CTRL+C event
+	GenerateConsoleCtrlEvent(CTRL_C_EVENT, dwProcessId);
+
+	// Close the process handle
+	CloseHandle(hProcess);
+}
 
 
 
@@ -1884,9 +1939,9 @@ bool MainWindow::SetupPython()
 		ret = true;
 	else {
 		wxBusyCursor wait;
-		MyMessageDialog dlg(GetCurrentTopLevelWindow(), "Installing the SUNI model. Please note that it may take a few minutes to complete the initial installation. Once installed, you will be able to estimate the solar uncertainty.",	"Solar Uncertainty Integrator",	wxCENTER, wxDefaultPosition, wxDefaultSize);
+		MyMessageDialog dlg(GetCurrentTopLevelWindow(), "Installing the SUNI model. Please note that it may take a few minutes to complete the initial installation. Once installed, you will be able to estimate the solar uncertainty using the 'Start' button.",	"Solar Uncertainty Integrator",	wxCENTER, wxDefaultPosition, wxDefaultSize);
 		dlg.Show();
-		wxGetApp().Yield(true);
+		//wxGetApp().Yield(true);
 
 		InstallPython();
 		InstallPythonPackage("suni");
@@ -1918,7 +1973,6 @@ bool MainWindow::InvokePython()
 		m_pythonpath = std::string(GetPythonConfigPath()) + "\\" + m_pythonExecPath ;
 		m_pythonargs = " -c \"" + m_pythonRunCmd + "\"";
 		size_t pos = m_pythonargs.find("<input>");
-		//std::string str = input_dict_as_text;
 		std::replace(str.begin(), str.end(), '\\', '/');
 		m_pythonargs.replace(pos, 7, str);
 
@@ -1926,18 +1980,18 @@ bool MainWindow::InvokePython()
 
 		if (CreateThread(wxTHREAD_JOINABLE) != wxTHREAD_NO_ERROR)
 		{
-			wxMessageBox("Could not create the worker thread!");
+			wxMessageBox("Could not create the Python thread!");
 			return false;
 		}
 		// go!
 		if (GetThread()->Run() != wxTHREAD_NO_ERROR)
 		{
-			wxMessageBox("Could not run the worker thread!");
+			wxMessageBox("Could not run the Python thread!");
 			return false;
 		}
 
 		while (GetThread() && GetThread()->IsRunning()) {
-			wxGetApp().Yield();
+			wxGetApp().Yield(); // to update progress bar
 		}
 
 
@@ -1977,47 +2031,55 @@ bool MainWindow::InvokePython()
 		//wxMessageBox(wxString(output_json), "Results");
 			
 		auto& strMessages = m_messages; // sth->GetNewMessages();
-		bool bError = false;
-		wxString sError = "";
 
-		if (strMessages.GetCount() > 0) {
-			bError = strMessages[0].Lower().Find("error") != wxNOT_FOUND;
-			for (size_t i = 0; i < strMessages.GetCount(); i++) {
-				if (bError) {
-					sError += strMessages[i] + "\n";
-				}
-			}
-		}
-
-			
-		if (sError.length() > 0) {
-			wxMessageBox(sError , "Error", wxICON_ERROR);
+		// user cancelled
+		if (m_cancelled) {
+			m_cancelled = false;
+			wxMessageBox("Uncertainty analysis cancelled.", "User Cancelled", wxICON_INFORMATION);
 		}
 		else {
-			// file retrieved to [Input File name]_Report.txt
-			wxFileName fnInputFile = InputFile->GetValue();
-			wxFileName fnOutputFile = OutputFile->GetValue();
-			if (wxFileExists(fnOutputFile.GetFullPath())) {
-				wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
-				if (wxFileExists(sfn)) {
-					wxLaunchDefaultApplication(sfn);
-					wxString str;
-					wxTextFile tFile;
-					tFile.Open(sfn);
-					str = tFile.GetFirstLine() + "\n";
-					while (!tFile.Eof())
-						str += tFile.GetNextLine() + "\n";
-					wxMessageBox(str, "Report", wxICON_NONE);
+			bool bError = false;
+			wxString sError = "";
+
+			if (strMessages.GetCount() > 0) {
+				bError = strMessages[0].Lower().Find("error") != wxNOT_FOUND;
+				for (size_t i = 0; i < strMessages.GetCount(); i++) {
+					if (bError) {
+						sError += strMessages[i] + "\n";
+					}
 				}
 			}
-			else {
-				sError = "Python run unsuccessful \n" + m_pythonpath + m_pythonargs;
+
+
+			if (sError.length() > 0) {
 				wxMessageBox(sError, "Error", wxICON_ERROR);
-				wxString sfn = GetAppPath() + "/System Files/error.txt";
-				wxTextFile tFile(sfn);
-				tFile.AddLine(m_pythonpath + m_pythonargs);
-				tFile.Write();
-				wxLaunchDefaultApplication(sfn);
+			}
+			else {
+				// file retrieved to [Input File name]_Report.txt
+				wxFileName fnInputFile = InputFile->GetValue();
+				wxFileName fnOutputFile = OutputFile->GetValue();
+				if (wxFileExists(fnOutputFile.GetFullPath())) {
+					wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
+					if (wxFileExists(sfn)) {
+						wxLaunchDefaultApplication(sfn);
+						wxString str;
+						wxTextFile tFile;
+						tFile.Open(sfn);
+						str = tFile.GetFirstLine() + "\n";
+						while (!tFile.Eof())
+							str += tFile.GetNextLine() + "\n";
+						wxMessageBox(str, "Report", wxICON_NONE);
+					}
+				}
+				else {
+					sError = "Python run unsuccessful \n" + m_pythonpath + m_pythonargs;
+					wxMessageBox(sError, "Error", wxICON_ERROR);
+					wxString sfn = GetAppPath() + "/System Files/error.txt";
+					wxTextFile tFile(sfn);
+					tFile.AddLine(m_pythonpath + m_pythonargs);
+					tFile.Write();
+					wxLaunchDefaultApplication(sfn);
+				}
 			}
 		}
 		m_gProgress->SetValue(0);
@@ -2031,15 +2093,13 @@ bool MainWindow::InvokePython()
 void MainWindow::OnClose( wxCloseEvent &evt )
 {
 	Raise();
-	/* may want to check for cleanup here!
-	if ( !CloseProject() )
+	if ( !SaveConfiguration(m_projectFileName))
 	{
 		evt.Veto();
 		return;
 	}
-	*/
 	// save current configuration
-	SaveConfiguration(m_projectFileName);
+	;
 	SUIApp::Settings().Write("configuration_file", m_projectFileName);
 
 	// save window position to settings
@@ -2052,15 +2112,13 @@ void MainWindow::OnClose( wxCloseEvent &evt )
 	SUIApp::Settings().Write( "window_height", rr.height);
 	SUIApp::Settings().Write( "window_maximized", IsMaximized() );
 
-	
-	// destroy the window
-	wxGetApp().ScheduleForDestruction( this );
-
 	// clean up running thread if necessary
-	if (GetThread() &&      // DoStartALongTask() may have not been called
+	if (GetThread() &&
 		GetThread()->IsRunning())
 		GetThread()->Wait();
 
+	// destroy the window
+	wxGetApp().ScheduleForDestruction( this );
 }
 
 
@@ -2279,16 +2337,17 @@ bool SUIApp::OnInit()
 	else
 		wxMessageBox("Error loading file: " + configurationFile, "Initialization error", wxICON_ERROR);
 
-/* Currently done in MainWindow - may want to move here.
-	try {
-		LoadPythonConfig();
+// Check in MainWindow - may want to move here. main windows not fully rendered here
+/*	try {
+		g_mainWindow->SetupPython();
 	}
 	catch (std::exception e) {
 		SUIException ex(e.what());
 		wxMessageBox(ex.what(),"Initialization error", wxICON_ERROR);
 	}
 */	
-	return true;
+	return g_mainWindow->SetupPython();
+//	return true;
 }
 
 

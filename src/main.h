@@ -66,8 +66,6 @@ struct smart_ptr
 #endif
 };
 
-wxDECLARE_EVENT(SUNI_EVT_THREAD_UPDATE, wxThreadEvent);
-
 const size_t BUFSIZE = 4096;
 
 class wxPanel;
@@ -105,8 +103,10 @@ public:
 
 	void UpdateProgressBar();
 
-	// thread helper 
-	void OnThreadUpdate(wxThreadEvent& evt);
+	bool SetupPython();
+	void SendCtrlC(DWORD dwProcessId);
+	void SendSIGINT(HANDLE hProcess);
+
 
 protected:
 	virtual wxThread::ExitCode Entry();
@@ -164,7 +164,6 @@ private:
 
 	void GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert);
 
-	bool SetupPython();
 	bool InvokePython();
 	void LoadConfig();
 	std::string GetPythonConfigPath();

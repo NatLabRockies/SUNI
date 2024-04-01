@@ -116,6 +116,106 @@ enum { __idFirst = wxID_HIGHEST+592,
 };
 
 
+
+class MyMessageDialog : public wxDialog {
+public:
+	MyMessageDialog(wxWindow* parent,
+		const wxString& message,
+		const wxString& title,
+		long buttons,
+		const wxPoint& pos = wxDefaultPosition,
+		const wxSize& size = wxDefaultSize,
+		bool addButtonClose = false)
+		: wxDialog(parent, wxID_ANY, title, pos, size, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
+		SetEscapeId(wxID_NONE);
+
+		wxPanel* panel = new wxPanel(this);
+		panel->SetBackgroundColour(*wxWHITE);
+
+		wxBoxSizer* szpnl = new wxBoxSizer(wxVERTICAL);
+
+		int wrap = 600;
+		if (size != wxDefaultSize && size.x > 100)
+			wrap = size.x - 40;
+
+		int nlpos = message.Find('\n');
+		if (nlpos > 0) {
+			wxStaticText* label1 = new wxStaticText(panel, wxID_ANY, message.Left(nlpos), wxDefaultPosition,
+				wxDefaultSize, wxALIGN_LEFT);
+			wxFont font(label1->GetFont());
+			font.SetPointSize(font.GetPointSize() + 2);
+			label1->SetFont(font);
+			label1->SetForegroundColour(wxColour(0, 0, 120));
+			label1->Wrap(wrap);
+
+			wxStaticText* label2 = new wxStaticText(panel, wxID_ANY, message.Mid(nlpos + 1), wxDefaultPosition,
+				wxDefaultSize, wxALIGN_LEFT);
+			label2->Wrap(wrap);
+
+			szpnl->Add(label1, 0, wxTOP | wxLEFT | wxRIGHT | wxEXPAND, 20);
+			szpnl->Add(label2, 1, wxALL | wxEXPAND, 20);
+		}
+		else {
+			wxStaticText* label = new wxStaticText(panel, wxID_ANY, message, wxDefaultPosition, wxDefaultSize,
+				wxALIGN_LEFT);
+			label->Wrap(wrap);
+
+			szpnl->Add(label, 1, wxALL | wxEXPAND, 20);
+		}
+
+		if (addButtonClose) {
+			wxButton* buttonClose = new wxButton(this, wxID_OK, wxT("OK"));
+			szpnl->Add(buttonClose, 1, wxCENTER);
+		}
+
+		panel->SetSizer(szpnl);
+
+		wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+		sizer->Add(panel, 1, wxALL | wxEXPAND, 0);
+		sizer->Add(CreateButtonSizer(buttons), 0, wxALL | wxEXPAND, 11);
+
+
+		SetSizerAndFit(sizer);
+
+		if (size != wxDefaultSize)
+			SetClientSize(size);
+		else {
+			wxSize sz = GetClientSize();
+			if (sz.x < 340) sz.x = 340;
+			if (sz.y < 120) sz.y = 120;
+			SetClientSize(sz);
+		}
+
+		if (pos == wxDefaultPosition) {
+			if (parent)
+				CenterOnParent();
+			else
+				CenterOnScreen();
+		}
+		Layout();
+	}
+	void Initialize() {
+		Layout();
+		Refresh();
+	}
+
+	void OnClose(wxCloseEvent&) {
+		EndModal(wxID_CANCEL);
+	}
+
+	void OnCharHook(wxKeyEvent& evt) {
+		if (evt.GetKeyCode() == WXK_ESCAPE)
+			EndModal(wxID_CANCEL);
+	}
+
+	void OnCommand(wxCommandEvent& evt) {
+		EndModal(evt.GetId());
+	}
+};
+
+
+
+
 class CalendarDialog : public wxDialog
 {
 public:
@@ -168,7 +268,10 @@ END_EVENT_TABLE()
 
 
 BEGIN_EVENT_TABLE( MainWindow, wxFrame )
-	EVT_CLOSE( MainWindow::OnClose )
+	EVT_CLOSE(MainWindow::OnClose)
+	EVT_IDLE(MainWindow::OnIdle)
+//	EVT_ACTIVATE(MainWindow::OnActivate)
+//	EVT_SET_FOCUS(MainWindow::OnSetFocus)
 	EVT_MENU( wxID_ABOUT, MainWindow::OnCommand )
 	EVT_MENU( wxID_HELP, MainWindow::OnCommand )
 	EVT_MENU(wxID_OPEN, MainWindow::OnCommand)
@@ -263,6 +366,7 @@ MainWindow::MainWindow()
 	m_typeDouble = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN"};
 
 	m_mainMenuBar = new wxMenuBar;
+	m_pythonInstalled = false;
 
 	wxMenu *menu = new wxMenu ;
 	menu->Append(wxID_SAVEAS, "Save Configuration");
@@ -496,10 +600,7 @@ MainWindow::MainWindow()
 	sizerTop->Add(sizer2, 1, wxEXPAND, 5);
 	sizerTop->AddSpacer(15);
 	sizerTop->Add(sizer3, 1, wxEXPAND, 5);
-//	sizerTop->AddGrowableCol(1);
 
-	// testing progress bar
-	//m_gProgress->Pulse();
 	m_gProgress->SetValue(0);
 
 	m_bCancel->Enable(false);
@@ -516,6 +617,7 @@ MainWindow::MainWindow()
 	this->SetSizer(sizer);
 
 	// long initialization of Python
+	//Layout();
 	//SetupPython();
 }
 
@@ -543,6 +645,47 @@ void MainWindow::OnDateClick(wxMouseEvent& event)
 
 }
 
+void MainWindow::OnActivate(wxActivateEvent& evt)
+{
+	if (evt.GetActive())
+		SetupPython();
+}
+
+void MainWindow::OnSetFocus(wxFocusEvent& evt)
+{
+	SetupPython();
+	evt.Skip();
+}
+
+wxWindow* GetCurrentTopLevelWindow() {
+	wxWindowList& wl = ::wxTopLevelWindows;
+	for (wxWindowList::iterator it = wl.begin(); it != wl.end(); ++it)
+		if (wxTopLevelWindow* tlw = dynamic_cast<wxTopLevelWindow*>(*it))
+			if (tlw->IsShown() && tlw->IsActive())
+				return tlw;
+
+	return 0;
+}
+
+
+void MainWindow::OnIdle(wxIdleEvent& evt)
+{
+//	SetupPython();
+	if (!m_pythonInstalled) {
+		if (CheckPythonPackage("suni"))
+			m_pythonInstalled = true;
+		else {
+			wxBusyCursor wait;
+			MyMessageDialog dlg(this, "Installing the SUNI model.\nPlease note that it may take a few minutes to complete the initial installation.\nOnce installed, you will be able to estimate the solar uncertainty using the 'Start' button.", "Solar Uncertainty Integrator", wxCENTER);
+			dlg.Show();
+			wxGetApp().SafeYieldFor(& dlg, true);
+			InstallPython();
+			InstallPythonPackage("suni");
+			dlg.Close();
+			m_pythonInstalled = true;
+		}
+	}
+}
 
 wxString MainWindow::GetProjectDisplayName()
 {
@@ -984,17 +1127,6 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		break;
 	case ID_BTN_CANCEL: // enable after running
 		m_cancelled = true;
-		/*
-		try {
-			// Send Ctrl+C to the child process.
-#ifdef __WINDOWS__
-//			GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_pi.dwProcessId);
-#endif
-		}
-		catch (std::runtime_error e) {
-			wxMessageBox(e.what(), "Python Error");
-		}
-		*/
 		break;
 	case ID_BTN_INPUTFILE:
 		{
@@ -1441,12 +1573,13 @@ void MainWindow::UpdateProgressBar()
 
 wxThread::ExitCode MainWindow::Entry()
 {
-
 	size_t offset = 0;
 	unsigned long m_bread;   //bytes read
-	unsigned long m_breadctrlc;   //bytes read
 	unsigned long m_bread_last = 0;
 	unsigned long m_avail;   //bytes available
+	unsigned long m_bread_err;   //bytes read
+	unsigned long m_bread_err_last = 0;
+	unsigned long m_avail_err;   //bytes available
 	PROCESS_INFORMATION m_pi;
 	STARTUPINFO m_si;
 	SECURITY_ATTRIBUTES m_sa;
@@ -1460,42 +1593,38 @@ wxThread::ExitCode MainWindow::Entry()
 	CA2T programpath(m_pythonpath.c_str());
 	CA2T programargs(m_pythonargs.c_str());
 
-	char ctrlc[1];
-	ctrlc[0] = 3;
-	CA2T ctrlct(ctrlc);
-
 
 	m_sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	m_sa.bInheritHandle = TRUE;
 	m_sa.lpSecurityDescriptor = NULL;
 	if (!CreatePipe(&m_stdout_rd, &m_stdout_wr, &m_sa, 0)) {
-		//			goto done;
-	}
-
-
-	if (!CreatePipe(&m_stdout_rd, &m_stdout_wr, &m_sa, 0)) {
-		//			goto done;
+		return  (wxThread::ExitCode)1;
 	}
 	if (!SetHandleInformation(m_stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
-		//			goto done;
+		return  (wxThread::ExitCode)1;
 	}
+	if (!CreatePipe(&m_stderr_rd, &m_stderr_wr, &m_sa, 0)) {
+		return  (wxThread::ExitCode)1;
+	}
+	if (!SetHandleInformation(m_stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
+		return  (wxThread::ExitCode)1;
+	}
+
 	//set startupinfo for the spawned process
 	GetStartupInfo(&m_si);
 
 	m_si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-//	m_si.wShowWindow = SW_HIDE; // for production
-	m_si.wShowWindow = SW_SHOW; // for debugging
-			//set the new handles for the child process
+	m_si.wShowWindow = SW_HIDE; // for production
+//	m_si.wShowWindow = SW_SHOW; // for debugging
+	//set the new handles for the child process
 	m_si.hStdOutput = m_stdout_wr;
+	m_si.hStdError = m_stderr_wr;
+
 
 	char buffer[BUFSIZE];
-	char bufferctrlc[BUFSIZE];
+	char buffererr[BUFSIZE];
 
 	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &m_si, &m_pi)) { // production
-//	if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &m_si, &m_pi)) { // debugging FALSE instead of TRUE shows console output but cannot capture buffer
-//		AttachConsole(m_pi.dwProcessId);
-//		SetConsoleCtrlHandler(NULL, true);
-//		while (!GetThread()->TestDestroy()) {
 		while (1) {
 			PeekNamedPipe(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, &m_avail, NULL);
 			//				PeekNamedPipe(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, &m_err_avail, NULL);
@@ -1508,14 +1637,7 @@ wxThread::ExitCode MainWindow::Entry()
 						wxCriticalSectionLocker lock(m_dataCS);
 						memcpy(m_data + offset, buffer, BUFSIZE - 1);
 						if (m_cancelled) {
-						//	TransactNamedPipe(m_stdout_rd, ctrlct, (lstrlen(ctrlct) + 1) * sizeof(TCHAR), bufferctrlc, BUFSIZE - 1, &m_breadctrlc, NULL);
-//							GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0); // does nothing
-						//	break; // kills thread and all running python processes but no Ctrl+C
-						//	SendCtrlC(m_pi.dwProcessId); // does nothing
-//							SendSIGINT(m_pi.hProcess); 
-//							FreeConsole();
-							if (AttachConsole(m_pi.dwProcessId))
-							{
+							if (AttachConsole(m_pi.dwProcessId)) {
 								// Disable Ctrl-C handling for our program
 								SetConsoleCtrlHandler(NULL, true);
 
@@ -1526,14 +1648,21 @@ wxThread::ExitCode MainWindow::Entry()
 //								SetConsoleCtrlHandler(NULL, false);
 //								FreeConsole();
 //								WaitForSingleObject(m_pi.hProcess, 10000);// exception
-								wxMilliSleep(10000);
-								ReadFile(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, NULL);
+//								wxMilliSleep(10000);
+								while (1) {
+									PeekNamedPipe(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, &m_avail, NULL);
+									if (m_bread_err != 0) {
+										if (ReadFile(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, NULL)) {
+											m_bread_err_last = m_bread_err;
+										}
+									}
+									else if (m_bread_err_last > 0) {
+										break;
+									}
+									wxMilliSleep(500);
+								}
+								break;
 							}
-//							wxMilliSleep(500);
-							break;
-							// break or keep reading output
-							//m_cancelled = false; // need to resolve with error messages
-							//ReadFile(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, NULL);
 						}
 						UpdateProgressBar();
 					}
@@ -1546,9 +1675,6 @@ wxThread::ExitCode MainWindow::Entry()
 			wxMilliSleep(500);
 		//	wxGetApp().Yield();
 		}
-		//			WaitForSingleObject(m_pi.hProcess, INFINITE);
-		//			GetExitCodeProcess(m_pi.hProcess, &ReturnValue);
-
 
 		CloseHandle(m_pi.hThread);
 		CloseHandle(m_pi.hProcess);
@@ -1561,27 +1687,16 @@ wxThread::ExitCode MainWindow::Entry()
 			CloseHandle(handle);
 		}
 	}
-	/*
-	if (m_buf[0] == '\0') {
-		if (m_err_buf[0] == '\0')
-			throw std::runtime_error("SUNI error. Function did not return a response and no error.");
-		else
-			return m_err_buf;
-		throw std::runtime_error("SUNI error. Function did not return a response.");
-	}
-	//		return buf;
-
-	FreeConsole();
-	*/
 	if (m_cancelled) {
 		m_messages.Add("Process cancelled by user.");
+		wxString str(buffererr);
+		m_messages = wxSplit(str, '\n');
 	}
 	else {
 		wxString str(m_data);
 		m_messages = wxSplit(str, '\n');
 	}
 	return  (wxThread::ExitCode)0;
-	
 }
 
 
@@ -1829,106 +1944,6 @@ void MainWindow::LoadPythonConfig() {
 	}
 }
 
-class MyMessageDialog : public wxDialog {
-public:
-	MyMessageDialog(wxWindow* parent,
-		const wxString& message,
-		const wxString& title,
-		long buttons,
-		const wxPoint& pos = wxDefaultPosition,
-		const wxSize& size = wxDefaultSize,
-		bool addButtonClose = false)
-		: wxDialog(parent, wxID_ANY, title, pos, size, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
-		SetEscapeId(wxID_NONE);
-
-		wxPanel* panel = new wxPanel(this);
-		panel->SetBackgroundColour(*wxWHITE);
-
-		wxBoxSizer* szpnl = new wxBoxSizer(wxVERTICAL);
-
-		int wrap = 600;
-		if (size != wxDefaultSize && size.x > 100)
-			wrap = size.x - 40;
-
-		int nlpos = message.Find('\n');
-		if (nlpos > 0) {
-			wxStaticText* label1 = new wxStaticText(panel, wxID_ANY, message.Left(nlpos), wxDefaultPosition,
-				wxDefaultSize, wxALIGN_LEFT);
-			wxFont font(label1->GetFont());
-			font.SetPointSize(font.GetPointSize() + 2);
-			label1->SetFont(font);
-			label1->SetForegroundColour(wxColour(0, 0, 120));
-			label1->Wrap(wrap);
-
-			wxStaticText* label2 = new wxStaticText(panel, wxID_ANY, message.Mid(nlpos + 1), wxDefaultPosition,
-				wxDefaultSize, wxALIGN_LEFT);
-			label2->Wrap(wrap);
-
-			szpnl->Add(label1, 0, wxTOP | wxLEFT | wxRIGHT | wxEXPAND, 20);
-			szpnl->Add(label2, 1, wxALL | wxEXPAND, 20);
-		}
-		else {
-			wxStaticText* label = new wxStaticText(panel, wxID_ANY, message, wxDefaultPosition, wxDefaultSize,
-				wxALIGN_LEFT);
-			label->Wrap(wrap);
-
-			szpnl->Add(label, 1, wxALL | wxEXPAND, 20);
-		}
-
-		if (addButtonClose) {
-			wxButton* buttonClose = new wxButton(this, wxID_OK, wxT("OK"));
-			szpnl->Add(buttonClose, 1, wxCENTER);
-		}
-
-		panel->SetSizer(szpnl);
-
-		wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-		sizer->Add(panel, 1, wxALL | wxEXPAND, 0);
-		sizer->Add(CreateButtonSizer(buttons), 0, wxALL | wxEXPAND, 11);
-
-		SetSizerAndFit(sizer);
-
-		if (size != wxDefaultSize)
-			SetClientSize(size);
-		else {
-			wxSize sz = GetClientSize();
-			if (sz.x < 340) sz.x = 340;
-			if (sz.y < 120) sz.y = 120;
-			SetClientSize(sz);
-		}
-
-		if (pos == wxDefaultPosition) {
-			if (parent)
-				CenterOnParent();
-			else
-				CenterOnScreen();
-		}
-	}
-
-	void OnClose(wxCloseEvent&) {
-		EndModal(wxID_CANCEL);
-	}
-
-	void OnCharHook(wxKeyEvent& evt) {
-		if (evt.GetKeyCode() == WXK_ESCAPE)
-			EndModal(wxID_CANCEL);
-	}
-
-	void OnCommand(wxCommandEvent& evt) {
-		EndModal(evt.GetId());
-	}
-};
-
-
-wxWindow* GetCurrentTopLevelWindow() {
-	wxWindowList& wl = ::wxTopLevelWindows;
-	for (wxWindowList::iterator it = wl.begin(); it != wl.end(); ++it)
-		if (wxTopLevelWindow* tlw = dynamic_cast<wxTopLevelWindow*>(*it))
-			if (tlw->IsShown() && tlw->IsActive())
-				return tlw;
-
-	return 0;
-}
 
 
 bool MainWindow::SetupPython()
@@ -1939,10 +1954,9 @@ bool MainWindow::SetupPython()
 		ret = true;
 	else {
 		wxBusyCursor wait;
-		MyMessageDialog dlg(GetCurrentTopLevelWindow(), "Installing the SUNI model. Please note that it may take a few minutes to complete the initial installation. Once installed, you will be able to estimate the solar uncertainty using the 'Start' button.",	"Solar Uncertainty Integrator",	wxCENTER, wxDefaultPosition, wxDefaultSize);
+		MyMessageDialog dlg(this, "Installing the SUNI model.\nPlease note that it may take a few minutes to complete the initial installation.\nOnce installed, you will be able to estimate the solar uncertainty using the 'Start' button.", "Solar Uncertainty Integrator", wxCENTER);
 		dlg.Show();
-		//wxGetApp().Yield(true);
-
+		wxGetApp().SafeYieldFor(&dlg, true);
 		InstallPython();
 		InstallPythonPackage("suni");
 		dlg.Close();
@@ -2035,7 +2049,14 @@ bool MainWindow::InvokePython()
 		// user cancelled
 		if (m_cancelled) {
 			m_cancelled = false;
-			wxMessageBox("Uncertainty analysis cancelled.", "User Cancelled", wxICON_INFORMATION);
+			wxString sPythonMessage = "";
+			for (size_t i = 0; i < strMessages.GetCount(); i++) {
+				if (strMessages[i].Lower().Find("interrupt") != wxNOT_FOUND)
+					sPythonMessage = strMessages[i];
+			}
+			if (sPythonMessage.length() > 0)
+				sPythonMessage = "\nSUNI: " + sPythonMessage;
+			wxMessageBox("Uncertainty analysis cancelled." + sPythonMessage, "User Cancelled", wxICON_INFORMATION);
 		}
 		else {
 			bool bError = false;
@@ -2262,7 +2283,6 @@ bool SUIApp::OnInit()
 	// we want to do our own handling of command line
 	// arguments.
 
-//	wxMetroTheme::SetTheme( new SAMThemeProvider );
 	// set app and vendor
 	SetAppName("");
 	SetVendorName("");
@@ -2288,8 +2308,7 @@ bool SUIApp::OnInit()
 
 
 	g_mainWindow = new MainWindow();
-	SetTopWindow(g_mainWindow);
-	g_mainWindow->Show();
+//	g_mainWindow->Show(true);
 
 	bool first_load = true;
 	wxString fl_key = wxString::Format("first_load");
@@ -2346,8 +2365,30 @@ bool SUIApp::OnInit()
 		wxMessageBox(ex.what(),"Initialization error", wxICON_ERROR);
 	}
 */	
-	return g_mainWindow->SetupPython();
-//	return true;
+	SetTopWindow(g_mainWindow);
+	g_mainWindow->Show();
+//	g_mainWindow->SetupPython(); // main window not yet rendered
+	/*
+	bool ret = false;
+	if (g_mainWindow->CheckPythonPackage("suni"))
+		ret = true;
+	else {
+		wxBusyCursor wait;
+		MyMessageDialog dlg(NULL, "Installing the SUNI model. Please note that it may take a few minutes to complete the initial installation. Once installed, you will be able to estimate the solar uncertainty using the 'Start' button.", "Solar Uncertainty Integrator", wxCENTER, wxDefaultPosition, wxDefaultSize);
+		dlg.Show();
+		dlg.CentreOnScreen();
+		//wxGetApp().Yield(true);
+
+
+		g_mainWindow->InstallPython();
+		g_mainWindow->InstallPythonPackage("suni");
+		dlg.Close();
+		ret = true;
+	}
+
+	return ret;
+	*/
+	return true;
 }
 
 

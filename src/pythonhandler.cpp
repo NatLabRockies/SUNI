@@ -219,8 +219,6 @@ int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig
 	s_info.cb = sizeof(s_info);
  
     if (CreateProcess(programpath, programargs, NULL, NULL, 0, CREATE_NO_WINDOW, NULL, NULL, &s_info, &p_info)) {
-//        if (CreateProcess(programpath, programargs, NULL, NULL, 0, CREATE_NO_WINDOW, NULL, NULL, &s_info, &p_info)) {
-            //        if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, 0, NULL, NULL, &s_info, &p_info)) {
         WaitForSingleObject(p_info.hProcess, INFINITE);
 		GetExitCodeProcess(p_info.hProcess, &ReturnValue);
 		CloseHandle(p_info.hProcess);

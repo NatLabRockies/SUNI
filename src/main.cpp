@@ -2103,13 +2103,13 @@ bool MainWindow::InvokePython()
 					wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
 					if (wxFileExists(sfn)) {
 						wxLaunchDefaultApplication(sfn);
-						wxString str;
+						wxString s;
 						wxTextFile tFile;
 						tFile.Open(sfn);
-						str = tFile.GetFirstLine() + "\n";
+						s = tFile.GetFirstLine() + "\n";
 						while (!tFile.Eof())
-							str += tFile.GetNextLine() + "\n";
-						wxMessageBox(str, "Report", wxICON_NONE);
+							s += tFile.GetNextLine() + "\n";
+						wxMessageBox(s, "Report", wxICON_NONE);
 					}
 				}
 				else {

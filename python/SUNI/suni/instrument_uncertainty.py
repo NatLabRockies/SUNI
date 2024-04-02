@@ -20,7 +20,7 @@ class _InstrumentUncertainties:
             Path to directory containing the "Upyranometer.csv" and
             "Upyrheliometer.csv" files. By default, ``None``.
         """
-        self.db = Path(db or REPO_DIR.parent / "instrument_database")
+        self.db = Path(db or REPO_DIR / "instrument_database")
         self.pyranometer_uncertainty = None
         self.pyranometer_cal_default = None
         self.pyrheliometer_uncertainty = None

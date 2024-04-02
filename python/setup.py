@@ -51,4 +51,5 @@ setup(
         "dev": TEST_REQUIREMENTS + DEV_REQUIREMENTS,
         "docs": TEST_REQUIREMENTS + DEV_REQUIREMENTS + DOC_REQUIREMENTS,
     },
+    include_package_data=True,
 )

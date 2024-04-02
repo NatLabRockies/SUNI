@@ -670,7 +670,6 @@ wxWindow* GetCurrentTopLevelWindow() {
 
 void MainWindow::OnIdle(wxIdleEvent& evt)
 {
-//	SetupPython();
 	if (!m_pythonInstalled) {
 		if (CheckPythonPackage("suni"))
 			m_pythonInstalled = true;
@@ -685,6 +684,7 @@ void MainWindow::OnIdle(wxIdleEvent& evt)
 			m_pythonInstalled = true;
 		}
 	}
+	m_bStart->Enable(CheckInputs());
 }
 
 wxString MainWindow::GetProjectDisplayName()
@@ -711,6 +711,26 @@ void MainWindow::OnInternalCommand( wxCommandEvent &evt )
 		wxLaunchDefaultBrowser(SUIApp::GetUserLocalDataDir());
 		break;
 	}
+}
+
+bool MainWindow::CheckInputs()
+{
+	bool ret = true;
+	for (auto& widget : p->GetChildren()) {
+		auto ci = widget->GetClassInfo();
+		wxString typeName = ci->GetClassName();
+		wxString widgetName = widget->GetName();
+		if (typeName == "wxTextCtrl") {
+			// dates can be blank
+			if (widgetName.Lower().Find("date") == wxNOT_FOUND)
+				ret = ret && (((wxTextCtrl*)widget)->GetValue().length() > 0);
+		}
+		else if (typeName == "wxComboBox") {
+			ret = ret && (((wxComboBox*)widget)->GetValue().length() > 0);
+		}
+	}
+	return ret;
+
 }
 
 bool MainWindow::OpenConfiguration(const wxString& filename)

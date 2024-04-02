@@ -166,6 +166,7 @@ private:
 	bool m_pythonInstalled;
 
 	void GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert);
+	bool CheckInputs();
 
 	bool InvokePython();
 	void LoadConfig();

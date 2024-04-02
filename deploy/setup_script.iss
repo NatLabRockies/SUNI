@@ -26,8 +26,8 @@ ArchitecturesInstallIn64BitMode=x64
 
 
 ; UPDATE THESE TO MATCH THE VERSION
-AppVerName=SUI 2024.2.9
-DefaultDirName={sd}\SUI\2024.2.9
+AppVerName=SUI 2024.4.2
+DefaultDirName={sd}\SUI\2024.4.2
 
 AppPublisher=National Renewable Energy Laboratory
 AppPublisherURL=
@@ -52,11 +52,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 
-Source: "../../build/SUNI/Release/python/*"; DestDir: "{app}/python"; Excludes: ".svn,*.map"; Flags: ignoreversion recursesubdirs createallsubdirs
+;Source: "../../build/SUNI/Release/python/*"; DestDir: "{app}/python"; Excludes: ".svn,*.map"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "msvcp140.dll"; DestDir: "{app}/"; Excludes: ".svn,*.map";  Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "vcruntime140.dll"; DestDir: "{app}/"; Excludes: ".svn,*.map";  Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "vcruntime140_1.dll"; DestDir: "{app}/"; Excludes: ".svn,*.map";  Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "../../build/SUNI/Release/sui.exe"; DestDir: "{app}/"; Excludes: ".svn,*.map";  Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "Configuration Files/*"; DestDir: "{app}/Configuration Files"; Excludes: ".svn,*.map"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "Instrument Files/*"; DestDir: "{app}/Instrument Files"; Excludes: ".svn,*.map"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "System Files/*"; DestDir: "{app}/System Files"; Excludes: ".svn,*.map"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files

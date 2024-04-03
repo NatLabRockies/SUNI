@@ -1,7 +1,7 @@
 {
-    "InputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\bad_seriqc\\SRRL2007_BOUNDARY1_01.csv",
-    "OutputFile": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\bad_seriqc\\SRRL2007_BOUNDARY1_01_Unc.csv",
-    "SERIQCpath": "C:\\Projects\\Github\\NREL\\SolarResourceGUI\\SUNI\\python\\tests\\data\\bad_seriqc",
+    "InputFile": "C:\\Projects\\Github\\NREL\\Solar Resource GUI\\SUNI\\python\\tests\\data\\bad_seriqc\\SRRL2007_BOUNDARY1_01.csv",
+    "OutputFile": "C:\\Projects\\Github\\NREL\\Solar Resource GUI\\SUNI\\python\\tests\\data\\bad_seriqc\\SRRL2007_BOUNDARY1_01_Unc.csv",
+    "SERIQCpath": "C:\\Projects\\Github\\NREL\\Solar Resource GUI\\SUNI\\python\\tests\\data\\bad_seriqc",
     "StationID": "NRELSR",
     "Interval": 1,
     "GHIid": "14003",

@@ -220,29 +220,29 @@ else()
     )
     endforeach( folder_i )
 
-    set( PYTHON_FOLDERS
-        "SUNI"
-        "SERIQC"
-    )
-    set (SYSTEM_FILES "System Files")
+#    set( PYTHON_FOLDERS
+#        "SUNI"
+#        "SERIQC"
+#    )
+#    set (SYSTEM_FILES "System Files")
 
     #CMAKE requires extra manipulation with Debug and Release builds
-    foreach( folder_i ${PYTHON_FOLDERS})
-        add_custom_command(
-        TARGET ${SUI_EXE}
-        PRE_BUILD
-        COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_directory ${SUINRELDIR}/python/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Debug/${SYSTEM_FILES}/${folder_i}
-    )
-   endforeach( folder_i )
-   foreach( folder_i ${PYTHON_FOLDERS})
-        add_custom_command(
-        TARGET ${SUI_EXE}
-        PRE_BUILD
-        COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_directory ${SUINRELDIR}/python/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Release/${SYSTEM_FILES}/${folder_i}
-    )
-    endforeach( folder_i )
+#    foreach( folder_i ${PYTHON_FOLDERS})
+#        add_custom_command(
+#        TARGET ${SUI_EXE}
+#        PRE_BUILD
+#        COMMAND ${CMAKE_COMMAND}
+#        ARGS -E copy_directory ${SUINRELDIR}/python/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Debug/${SYSTEM_FILES}/${folder_i}
+#    )
+#   endforeach( folder_i )
+#   foreach( folder_i ${PYTHON_FOLDERS})
+#        add_custom_command(
+#        TARGET ${SUI_EXE}
+#        PRE_BUILD
+#        COMMAND ${CMAKE_COMMAND}
+#        ARGS -E copy_directory ${SUINRELDIR}/python/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Release/${SYSTEM_FILES}/${folder_i}
+#    )
+#    endforeach( folder_i )
 
 
 endif()

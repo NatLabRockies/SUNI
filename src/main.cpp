@@ -1144,7 +1144,7 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 			InvokePython();
 		}
 		catch (std::runtime_error e) {
-			wxMessageBox(e.what(), "Python Error");
+			wxMessageBox(e.what(), "Python Error", wxICON_ERROR);
 		}
 		m_bCancel->Enable(false);
 		break;
@@ -1596,6 +1596,8 @@ void MainWindow::UpdateProgressBar()
 
 wxThread::ExitCode MainWindow::Entry()
 {
+	bool success = true;
+	size_t python_startup_delay = 0;
 	size_t offset = 0;
 	unsigned long m_bread;   //bytes read
 	unsigned long m_bread_last = 0;
@@ -1686,23 +1688,85 @@ wxThread::ExitCode MainWindow::Entry()
 								}
 								break;
 							}
+							else {
+								break; // console did not attach
+							}
 						}
 						UpdateProgressBar();
 					}
 				}
 			}
-			else if (m_bread_last > 3) // 100%
+			else if (m_bread_last > 3) // 100% - success
 			{
 				break;
 			}
+			else if (python_startup_delay < 100) {
+				python_startup_delay++;
+			}
+			else { // check for errors - endless loop with 2024.4.2 beta release
+				success = false;
+				// following not executed unless breakpoint and then gets correct response
+				while(1) {
+					PeekNamedPipe(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, &m_avail, NULL);
+					if (m_bread_err != 0) {
+						if (ReadFile(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, NULL)) {
+							m_bread_err_last = m_bread_err;
+							{
+								wxCriticalSectionLocker lock(m_dataCS);
+								memcpy(m_data + offset, buffererr, BUFSIZE - 1);
+							}
+						}
+					}
+					else if (m_bread_err_last > 0) {
+						break;
+					}
+					else {
+						if (m_cancelled) {
+							if (AttachConsole(m_pi.dwProcessId)) {
+								// Disable Ctrl-C handling for our program
+								SetConsoleCtrlHandler(NULL, true);
+
+								GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0); // SIGINT
+
+								//Re-enable Ctrl-C handling or any subsequently started
+								//programs will inherit the disabled state.
+		//								SetConsoleCtrlHandler(NULL, false);
+		//								FreeConsole();
+		//								WaitForSingleObject(m_pi.hProcess, 10000);// exception
+		//								wxMilliSleep(10000);
+								while (1) {
+									PeekNamedPipe(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, &m_avail, NULL);
+									if (m_bread_err != 0) {
+										if (ReadFile(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, NULL)) {
+											m_bread_err_last = m_bread_err;
+										}
+									}
+									else if (m_bread_err_last > 0) {
+										break;
+									}
+									wxMilliSleep(500);
+								}
+								break;
+							}
+							else { // cannot attach console so process failed
+								break; // no pipes to read
+							}
+						}
+
+					}
+					break; // out of stderr check
+				}
+				break; // out of no stdout
+			}
 			wxMilliSleep(500);
 		//	wxGetApp().Yield();
-		}
-
+		} // main loop
 		CloseHandle(m_pi.hThread);
 		CloseHandle(m_pi.hProcess);
 	}
-
+	else {
+		success = false;
+	}
 
 	std::vector<HANDLE> handles = { m_stdin_rd, m_stdin_wr, m_stdout_rd, m_stdout_wr, m_stderr_rd, m_stderr_wr };
 	for (HANDLE handle : handles) {
@@ -1710,15 +1774,23 @@ wxThread::ExitCode MainWindow::Entry()
 			CloseHandle(handle);
 		}
 	}
+	
 	if (m_cancelled) {
 		m_messages.Add("Process cancelled by user.");
 		wxString str(buffererr);
 		m_messages = wxSplit(str, '\n');
 	}
-	else {
+	else if (success) {
 		wxString str(m_data);
 		m_messages = wxSplit(str, '\n');
 	}
+	else { 
+		// success set to false but see note above about execution with breakpoints only!
+		//wxString str(buffererr);
+		wxString str = "Error:\nCheck Python installation under System Files.\n ";
+		m_messages = wxSplit(str, '\n');
+	}
+	
 	return  (wxThread::ExitCode)0;
 }
 
@@ -2000,6 +2072,19 @@ bool MainWindow::InvokePython()
 		return false;
 	}
 
+	if (!SaveConfiguration(m_projectFileName)) {
+		throw std::runtime_error("Save configuration failed");
+		return false;
+	}
+
+	// remove any existing report files
+	wxFileName fnInputFile = InputFile->GetValue();
+	wxFileName fnOutputFile = OutputFile->GetValue();
+	wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
+	if (wxFileExists(sfn)) {
+		wxRemoveFile(sfn);
+	}
+
 
 	try {
 		wxBusyCursor wait;
@@ -2032,32 +2117,7 @@ bool MainWindow::InvokePython()
 		}
 
 
-/*
-		std::unique_ptr<SimulationThreadWindows> sth = std::make_unique<SimulationThreadWindows>(pythonpath, pythonarg);
-			sth->Add(pythonpath, pythonarg);
-		sth->Create();
-		sth->Run();
 
-		while (sth->IsRunning()) {
-			wxString update;
-			float per = sth->GetPercent(&update);
-			m_gProgress->SetValue((int)per);
-			m_gProgress->Refresh();
-			m_gProgress->Layout();
-
-			wxGetApp().Yield();
-
-			if (m_cancelled) {
-				sth->Cancel();
-				m_cancelled = false;
-			}
-
-			::wxMilliSleep(10);
-		}
-		m_gProgress->SetValue(100);
-
-
-*/
 //			std::string output_json = CallPythonModuleWindows(str);
 #else
 		std::string output_json = CallPythonModule(m_projectFileName.ToStdString());
@@ -2086,8 +2146,9 @@ bool MainWindow::InvokePython()
 			wxString sError = "";
 
 			if (strMessages.GetCount() > 0) {
-				bError = strMessages[0].Lower().Find("error") != wxNOT_FOUND;
-				for (size_t i = 0; i < strMessages.GetCount(); i++) {
+//				bError = strMessages[0].Lower().Find("error") != wxNOT_FOUND;
+				for (size_t i = 0; i < strMessages.GetCount() -1; i++) {
+					bError = bError || strMessages[i].Lower().Find("error") != wxNOT_FOUND;
 					if (bError) {
 						sError += strMessages[i] + "\n";
 					}

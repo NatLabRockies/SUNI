@@ -62,7 +62,7 @@ def process_from_config(cfg, from_gui=True):
         return _process(cfg, from_gui=from_gui)
 
     try:
-        out = _process(cfg, from_gui=from_gui)
+        return _process(cfg, from_gui=from_gui)
     except KeyboardInterrupt as cancel:
         raise cancel
     except Exception as err:

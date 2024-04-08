@@ -282,17 +282,11 @@ def test_seriqc_error_from_gui(tmp_cwd, test_data_dir):
 
     out = process_from_config(cfg, from_gui=True)
 
-    assert "err_fp" in out
-
-    fp = out["err_fp"]
-    with open(fp, "r") as fh:
-        msg = fh.read()
-
     expected_message = (
         "SERIQCError:\nNon-zero SERIQC code: 2. Decoded to the following:"
         "\n\t- Invalid month"
     )
-    assert msg == expected_message
+    assert out == expected_message
 
 
 def test_seriqc_error_bad_input_data(tmp_cwd, test_data_dir):
@@ -311,18 +305,12 @@ def test_seriqc_error_bad_input_data(tmp_cwd, test_data_dir):
 
     out = process_from_config(cfg, from_gui=True)
 
-    assert "err_fp" in out
-
-    fp = out["err_fp"]
-    with open(fp, "r") as fh:
-        msg = fh.read()
-
     expected_message = (
         "SUNIInputDataError:\nFound incorrect number of columns in input "
         "data! Ensure your input data has exactly the following columns: "
         '["DATE", "TIME", "GHI", "DNI", "DHI"]'
     )
-    assert msg == expected_message
+    assert out == expected_message
 
 
 def test_basic_run_new_instrument_uncertainty(

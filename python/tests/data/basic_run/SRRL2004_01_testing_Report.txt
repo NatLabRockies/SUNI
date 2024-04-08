@@ -19,6 +19,6 @@ Below DNI Minimum: 5 (0.3%)
 Mathematically Invalid: 0 (0.0%)
 Total Eligible Uncertainty Records: 421 (21.9%)
 
-GHI Mean U95: +/-2.3% | Standard deviation: 0.4
-DNI Mean U95: +/-1.0% | Standard deviation: 0.6
-DHI Mean U95: +/-2.3% | Standard deviation: 0.4
+GHI Mean U95: +/-3.25% | Standard deviation: 0.37
+DNI Mean U95: +/-1.48% | Standard deviation: 0.61
+DHI Mean U95: +/-3.25% | Standard deviation: 0.37

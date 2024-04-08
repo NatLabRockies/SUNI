@@ -35,4 +35,4 @@ jobs:
         python -m pip install ./python[test]
     - name: Run Pytest
       run: |
-        python -m pytest ./python/tests -v --disable-warnings --cov-config=./python/.coveragerc --cov./python
+        python -m pytest ./python/tests -v --disable-warnings --cov-config=./python/.coveragerc --cov=./python

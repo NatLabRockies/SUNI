@@ -19,9 +19,9 @@ Beginning: 1/1/2004 0:00, Ending: 1/2/2004 8:00, Data records: 1921
 Total eligible records: 421 (21.9%)
 Exceeded SERIQC max: 0 (0.0%)
 
-GHI Mean U95: +/-2.30% | Standard deviation: 0.37
-DNI Mean U95: +/-1.04% | Standard deviation: 0.61
-DHI Mean U95: +/-2.30% | Standard deviation: 0.37
+GHI Mean U95: +/-3.25% | Standard deviation: 0.37
+DNI Mean U95: +/-1.48% | Standard deviation: 0.61
+DHI Mean U95: +/-3.25% | Standard deviation: 0.37
 """
 EXPECTED_EXTENDED_GUI_REPORT = """
 Uncertainty Processing Report for SRRL2004_01_testing.csv NRELSR
@@ -30,13 +30,13 @@ Beginning: 2004-1-1 0:00, Ending: 2004-1-2 8:00, Data records: 1921
 Total eligible records: 421 (21.9%)
 Exceeded SERIQC max: 0 (0.0%)
 
-GHI Mean U95: +/-2.30% | Standard deviation: 0.37
-DNI Mean U95: +/-1.04% | Standard deviation: 0.61
-DHI Mean U95: +/-2.30% | Standard deviation: 0.37
+GHI Mean U95: +/-3.25% | Standard deviation: 0.37
+DNI Mean U95: +/-1.48% | Standard deviation: 0.61
+DHI Mean U95: +/-3.25% | Standard deviation: 0.37
 
-Urads Uncertainty Mean: +/-2.67%
-System Uncertainty Mean: +/-1.67%
-Field Uncertainty Mean: +/-0.33%
+Urads Uncertainty Mean: +/-3.79%
+System Uncertainty Mean: +/-2.36%
+Field Uncertainty Mean: +/-0.47%
 """
 
 

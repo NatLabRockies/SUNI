@@ -44,7 +44,7 @@ def convert_to_year_first(date):
     return f"{year}-{month}-{day}"
 
 
-def compute_parameter_stats(param_sum, param_sum_sq, sun_up_count, n_valid):
+def compute_parameter_stats(param_sum, param_sum_sq, n_valid):
     """Compute mean and standard deviation from parameter accumulations.
 
     Parameters
@@ -53,8 +53,6 @@ def compute_parameter_stats(param_sum, param_sum_sq, sun_up_count, n_valid):
         The sum of the parameter across all records.
     param_sum_sq : int | float
         The squared sum of the parameter across all records.
-    sun_up_count : int
-        Number of records that correspond to a "sun up" measurement.
     n_valid : int
         Number of valid records.
 
@@ -64,7 +62,7 @@ def compute_parameter_stats(param_sum, param_sum_sq, sun_up_count, n_valid):
         Mean and standard deviation values fro parameter, or -9900 if
         the statistic cannot be computed from the inputs.
     """
-    mean = (param_sum / sun_up_count) if sun_up_count > 0 else -9900
+    mean = (param_sum / n_valid) if n_valid > 0 else -9900
     if (divisor := (n_valid - 1)) > 0:
         std = sqrt(
             (round(param_sum_sq, 4) - round(param_sum**2 / n_valid, 4))

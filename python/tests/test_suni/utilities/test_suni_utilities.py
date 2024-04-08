@@ -30,10 +30,10 @@ def test_convert_to_year_first():
 def test_compute_parameter_stats():
     """Test the `compute_parameter_stats` function"""
 
-    assert compute_parameter_stats(0, 0, 0, 0) == (-9900, -9900)
-    assert compute_parameter_stats(100, 100, 0, 1) == (-9900, -9900)
-    assert compute_parameter_stats(0, 0, 100, 100) == (0, 0)
-    assert compute_parameter_stats(1000, 1000**2, 100, 100) == (10, 100)
+    assert compute_parameter_stats(0, 0, 0) == (-9900, -9900)
+    assert compute_parameter_stats(100, 100, 1) == (100, -9900)
+    assert compute_parameter_stats(0, 0, 100) == (0, 0)
+    assert compute_parameter_stats(1000, 1000**2, 100) == (10, 100)
 
 
 @pytest.mark.parametrize(

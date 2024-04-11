@@ -2151,10 +2151,13 @@ bool MainWindow::InvokePython()
 			wxString sError = "";
 
 			if (strMessages.GetCount() > 0) {
-//				bError = strMessages[0].Lower().Find("error") != wxNOT_FOUND;
 				for (size_t i = 0; i < strMessages.GetCount() -1; i++) {
 					bError = bError || strMessages[i].Lower().Find("error") != wxNOT_FOUND;
-					if (bError) {
+					// do not include number only lines per issue 40
+					double tmp;
+					wxString stmp = strMessages[i];
+					stmp.Replace("\r", "");
+					if (bError && !stmp.ToDouble(&tmp)) {
 						sError += strMessages[i] + "\n";
 					}
 				}

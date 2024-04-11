@@ -645,7 +645,6 @@ void MainWindow::OnDateClick(wxMouseEvent& event)
 	if (dlg->ShowModal() == wxID_OK) {
 		text->SetValue(dlg->GetDate());
 	}
-
 }
 
 void MainWindow::OnActivate(wxActivateEvent& evt)
@@ -687,7 +686,6 @@ void MainWindow::OnIdle(wxIdleEvent& evt)
 			m_pythonInstalled = true;
 		}
 	}
-	m_bStart->Enable(CheckInputs());
 }
 
 wxString MainWindow::GetProjectDisplayName()
@@ -1103,6 +1101,11 @@ bool MainWindow::UpdateStationIDs(const wxString& dir)
 	return ret;
 }
 
+void MainWindow::EnableStartButton(const bool& enable)
+{
+	m_bStart->Enable(enable);
+	m_bCancel->Enable(!enable);
+}
 
 
 void MainWindow::OnCommand( wxCommandEvent &evt )
@@ -1139,14 +1142,18 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		Close();
 		break;
 	case ID_BTN_START:
-		m_bCancel->Enable(true);
+		if (!CheckInputs()) {
+			wxMessageBox("Please check that all inputs have been set to valid values.","Missing Inputs", wxICON_ERROR);
+			break;
+		}
+		EnableStartButton(false);
 		try {
 			InvokePython();
 		}
 		catch (std::runtime_error e) {
 			wxMessageBox(e.what(), "Python Error", wxICON_ERROR);
 		}
-		m_bCancel->Enable(false);
+		EnableStartButton(true);
 		break;
 	case ID_BTN_CANCEL: // enable after running
 		m_cancelled = true;

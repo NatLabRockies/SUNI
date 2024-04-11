@@ -167,6 +167,7 @@ private:
 
 	void GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert);
 	bool CheckInputs();
+	void EnableStartButton(const bool& enable);
 
 	bool InvokePython();
 	void LoadConfig();

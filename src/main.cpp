@@ -1708,9 +1708,9 @@ wxThread::ExitCode MainWindow::Entry()
 			else if (python_startup_delay < 100) {
 				python_startup_delay++;
 			}
-			else { // check for errors - endless loop with 2024.4.2 beta release
+			else if (m_bread_last == 0){ // check for errors - endless loop with 2024.4.2 beta release
 				success = false;
-				// following not executed unless breakpoint and then gets correct response
+				// following not executed unless breakpoint in debug mode and then gets correct response
 				while(1) {
 					PeekNamedPipe(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, &m_avail, NULL);
 					if (m_bread_err != 0) {

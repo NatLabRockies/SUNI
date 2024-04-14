@@ -67,7 +67,7 @@ def process_from_config(cfg, from_gui=True):
         raise cancel
     except Exception as err:
         msg = f"{type(err).__name__}:\n{err}"
-    return msg
+        return msg
 
 
 def _read_data(input_file):

@@ -26,8 +26,8 @@ ArchitecturesInstallIn64BitMode=x64
 
 
 ; UPDATE THESE TO MATCH THE VERSION
-AppVerName=SUI 2024.4.3
-DefaultDirName={sd}\SUI\2024.4.3
+AppVerName=SUI 2024.4.15
+DefaultDirName={sd}\SUI\2024.4.15
 
 AppPublisher=National Renewable Energy Laboratory
 AppPublisherURL=

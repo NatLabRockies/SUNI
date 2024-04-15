@@ -1666,37 +1666,6 @@ wxThread::ExitCode MainWindow::Entry()
 					{
 						wxCriticalSectionLocker lock(m_dataCS);
 						memcpy(m_data + offset, buffer, BUFSIZE - 1);
-						if (m_cancelled) {
-							if (AttachConsole(m_pi.dwProcessId)) {
-								// Disable Ctrl-C handling for our program
-								SetConsoleCtrlHandler(NULL, true);
-
-								GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0); // SIGINT
-
-								//Re-enable Ctrl-C handling or any subsequently started
-								//programs will inherit the disabled state.
-//								SetConsoleCtrlHandler(NULL, false);
-//								FreeConsole();
-//								WaitForSingleObject(m_pi.hProcess, 10000);// exception
-//								wxMilliSleep(10000);
-								while (1) {
-									PeekNamedPipe(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, &m_avail, NULL);
-									if (m_bread_err != 0) {
-										if (ReadFile(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, NULL)) {
-											m_bread_err_last = m_bread_err;
-										}
-									}
-									else if (m_bread_err_last > 0) {
-										break;
-									}
-									wxMilliSleep(500);
-								}
-								break;
-							}
-							else {
-								break; // console did not attach
-							}
-						}
 						UpdateProgressBar();
 					}
 				}
@@ -1725,46 +1694,42 @@ wxThread::ExitCode MainWindow::Entry()
 					else if (m_bread_err_last > 0) {
 						break;
 					}
-					else {
-						if (m_cancelled) {
-							if (AttachConsole(m_pi.dwProcessId)) {
-								// Disable Ctrl-C handling for our program
-								SetConsoleCtrlHandler(NULL, true);
-
-								GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0); // SIGINT
-
-								//Re-enable Ctrl-C handling or any subsequently started
-								//programs will inherit the disabled state.
-		//								SetConsoleCtrlHandler(NULL, false);
-		//								FreeConsole();
-		//								WaitForSingleObject(m_pi.hProcess, 10000);// exception
-		//								wxMilliSleep(10000);
-								while (1) {
-									PeekNamedPipe(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, &m_avail, NULL);
-									if (m_bread_err != 0) {
-										if (ReadFile(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, NULL)) {
-											m_bread_err_last = m_bread_err;
-										}
-									}
-									else if (m_bread_err_last > 0) {
-										break;
-									}
-									wxMilliSleep(500);
-								}
-								break;
-							}
-							else { // cannot attach console so process failed
-								break; // no pipes to read
-							}
-						}
-
-					}
 					break; // out of stderr check
 				}
 				break; // out of no stdout
 			}
 			wxMilliSleep(500);
-		//	wxGetApp().Yield();
+			if (m_cancelled) {
+				if (AttachConsole(m_pi.dwProcessId)) {
+					// Disable Ctrl-C handling for our program
+					SetConsoleCtrlHandler(NULL, true);
+
+					GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0); // SIGINT
+
+					//Re-enable Ctrl-C handling or any subsequently started
+					//programs will inherit the disabled state.
+//								SetConsoleCtrlHandler(NULL, false);
+//								FreeConsole();
+//								WaitForSingleObject(m_pi.hProcess, 10000);// exception
+//								wxMilliSleep(10000);
+					while (1) {
+						PeekNamedPipe(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, &m_avail, NULL);
+						if (m_bread_err != 0) {
+							if (ReadFile(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, NULL)) {
+								m_bread_err_last = m_bread_err;
+							}
+						}
+						else if (m_bread_err_last > 0) {
+							break;
+						}
+						wxMilliSleep(500);
+					}
+					break;
+				}
+				else {
+					break; // console did not attach
+				}
+			}
 		} // main loop
 		CloseHandle(m_pi.hThread);
 		CloseHandle(m_pi.hProcess);

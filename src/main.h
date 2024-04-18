@@ -145,7 +145,7 @@ private:
 //	wxSpinCtrl* MaxQC, * MinDNI, * MaxZEN;
 	// wxSpinCtrl for integer values only
 	//wxTextCtrl* MaxQC, * MinDNI, * MaxZEN;
-	wxTextCtrl *MinDNI, *MaxZEN;
+	wxTextCtrl *MinDNI, *MaxZEN, *MaxSysUncert;
 	// MaxQC changed to combo box per specifications v2 p.32
 	wxComboBox *MaxQC, *StationID, *Interval, *GHIclass, *DNIclass, *DHIclass;
 

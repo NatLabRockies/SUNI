@@ -112,7 +112,8 @@ enum { __idFirst = wxID_HIGHEST+592,
 	ID_GHIid, ID_GHImodel, ID_GHIclass, ID_GHIclassUncert, ID_GHIcalUncert, ID_GHIcalDate, ID_GHIdueDate, ID_GHIradUncert,
 	ID_DNIid, ID_DNImodel, ID_DNIclass, ID_DNIclassUncert, ID_DNIcalUncert, ID_DNIcalDate, ID_DNIdueDate, ID_DNIradUncert,
 	ID_DHIid, ID_DHImodel, ID_DHIclass, ID_DHIclassUncert, ID_DHIcalUncert, ID_DHIcalDate, ID_DHIdueDate, ID_DHIradUncert,
-	ID_MaxQC, ID_MinDNI, ID_MaxZEN, ID_DateFormat1, ID_DateFormat2, ID_ExtendedRpt, ID_BTN_START, ID_BTN_CANCEL, ID_PROGRESS, ID_CALENDAR, ID_NODATE
+	ID_MaxQC, ID_MinDNI, ID_MaxZEN, ID_MaxSysUncert, ID_DateFormat1, ID_DateFormat2, ID_ExtendedRpt, 
+	ID_BTN_START, ID_BTN_CANCEL, ID_PROGRESS, ID_CALENDAR, ID_NODATE
 };
 
 
@@ -363,7 +364,7 @@ MainWindow::MainWindow()
 #endif
 	// for JSON type loading and saving
 	m_typeInt = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval"};
-	m_typeDouble = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN"};
+	m_typeDouble = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN", "MaxSysUncert"};
 
 	m_mainMenuBar = new wxMenuBar;
 	m_pythonInstalled = false;
@@ -545,6 +546,14 @@ MainWindow::MainWindow()
 	MaxZEN->SetSizeHints(p->FromDIP(wxSize(75, 24)));
 	szH3->Add(MaxZEN);
 	sizer2->Add(szH3, 1, wxALIGN_CENTER, 5);
+	// Issue 35
+	wxBoxSizer* szH35 = new wxBoxSizer(wxHORIZONTAL);
+	szH35->Add(new wxStaticText(p, wxID_ANY, "Maximum System Uncertainty (%)", wxDefaultPosition, p->FromDIP(wxSize(250, 24)), wxALIGN_RIGHT));
+	szH35->AddSpacer(10);
+	MaxSysUncert = new wxTextCtrl(p, ID_MaxSysUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "MaxSysUncert");
+	MaxSysUncert->SetSizeHints(p->FromDIP(wxSize(75, 24)));
+	szH35->Add(MaxSysUncert);
+	sizer2->Add(szH35, 1, wxALIGN_CENTER, 5);
 	wxBoxSizer* szH4 = new wxBoxSizer(wxHORIZONTAL);
 	szH4->Add(new wxStaticText(p, wxID_ANY, "Create Extended Report", wxDefaultPosition, p->FromDIP(wxSize(250, 24)), wxALIGN_RIGHT));
 	szH4->AddSpacer(10);
@@ -921,12 +930,13 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 //		else // like group boxes or static boxes - not a failure.
 //			ret = false;// throw error?
 	}
+	/*
 	// Add required MaxSysUncert that is not an input
 	wxString widgetName = "MaxSysUncert";
 	rapidjson::Value jValue;
 	jValue = 100.0;
 	doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());
-
+	*/
 
 	rapidjson::StringBuffer os;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(os); 

@@ -108,12 +108,16 @@ enum { __idFirst = wxID_HIGHEST+592,
 
 	ID_BTN_INPUTFILE, ID_BTN_OUTPUTFILE, ID_BTN_SERIQCPATH,
 	ID_TXT_INPUTFILE, ID_TXT_OUTPUTFILE, ID_TXT_SERIQCPATH,
-	ID_INTERNAL_DATAFOLDER, ID_CMB_SERI_QC, ID_CMB_INTERVAL,
+	ID_CMB_SERI_QC, ID_CMB_INTERVAL,
 	ID_GHIid, ID_GHImodel, ID_GHIclass, ID_GHIclassUncert, ID_GHIcalUncert, ID_GHIcalDate, ID_GHIdueDate, ID_GHIradUncert,
 	ID_DNIid, ID_DNImodel, ID_DNIclass, ID_DNIclassUncert, ID_DNIcalUncert, ID_DNIcalDate, ID_DNIdueDate, ID_DNIradUncert,
 	ID_DHIid, ID_DHImodel, ID_DHIclass, ID_DHIclassUncert, ID_DHIcalUncert, ID_DHIcalDate, ID_DHIdueDate, ID_DHIradUncert,
 	ID_MaxQC, ID_MinDNI, ID_MaxZEN, ID_MaxSysUncert, ID_DateFormat1, ID_DateFormat2, ID_ExtendedRpt, 
-	ID_BTN_START, ID_BTN_CANCEL, ID_PROGRESS, ID_CALENDAR, ID_NODATE
+	ID_BTN_START, ID_BTN_CANCEL, ID_PROGRESS, ID_CALENDAR, ID_NODATE,
+	__idInternalFirst,
+	ID_INTERNAL_SHOWLOG,ID_INTERNAL_DATAFOLDER,
+	__idInternalLast
+
 };
 
 
@@ -297,6 +301,7 @@ BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_COMBOBOX(ID_DNIclass, MainWindow::UpdateClassCalDNIUncertainty)
 	EVT_RADIOBUTTON(ID_DateFormat1, MainWindow::OnDateFormat)
 	EVT_RADIOBUTTON(ID_DateFormat2, MainWindow::OnDateFormat)
+	EVT_MENU_RANGE(__idInternalFirst, __idInternalLast, MainWindow::OnInternalCommand)
 	END_EVENT_TABLE()
 
 static std::unique_ptr<std::string> s_python_path;
@@ -420,16 +425,16 @@ MainWindow::MainWindow()
 	asClass.Add("C");
 	wxStaticBoxSizer* sizer1 = new wxStaticBoxSizer(wxVERTICAL, p, "Instruments and Uncertainty");
 	//sizer1->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
-	wxFlexGridSizer* grdInstruments = new wxFlexGridSizer(4, 9, 25, 15);
+	wxFlexGridSizer* grdInstruments = new wxFlexGridSizer(4, 9, 10, 15);
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, " ", wxDefaultPosition, p->FromDIP(wxSize(50, 24))));
-	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument ID",wxDefaultPosition, p->FromDIP(wxSize(150,72))));
-	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument model", wxDefaultPosition, p->FromDIP(wxSize(75, 72))));
-	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument class", wxDefaultPosition, p->FromDIP(wxSize(75, 72))));
-	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Class Uncertainty (+/- %)", wxDefaultPosition, p->FromDIP(wxSize(75, 72))));
-	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Uncertainty (+/- %)", wxDefaultPosition, p->FromDIP(wxSize(75, 72))));
-	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Date", wxDefaultPosition, p->FromDIP(wxSize(75, 72))));
-	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Due Date", wxDefaultPosition, p->FromDIP(wxSize(75, 72))));
-	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Radiometer Uncertainty (+/- %)", wxDefaultPosition, p->FromDIP(wxSize(100, 72))));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument ID",wxDefaultPosition, p->FromDIP(wxSize(150,50))));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument model", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument class", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Class Uncertainty (+/- %)", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Uncertainty (+/- %)", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Date", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Due Date", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Radiometer Uncertainty   (+/- %)", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
 	GHIid = new wxTextCtrl(p, ID_GHIid, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIid");
 	GHIid->SetSizeHints(p->FromDIP(wxSize(150, 24)));
 	GHImodel = new wxTextCtrl(p, ID_GHImodel, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHImodel");
@@ -514,7 +519,7 @@ MainWindow::MainWindow()
 	grdInstruments->Add(DHIdueDate);
 	grdInstruments->Add(DHIradUncert);
 
-	sizer1->Add(grdInstruments, 1, wxEXPAND | wxALL, 5);
+	sizer1->Add(grdInstruments, 0, wxEXPAND , 5);
 
 	wxStaticBoxSizer* sizer2 = new wxStaticBoxSizer(wxVERTICAL, p, "Defaults");
 	//sizer2->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
@@ -529,23 +534,23 @@ MainWindow::MainWindow()
 		asMaxQC.Add(wxString::FromDouble(i));
 //	asMaxQC.Add("87");
 	MaxQC = new wxComboBox(p, ID_DHIclass, "89", wxDefaultPosition, wxDefaultSize, asMaxQC, wxCB_READONLY, wxDefaultValidator, "MaxQC");
-	MaxQC->SetSizeHints(p->FromDIP(wxSize(75, 30)));
+	MaxQC->SetSizeHints(p->FromDIP(wxSize(75, 24)));
 	szH1->Add(MaxQC);
-	sizer2->Add(szH1, 1, wxALIGN_CENTER, 5);
+	sizer2->Add(szH1, 0, wxALIGN_CENTER, 1);
 	wxBoxSizer* szH2 = new wxBoxSizer(wxHORIZONTAL);
 	szH2->Add(new wxStaticText(p, wxID_ANY, "Minimum DNI (W/m^2)", wxDefaultPosition, p->FromDIP(wxSize(250, 24)), wxALIGN_RIGHT));
 	szH2->AddSpacer(10);
 	MinDNI = new wxTextCtrl(p, ID_MinDNI, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "MinDNI");
 	MinDNI->SetSizeHints(p->FromDIP(wxSize(75, 24)));
 	szH2->Add(MinDNI);
-	sizer2->Add(szH2, 1, wxALIGN_CENTER, 5);
+	sizer2->Add(szH2, 0, wxALIGN_CENTER, 1);
 	wxBoxSizer* szH3 = new wxBoxSizer(wxHORIZONTAL);
 	szH3->Add(new wxStaticText(p, wxID_ANY, "Maximum Zenith (deg)", wxDefaultPosition, p->FromDIP(wxSize(250, 24)), wxALIGN_RIGHT));
 	szH3->AddSpacer(10);
 	MaxZEN = new wxTextCtrl(p, ID_MaxZEN, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "MaxZEN");
 	MaxZEN->SetSizeHints(p->FromDIP(wxSize(75, 24)));
 	szH3->Add(MaxZEN);
-	sizer2->Add(szH3, 1, wxALIGN_CENTER, 5);
+	sizer2->Add(szH3, 0, wxALIGN_CENTER, 1);
 	// Issue 35
 	wxBoxSizer* szH35 = new wxBoxSizer(wxHORIZONTAL);
 	szH35->Add(new wxStaticText(p, wxID_ANY, "Maximum System Uncertainty (%)", wxDefaultPosition, p->FromDIP(wxSize(250, 24)), wxALIGN_RIGHT));
@@ -553,14 +558,14 @@ MainWindow::MainWindow()
 	MaxSysUncert = new wxTextCtrl(p, ID_MaxSysUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "MaxSysUncert");
 	MaxSysUncert->SetSizeHints(p->FromDIP(wxSize(75, 24)));
 	szH35->Add(MaxSysUncert);
-	sizer2->Add(szH35, 1, wxALIGN_CENTER, 5);
+	sizer2->Add(szH35, 0, wxALIGN_CENTER, 1);
 	wxBoxSizer* szH4 = new wxBoxSizer(wxHORIZONTAL);
 	szH4->Add(new wxStaticText(p, wxID_ANY, "Create Extended Report", wxDefaultPosition, p->FromDIP(wxSize(250, 24)), wxALIGN_RIGHT));
 	szH4->AddSpacer(10);
 	ExtendedRpt = new wxCheckBox(p, ID_ExtendedRpt, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "ExtendedRpt");
 	ExtendedRpt->SetSizeHints(p->FromDIP(wxSize(75, 24)));
 	szH4->Add(ExtendedRpt);
-	sizer2->Add(szH4, 1, wxALIGN_CENTER, 5);
+	sizer2->Add(szH4, 0, wxALIGN_CENTER, 1);
 	wxBoxSizer* szH5 = new wxBoxSizer(wxHORIZONTAL);
 	szH5->Add(new wxStaticText(p, wxID_ANY, "Date format:", wxDefaultPosition, p->FromDIP(wxSize(150, 24)), wxALIGN_RIGHT));
 	szH5->AddSpacer(10);
@@ -573,7 +578,7 @@ MainWindow::MainWindow()
 	DateFormat1 = new wxRadioButton(p, ID_DateFormat2, asDateFormat[1], wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DateFormat");
 	DateFormat1->SetSizeHints(p->FromDIP(wxSize(150, 24)));
 	szH5->Add(DateFormat1);
-	sizer2->Add(szH5, 1, wxALIGN_CENTER, 5);
+	sizer2->Add(szH5, 0, wxALIGN_CENTER, 1);
 
 
 
@@ -587,10 +592,12 @@ MainWindow::MainWindow()
 	m_bCancel = new wxButton(p, ID_BTN_CANCEL, "Cancel");
 	m_bCancel->SetSizeHints(p->FromDIP(wxSize(75, 24)));
 	szButtons->Add(m_bCancel);
-	sizer3->Add(szButtons, 1, wxALIGN_CENTER, 25);
+	sizer3->Add(szButtons, 0, wxALIGN_CENTER, 10);
 	m_gProgress = new wxGauge(p, ID_PROGRESS, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL);
 	m_gProgress->SetSizeHints(p->FromDIP(wxSize(1000, 24)));
-	sizer3->Add(m_gProgress, 1, wxEXPAND, 2);
+	wxBoxSizer* szGauge = new wxBoxSizer(wxHORIZONTAL);
+	szGauge->Add(m_gProgress, 1, wxEXPAND | wxALL, 2);
+	sizer3->Add(szGauge, 0, wxEXPAND | wxHORIZONTAL, 2);
 	wxBoxSizer* szPercent = new wxBoxSizer(wxHORIZONTAL);
 	szPercent->Add(new wxStaticText(p, wxID_ANY, "0"));
 	szPercent->AddStretchSpacer();
@@ -598,20 +605,20 @@ MainWindow::MainWindow()
 	szPercent->AddStretchSpacer();
 	szPercent->Add(new wxStaticText(p, wxID_ANY, "100"));
 	szPercent->SetSizeHints(m_gProgress);
-	sizer3->Add(szPercent, 1, wxEXPAND, 2);
+	sizer3->Add(szPercent, 0, wxEXPAND, 2);
 
 
 	// add both columns to grid sizer
 //	wxFlexGridSizer* sizerTop = new wxFlexGridSizer(2, 2, wxSize(50, 50));
 	wxBoxSizer* sizerTop = new wxBoxSizer(wxVERTICAL);
 	sizerTop->AddSpacer(10);
-	sizerTop->Add(sizer0, 1, wxEXPAND, 5);
+	sizerTop->Add(sizer0, 0, wxEXPAND, 5);
 	sizerTop->AddSpacer(15);
-	sizerTop->Add(sizer1, 1, wxEXPAND, 5);
+	sizerTop->Add(sizer1, 0, wxEXPAND, 5);
 	sizerTop->AddSpacer(15);
-	sizerTop->Add(sizer2, 1, wxEXPAND, 5);
+	sizerTop->Add(sizer2, 0, wxEXPAND, 5);
 	sizerTop->AddSpacer(15);
-	sizerTop->Add(sizer3, 1, wxEXPAND, 5);
+	sizerTop->Add(sizer3, 0, wxEXPAND, 5);
 
 	m_gProgress->SetValue(0);
 
@@ -627,6 +634,14 @@ MainWindow::MainWindow()
 	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 	sizer->Add(p, 1, wxEXPAND);
 	this->SetSizer(sizer);
+
+
+
+	std::vector<wxAcceleratorEntry> entries;
+	entries.push_back(wxAcceleratorEntry(wxACCEL_SHIFT, WXK_F4, ID_INTERNAL_SHOWLOG));
+	entries.push_back(wxAcceleratorEntry(wxACCEL_SHIFT, WXK_F9, ID_INTERNAL_DATAFOLDER));
+	SetAcceleratorTable(wxAcceleratorTable(entries.size(), &entries[0]));
+
 
 	// long initialization of Python
 	//Layout();
@@ -717,6 +732,10 @@ void MainWindow::OnInternalCommand( wxCommandEvent &evt )
 {
 	switch (evt.GetId())
 	{
+	case ID_INTERNAL_SHOWLOG:
+		SUILogWindow::Setup();
+		break;
+
 	case ID_INTERNAL_DATAFOLDER:
 		wxLaunchDefaultBrowser(SUIApp::GetUserLocalDataDir());
 		break;
@@ -1606,7 +1625,6 @@ void MainWindow::UpdateProgressBar()
 		if (dret - current > 0)
 			m_gProgress->SetValue((int)dret);
 	}
-
 }
 
 wxThread::ExitCode MainWindow::Entry()
@@ -1676,8 +1694,9 @@ wxThread::ExitCode MainWindow::Entry()
 					{
 						wxCriticalSectionLocker lock(m_dataCS);
 						memcpy(m_data + offset, buffer, BUFSIZE - 1);
-						UpdateProgressBar();
 					}
+					wxLogStatus("%.*s", m_bread, buffer);
+					UpdateProgressBar();
 				}
 			}
 			else if (m_bread_last > 3) // 100% - success
@@ -1699,6 +1718,7 @@ wxThread::ExitCode MainWindow::Entry()
 								wxCriticalSectionLocker lock(m_dataCS);
 								memcpy(m_data + offset, buffererr, BUFSIZE - 1);
 							}
+							wxLogStatus("%.*s", m_bread_err, buffererr);
 						}
 					}
 					else if (m_bread_err_last > 0) {
@@ -1708,7 +1728,8 @@ wxThread::ExitCode MainWindow::Entry()
 				}
 				break; // out of no stdout
 			}
-			wxMilliSleep(500);
+			wxMilliSleep(5000); // address issue 39
+//			wxGetApp().SafeYieldFor((wxWindow*)g_logWindow, true);
 			if (m_cancelled) {
 				if (AttachConsole(m_pi.dwProcessId)) {
 					// Disable Ctrl-C handling for our program
@@ -1727,6 +1748,7 @@ wxThread::ExitCode MainWindow::Entry()
 						if (m_bread_err != 0) {
 							if (ReadFile(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, NULL)) {
 								m_bread_err_last = m_bread_err;
+								wxLogStatus("%.*s", m_bread_err, buffererr);
 							}
 						}
 						else if (m_bread_err_last > 0) {
@@ -1746,6 +1768,21 @@ wxThread::ExitCode MainWindow::Entry()
 	}
 	else {
 		success = false;
+		PeekNamedPipe(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, &m_avail, NULL);
+		//				PeekNamedPipe(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, &m_err_avail, NULL);
+		//				PeekNamedPipe(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, &m_out_avail, NULL);
+						//check to see if there is any data to read from stdout
+		if (m_bread != 0) {
+			if (ReadFile(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, NULL)) {
+				m_bread_last = m_bread;
+				{
+					wxCriticalSectionLocker lock(m_dataCS);
+					memcpy(m_data + offset, buffer, BUFSIZE - 1);
+				}
+				wxLogStatus("%.*s", m_bread, buffer);
+			}
+		}
+
 	}
 
 	std::vector<HANDLE> handles = { m_stdin_rd, m_stdin_wr, m_stdout_rd, m_stdout_wr, m_stderr_rd, m_stderr_wr };
@@ -1766,8 +1803,8 @@ wxThread::ExitCode MainWindow::Entry()
 	}
 	else { 
 		// success set to false but see note above about execution with breakpoints only!
-		//wxString str(buffererr);
-		wxString str = "Error:\nCheck Python installation under System Files.\n ";
+		wxString str(buffererr);
+		str = "Error:\nCheck log file using Shift+F4.\n" + str;
 		m_messages = wxSplit(str, '\n');
 	}
 	
@@ -2085,6 +2122,8 @@ bool MainWindow::InvokePython()
 			wxMessageBox("Could not create the Python thread!");
 			return false;
 		}
+		wxLogStatus("%s %s", m_pythonpath.c_str(), m_pythonargs.c_str());
+
 		// go!
 		if (GetThread()->Run() != wxTHREAD_NO_ERROR)
 		{

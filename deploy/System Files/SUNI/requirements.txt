@@ -1,6 +1,0 @@
-attrs
-click
-numpy
-NREL-seriqc
-pandas
-tqdm

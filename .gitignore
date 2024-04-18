@@ -14,3 +14,11 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+
+deploy/System Files/requirements.txt
+
+deploy/System Files/SERIQC/
+
+deploy/System Files/SUNI/
+
+deploy/System Files/setup.py

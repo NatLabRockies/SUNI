@@ -190,7 +190,8 @@ private:
 	wxArrayString m_typeInt, m_typeDouble;
 	bool m_pythonInstalled;
 
-	void GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert);
+	void GetInstrumentPyranometerDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert);
+	void GetInstrumentPyrheliometerDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert);
 	bool CheckInputs();
 	void EnableStartButton(const bool& enable);
 

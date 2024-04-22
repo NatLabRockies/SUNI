@@ -966,10 +966,34 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 	return ret;
 }
 
-void MainWindow::GetInstrumentDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert )
+void MainWindow::GetInstrumentPyranometerDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert )
 {
 	wxCSVData csv;
 	wxFileName path(GetAppPath() + "/Instrument Files/Upyranometer.csv");
+	path.Normalize();
+	if (!csv.ReadFile(path.GetFullPath())) {
+		wxMessageBox("Error opening instrument file:\n\n" + path.GetFullPath() + "\n\n", "Notice", wxOK, this);
+		return;
+	}
+	size_t nr = csv.NumRows();
+	size_t nc = csv.NumCols();
+	if ((nr != 4) || (nc != 3)) {
+		wxMessageBox("Error with instrument file:\n\n" + path.GetFullPath() + "\nnumber of (row, cols) incorrect - should be (4,3)\n", "Notice", wxOK, this);
+		return;
+	}
+	for (size_t r = 0; r < nr; r++) {
+		if (csv(r, 0).Lower() == instClass.Lower()) {
+			*classUncert = csv(r, 1);
+			*calUncert = csv(r, 2);
+		}
+	}
+}
+
+
+void MainWindow::GetInstrumentPyrheliometerDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert)
+{
+	wxCSVData csv;
+	wxFileName path(GetAppPath() + "/Instrument Files/Upyrheliometer.csv");
 	path.Normalize();
 	if (!csv.ReadFile(path.GetFullPath())) {
 		wxMessageBox("Error opening instrument file:\n\n" + path.GetFullPath() + "\n\n", "Notice", wxOK, this);
@@ -995,7 +1019,7 @@ void MainWindow::UpdateClassCalGHIUncertainty(wxCommandEvent& evt)
 	wxString instClass = GHIclass->GetValue();
 	wxString classUncert = "";
 	wxString calUncert = "";
-	GetInstrumentDataBaseUncertainties(instClass, &classUncert, &calUncert);
+	GetInstrumentPyranometerDataBaseUncertainties(instClass, &classUncert, &calUncert);
 	GHIclassUncert->SetValue(classUncert);
 	GHIcalUncert->ChangeValue(calUncert);
 	GHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
@@ -1007,7 +1031,7 @@ void MainWindow::UpdateClassCalDHIUncertainty(wxCommandEvent& evt)
 	wxString instClass = DHIclass->GetValue();
 	wxString classUncert = "";
 	wxString calUncert = "";
-	GetInstrumentDataBaseUncertainties(instClass, &classUncert, &calUncert);
+	GetInstrumentPyranometerDataBaseUncertainties(instClass, &classUncert, &calUncert);
 	DHIclassUncert->SetValue(classUncert);
 	DHIcalUncert->ChangeValue(calUncert);
 	DHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
@@ -1019,7 +1043,7 @@ void MainWindow::UpdateClassCalDNIUncertainty(wxCommandEvent& evt)
 	wxString instClass = DNIclass->GetValue();
 	wxString classUncert = "";
 	wxString calUncert = "";
-	GetInstrumentDataBaseUncertainties(instClass, &classUncert, &calUncert);
+	GetInstrumentPyrheliometerDataBaseUncertainties(instClass, &classUncert, &calUncert);
 	DNIclassUncert->SetValue(classUncert);
 	DNIcalUncert->ChangeValue(calUncert);
 	DNIcalUncert->SetBackgroundColour(*wxGREEN); // Database

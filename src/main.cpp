@@ -1110,7 +1110,7 @@ bool MainWindow::UpdateStationIDs(const wxString& dir)
 					stationID = stationID.Trim(true);
 				}
 			}
-			if (fnStationID == stationID) {
+			if (fnStationID.Lower() == stationID.Lower()) { // case insensitive comparison per issue 56
 				filenames.push_back(stationID);
 			}
 			else {

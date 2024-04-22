@@ -79,6 +79,31 @@ public:
 	const char *what() const throw() { return (const char*)m_err.c_str(); };
 };
 
+static wxLogWindow* g_logWindow = 0;
+
+
+class SUILogWindow : public wxLogWindow
+{
+public:
+	SUILogWindow() : wxLogWindow(0, "suni-log") {
+		GetFrame()->SetPosition(wxPoint(5, 5));
+		GetFrame()->SetClientSize(wxSize(1000, 200));
+	}
+	virtual bool OnFrameClose(wxFrame*) {
+		g_logWindow = 0; // clear the global pointer, then delete the frame
+		return true;
+	}
+
+	static void Setup()
+	{
+		if (g_logWindow != 0)
+			delete g_logWindow;
+
+		g_logWindow = new SUILogWindow;
+		wxLog::SetActiveTarget(g_logWindow);
+		g_logWindow->Show();
+	}
+};
 
 
 class MainWindow : public wxFrame, public wxThreadHelper
@@ -189,7 +214,6 @@ private:
 static wxArrayString g_appArgs;
 static MainWindow* g_mainWindow = 0;
 static wxConfig* g_config = 0;
-static wxLogWindow* g_logWindow = 0;
 
 
 class SUIApp : public wxApp

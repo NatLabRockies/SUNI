@@ -22,3 +22,7 @@ deploy/System Files/SERIQC/
 deploy/System Files/SUNI/
 
 deploy/System Files/setup.py
+
+deploy/Configuration Files/basic_run/
+
+deploy/Configuration Files/validation/

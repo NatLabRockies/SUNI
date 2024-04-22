@@ -1090,7 +1090,7 @@ bool MainWindow::UpdateStationIDs(const wxString& dir)
 	else {
 		wxDir folder(dir);
 		wxArrayString files;
-		folder.GetAllFiles(dir, &files, "s_*.qc0");
+		folder.GetAllFiles(dir, &files, "s_*.qc0", wxDIR_FILES);
 		wxArrayString filenames;
 		for (auto& f : files) {
 			wxFileName fn = f;

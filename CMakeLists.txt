@@ -23,7 +23,7 @@ endif()
 #####################################################################################################################
 
 
-set(SUI_SRC 
+set(SUNI_SRC 
     src/main.cpp                    src/main.h
     src/csv.cpp                     src/csv.h
     src/pythonhandler.cpp           src/pythonhandler.h
@@ -103,47 +103,47 @@ include(${wxWidgets_USE_FILE})
 
 # have to make executables with different names so the .app's have different names
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	add_executable(SUId
+	add_executable(SUNId
 			WIN32
 			MACOSX_BUNDLE
-			${SUI_SRC})
-	set(SUI_EXE SUId)
+			${SUNI_SRC})
+	set(SUNI_EXE SUNId)
 else() # if Release or if MSVC multigenerator
-	add_executable(SUI
+	add_executable(SUNI
 			WIN32
 			MACOSX_BUNDLE
-			${SUI_SRC})
-	set(SUI_EXE SUI)
+			${SUNI_SRC})
+	set(SUNI_EXE SUNI)
 endif()
 
 if (MSVC)
-	set_target_properties(${SUI_EXE}
+	set_target_properties(${SUNI_EXE}
 		PROPERTIES
 		LINK_FLAGS /SUBSYSTEM:WINDOWS)
 #        DEBUG_POSTFIX "d"
 #		RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_CURRENT_SOURCE_DIR}>/deploy/x64)
 else()
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(SUI_NAME SUId)
+        set(SUNI_NAME SUNId)
     else()
-        set(SUI_NAME SUI)
+        set(SUNI_NAME SUNI)
     endif()
     if(APPLE)
         if (CMAKE_GENERATOR STREQUAL Xcode)
             if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-                set(SUI_APP ${CMAKE_CURRENT_BINARY_DIR}/Debug/${SUI_NAME}.app)
+                set(SUNI_APP ${CMAKE_CURRENT_BINARY_DIR}/Debug/${SUNI_NAME}.app)
             else()
-                set(SUI_APP ${CMAKE_CURRENT_BINARY_DIR}/Release/${SUI_NAME}.app)
+                set(SUNI_APP ${CMAKE_CURRENT_BINARY_DIR}/Release/${SUNI_NAME}.app)
             endif()
         else()
-            set(SUI_APP ${CMAKE_CURRENT_BINARY_DIR}/${SUI_NAME}.app)
+            set(SUNI_APP ${CMAKE_CURRENT_BINARY_DIR}/${SUNI_NAME}.app)
         endif()
     else()
-        set(SUI_APP ${CMAKE_CURRENT_BINARY_DIR}/deploy)
-        set_target_properties(${SUI_EXE}
+        set(SUNI_APP ${CMAKE_CURRENT_BINARY_DIR}/deploy)
+        set_target_properties(${SUNI_EXE}
                 PROPERTIES
-                OUTPUT_NAME ${SUI_NAME}.bin
-                RUNTIME_OUTPUT_DIRECTORY ${SUI_APP}/linux_64)
+                OUTPUT_NAME ${SUNI_NAME}.bin
+                RUNTIME_OUTPUT_DIRECTORY ${SUNI_APP}/linux_64)
     endif()
 endif()
 
@@ -154,7 +154,7 @@ endif()
 #####################################################################################################################
 
 
-target_link_libraries(${SUI_EXE} ${wxWidgets_LIBRARIES})
+target_link_libraries(${SUNI_EXE} ${wxWidgets_LIBRARIES})
 
 
 #####################################################################################################################
@@ -168,33 +168,33 @@ SET(CMAKE_SKIP_BUILD_RPATH)
 if (UNIX)
     if (APPLE)
         add_custom_command(
-            TARGET ${SUI_EXE}
+            TARGET ${SUNI_EXE}
             POST_BUILD
-            COMMAND rsync -a -v ${CMAKE_CURRENT_SOURCE_DIR}/python/* ${SUI_APP}/Contents
-            COMMAND rm ${SUI_APP}/Contents/test_script_ow.lk
-#            COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/build_resources/Info-${SAM_NAME}.plist ${SUI_APP}/Contents/Info.plist
-            COMMAND mkdir -p ${SUI_APP}/Contents/Frameworks
-            COMMAND install_name_tool -change ${SSC_NAME} @executable_path/../Frameworks/${SSC_NAME} ${SUI_APP}/Contents/MacOS/${SAM_NAME}
+            COMMAND rsync -a -v ${CMAKE_CURRENT_SOURCE_DIR}/python/* ${SUNI_APP}/Contents
+            COMMAND rm ${SUNI_APP}/Contents/test_script_ow.lk
+#            COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/build_resources/Info-${SAM_NAME}.plist ${SUNI_APP}/Contents/Info.plist
+            COMMAND mkdir -p ${SUNI_APP}/Contents/Frameworks
+            COMMAND install_name_tool -change ${SSC_NAME} @executable_path/../Frameworks/${SSC_NAME} ${SUNI_APP}/Contents/MacOS/${SAM_NAME}
         )
     else()
         add_custom_command(
                 TARGET ${SAM_EXE}
                 PRE_BUILD
-                COMMAND rm -rf ${SUI_APP}/linux_64
-                COMMAND mkdir -p ${SUI_APP}/linux_64
+                COMMAND rm -rf ${SUNI_APP}/linux_64
+                COMMAND mkdir -p ${SUNI_APP}/linux_64
         )
         add_custom_command(
                 TARGET ${SAM_EXE}
                 POST_BUILD
-                COMMAND rsync -a -v ${CMAKE_CURRENT_SOURCE_DIR}/deploy/* ${SUI_APP}
-                COMMAND cp ${SSC_SO} ${SUI_APP}/linux_64
+                COMMAND rsync -a -v ${CMAKE_CURRENT_SOURCE_DIR}/deploy/* ${SUNI_APP}
+                COMMAND cp ${SSC_SO} ${SUNI_APP}/linux_64
         )
 
     endif()
 else()
 # type cannot be used in set statement
 
-    file(TO_CMAKE_PATH $ENV{SUINRELDIR} SUINRELDIR)
+    file(TO_CMAKE_PATH $ENV{SUNINRELDIR} SUNINRELDIR)
  
     set( DEPLOY_FOLDERS
         "System Files"
@@ -205,18 +205,18 @@ else()
     #CMAKE requires extra manipulation with Debug and Release builds
     foreach( folder_i ${DEPLOY_FOLDERS})
         add_custom_command(
-        TARGET ${SUI_EXE}
+        TARGET ${SUNI_EXE}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_directory ${SUINRELDIR}/deploy/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Debug/${folder_i}
+        ARGS -E copy_directory ${SUNINRELDIR}/deploy/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Debug/${folder_i}
     )
    endforeach( folder_i )
    foreach( folder_i ${DEPLOY_FOLDERS})
         add_custom_command(
-        TARGET ${SUI_EXE}
+        TARGET ${SUNI_EXE}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND}
-        ARGS -E copy_directory ${SUINRELDIR}/deploy/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Release/${folder_i}
+        ARGS -E copy_directory ${SUNINRELDIR}/deploy/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Release/${folder_i}
     )
     endforeach( folder_i )
 
@@ -229,18 +229,18 @@ else()
     #CMAKE requires extra manipulation with Debug and Release builds
 #    foreach( folder_i ${PYTHON_FOLDERS})
 #        add_custom_command(
-#        TARGET ${SUI_EXE}
+#        TARGET ${SUNI_EXE}
 #        PRE_BUILD
 #        COMMAND ${CMAKE_COMMAND}
-#        ARGS -E copy_directory ${SUINRELDIR}/python/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Debug/${SYSTEM_FILES}/${folder_i}
+#        ARGS -E copy_directory ${SUNINRELDIR}/python/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Debug/${SYSTEM_FILES}/${folder_i}
 #    )
 #   endforeach( folder_i )
 #   foreach( folder_i ${PYTHON_FOLDERS})
 #        add_custom_command(
-#        TARGET ${SUI_EXE}
+#        TARGET ${SUNI_EXE}
 #        PRE_BUILD
 #        COMMAND ${CMAKE_COMMAND}
-#        ARGS -E copy_directory ${SUINRELDIR}/python/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Release/${SYSTEM_FILES}/${folder_i}
+#        ARGS -E copy_directory ${SUNINRELDIR}/python/${folder_i} ${CMAKE_CURRENT_BINARY_DIR}/Release/${SYSTEM_FILES}/${folder_i}
 #    )
 #    endforeach( folder_i )
 

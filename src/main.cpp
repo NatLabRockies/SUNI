@@ -733,11 +733,11 @@ void MainWindow::OnInternalCommand( wxCommandEvent &evt )
 	switch (evt.GetId())
 	{
 	case ID_INTERNAL_SHOWLOG:
-		SUILogWindow::Setup();
+		SUNILogWindow::Setup();
 		break;
 
 	case ID_INTERNAL_DATAFOLDER:
-		wxLaunchDefaultBrowser(SUIApp::GetUserLocalDataDir());
+		wxLaunchDefaultBrowser(SUNIApp::GetUserLocalDataDir());
 		break;
 	}
 }
@@ -2259,17 +2259,17 @@ void MainWindow::OnClose( wxCloseEvent &evt )
 	}
 	// save current configuration
 	;
-	SUIApp::Settings().Write("configuration_file", m_projectFileName);
+	SUNIApp::Settings().Write("configuration_file", m_projectFileName);
 
 	// save window position to settings
 	wxRect rr;
 	GetPosition( &rr.x,&rr.y );
 	GetClientSize( &rr.width, &rr.height );
-	SUIApp::Settings().Write( "window_x", rr.x);
-	SUIApp::Settings().Write( "window_y", rr.y);
-	SUIApp::Settings().Write( "window_width", rr.width);
-	SUIApp::Settings().Write( "window_height", rr.height);
-	SUIApp::Settings().Write( "window_maximized", IsMaximized() );
+	SUNIApp::Settings().Write( "window_x", rr.x);
+	SUNIApp::Settings().Write( "window_y", rr.y);
+	SUNIApp::Settings().Write( "window_width", rr.width);
+	SUNIApp::Settings().Write( "window_height", rr.height);
+	SUNIApp::Settings().Write( "window_maximized", IsMaximized() );
 
 	// clean up running thread if necessary
 	if (GetThread() &&
@@ -2281,7 +2281,7 @@ void MainWindow::OnClose( wxCloseEvent &evt )
 }
 
 
-int SUIApp::OnExit()
+int SUNIApp::OnExit()
 {
 	FileHistory().Save( Settings() );
 
@@ -2290,11 +2290,11 @@ int SUIApp::OnExit()
 	return 0;
 }
 
-SUIApp::SUIApp()
+SUNIApp::SUNIApp()
 {
 }
 
-wxString SUIApp::GetAppPath()
+wxString SUNIApp::GetAppPath()
 {
 	wxFileName path( g_appArgs[0] );
 	if ( !path.IsAbsolute() )
@@ -2303,7 +2303,7 @@ wxString SUIApp::GetAppPath()
 	return wxPathOnly( path.GetFullPath() );
 }
 
-wxString SUIApp::GetRuntimePath()
+wxString SUNIApp::GetRuntimePath()
 {
 	wxFileName path( GetAppPath() + "/../runtime/" );
 //	path.Normalize();
@@ -2312,7 +2312,7 @@ wxString SUIApp::GetRuntimePath()
 	return path.GetFullPath();
 }
 
-wxString SUIApp::GetUserLocalDataDir()
+wxString SUNIApp::GetUserLocalDataDir()
 {
 	wxString path = wxStandardPaths::Get().GetUserLocalDataDir();
 	path.Replace("\\","/");
@@ -2323,25 +2323,25 @@ wxString SUIApp::GetUserLocalDataDir()
 	return path;
 }
 
-wxConfig &SUIApp::Settings()
+wxConfig &SUNIApp::Settings()
 {
-	if ( g_config == 0 ) throw SUIException( "g_config = NULL: internal error" );
+	if ( g_config == 0 ) throw SUNIException( "g_config = NULL: internal error" );
 	return *g_config;
 }
 
-MainWindow *SUIApp::Window()
+MainWindow *SUNIApp::Window()
 {
 	return g_mainWindow;
 }
 
 
 
-wxFileHistory &SUIApp::FileHistory()
+wxFileHistory &SUNIApp::FileHistory()
 {
 static wxFileHistory s_fileHistory;
 	return s_fileHistory;
 }
-wxArrayString SUIApp::RecentFiles()
+wxArrayString SUNIApp::RecentFiles()
 {
 	wxArrayString files;
 	size_t n = FileHistory().GetCount();
@@ -2351,14 +2351,14 @@ wxArrayString SUIApp::RecentFiles()
 	return files;
 }
 
-void SUIApp::ShowHelp( const wxString &context )
+void SUNIApp::ShowHelp( const wxString &context )
 {
 	wxString url;
 	if ( context.Left(1) == ":" )
 		url = context; // for things like :about, etc
 	else
 	{
-		wxFileName fn( SUIApp::GetRuntimePath() + "/help/html/" );
+		wxFileName fn( SUNIApp::GetRuntimePath() + "/help/html/" );
 		fn.MakeAbsolute();
 		url = "file:///" + fn.GetFullPath( wxPATH_NATIVE ) + "index.html";
 #ifdef __WXGTK__
@@ -2392,14 +2392,14 @@ void SUIApp::ShowHelp( const wxString &context )
 	// if possible, use the SAM main window
 	// otherwise, choose any top level window that is not modal
 	// last resort, choose a currently modal dialog box
-	wxWindow *parent = SUIApp::Window();
+	wxWindow *parent = SUNIApp::Window();
 	if ( !parent ) parent = nonmodal_tlw;
 	if ( !parent ) parent = modal_active;
 
 }
 
 
-bool SUIApp::OnInit()
+bool SUNIApp::OnInit()
 {
 
 
@@ -2499,7 +2499,7 @@ bool SUIApp::OnInit()
 		g_mainWindow->SetupPython();
 	}
 	catch (std::exception e) {
-		SUIException ex(e.what());
+		SUNIException ex(e.what());
 		wxMessageBox(ex.what(),"Initialization error", wxICON_ERROR);
 	}
 */	
@@ -2532,7 +2532,7 @@ bool SUIApp::OnInit()
 
 
 
-wxWindow *SUIApp::CurrentActiveWindow()
+wxWindow *SUNIApp::CurrentActiveWindow()
 {
 	wxWindowList &wl = ::wxTopLevelWindows;
 	for( wxWindowList::iterator it = wl.begin(); it != wl.end(); ++it )
@@ -2544,9 +2544,9 @@ wxWindow *SUIApp::CurrentActiveWindow()
 }
 
 
-wxString SUIApp::ReadProxyFile()
+wxString SUNIApp::ReadProxyFile()
 {
-	wxString proxy_file = SUIApp::GetAppPath() + "/proxy.txt";
+	wxString proxy_file = SUNIApp::GetAppPath() + "/proxy.txt";
 	if ( wxFileExists( proxy_file ) )
 	{
 		if ( FILE *f = fopen(proxy_file.c_str(), "r") )
@@ -2561,9 +2561,9 @@ wxString SUIApp::ReadProxyFile()
 	return wxEmptyString;
 }
 
-bool SUIApp::WriteProxyFile( const wxString &proxy )
+bool SUNIApp::WriteProxyFile( const wxString &proxy )
 {
-	wxString proxy_file = SUIApp::GetAppPath() + "/proxy.txt";
+	wxString proxy_file = SUNIApp::GetAppPath() + "/proxy.txt";
 	if ( FILE *f = fopen(proxy_file.c_str(), "w") )
 	{
 		fprintf(f, "%s\n", (const char*)proxy.ToAscii() );
@@ -2574,13 +2574,13 @@ bool SUIApp::WriteProxyFile( const wxString &proxy )
 		return false;
 }
 /*
-std::string SUIApp::GetPythonConfigPath(){
+std::string SUNIApp::GetPythonConfigPath(){
     wxFileName path( GetAppPath() + "/python" );
     path.Normalize();
     return path.GetFullPath().ToStdString();
 }
 
-void SUIApp::LoadPythonConfig(){
+void SUNIApp::LoadPythonConfig(){
     pythonConfig = ReadPythonConfig(GetPythonConfigPath() + "/python_config.json");
     if (CheckPythonInstalled(pythonConfig)){
         std::string python_path = GetPythonConfigPath();
@@ -2589,7 +2589,7 @@ void SUIApp::LoadPythonConfig(){
     }
 }
 
-bool SUIApp::CheckPythonPackage(const std::string& pip_name){
+bool SUNIApp::CheckPythonPackage(const std::string& pip_name){
     if (CheckPythonInstalled(pythonConfig)){
         if (CheckPythonPackageInstalled(pip_name, pythonConfig))
             return true;
@@ -2597,7 +2597,7 @@ bool SUIApp::CheckPythonPackage(const std::string& pip_name){
     return false;
 }
 
-void SUIApp::InstallPython() {
+void SUNIApp::InstallPython() {
     if (pythonConfig.pythonVersion.empty() && pythonConfig.minicondaVersion.empty())
         LoadPythonConfig();
 
@@ -2619,7 +2619,7 @@ void SUIApp::InstallPython() {
     LoadPythonConfig();
 }
 
-void SUIApp::InstallPythonPackage(const std::string& pip_name) {
+void SUNIApp::InstallPythonPackage(const std::string& pip_name) {
     if (CheckPythonPackageInstalled(pip_name, pythonConfig))
         return;
     auto packageConfig = ReadPythonPackageConfig(pip_name, GetPythonConfigPath() + "/" + pip_name + ".json");
@@ -2641,4 +2641,4 @@ void SUIApp::InstallPythonPackage(const std::string& pip_name) {
 */
 
 
-IMPLEMENT_APP( SUIApp );
+IMPLEMENT_APP( SUNIApp );

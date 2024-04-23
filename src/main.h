@@ -70,22 +70,22 @@ const size_t BUFSIZE = 4096;
 
 class wxPanel;
 
-class SUIException : public std::exception
+class SUNIException : public std::exception
 {
 	wxString m_err;
 public:
-	SUIException( const wxString &err ) : m_err(err) { }
-	virtual ~SUIException() throw() { }
+	SUNIException( const wxString &err ) : m_err(err) { }
+	virtual ~SUNIException() throw() { }
 	const char *what() const throw() { return (const char*)m_err.c_str(); };
 };
 
 static wxLogWindow* g_logWindow = 0;
 
 
-class SUILogWindow : public wxLogWindow
+class SUNILogWindow : public wxLogWindow
 {
 public:
-	SUILogWindow() : wxLogWindow(0, "suni-log") {
+	SUNILogWindow() : wxLogWindow(0, "suni-log") {
 		GetFrame()->SetPosition(wxPoint(5, 5));
 		GetFrame()->SetClientSize(wxSize(1000, 200));
 	}
@@ -99,7 +99,7 @@ public:
 		if (g_logWindow != 0)
 			delete g_logWindow;
 
-		g_logWindow = new SUILogWindow;
+		g_logWindow = new SUNILogWindow;
 		wxLog::SetActiveTarget(g_logWindow);
 		g_logWindow->Show();
 	}
@@ -217,13 +217,13 @@ static MainWindow* g_mainWindow = 0;
 static wxConfig* g_config = 0;
 
 
-class SUIApp : public wxApp
+class SUNIApp : public wxApp
 {
 public:
 
 	struct ver { int major, minor, micro; };
 
-	SUIApp();
+	SUNIApp();
 	/*virtual*/ bool OnInit();
 	virtual int OnExit();
 
@@ -251,7 +251,7 @@ public:
 };
 
 
-DECLARE_APP( SUIApp );
+DECLARE_APP( SUNIApp );
 
 
 class wxCheckBox;

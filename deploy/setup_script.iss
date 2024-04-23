@@ -26,8 +26,8 @@ ArchitecturesInstallIn64BitMode=x64
 
 
 ; UPDATE THESE TO MATCH THE VERSION
-AppVerName=SUI 2024.4.18
-DefaultDirName={sd}\SUI\2024.4.18
+AppVerName=SUNI 2024.4.23
+DefaultDirName={sd}\SUNI\2024.4.23
 
 AppPublisher=National Renewable Energy Laboratory
 AppPublisherURL=
@@ -35,7 +35,7 @@ AppSupportURL=
 AppUpdatesURL=
 DefaultGroupName=Solar Uncertainty Integrator
 OutputDir=.
-OutputBaseFilename=sui-install
+OutputBaseFilename=SUNI-install
 Compression=lzma
 SolidCompression=yes
 ChangesAssociations=yes
@@ -56,7 +56,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "msvcp140.dll"; DestDir: "{app}/"; Excludes: ".svn,*.map";  Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "vcruntime140.dll"; DestDir: "{app}/"; Excludes: ".svn,*.map";  Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "vcruntime140_1.dll"; DestDir: "{app}/"; Excludes: ".svn,*.map";  Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "../../build/SUNI/Release/sui.exe"; DestDir: "{app}/"; Excludes: ".svn,*.map";  Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "../../build/SUNI/Release/SUNI.exe"; DestDir: "{app}/"; Excludes: ".svn,*.map";  Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "Configuration Files/*"; DestDir: "{app}/Configuration Files"; Excludes: ".svn,*.map"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "Instrument Files/*"; DestDir: "{app}/Instrument Files"; Excludes: ".svn,*.map"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "System Files/*"; DestDir: "{app}/System Files"; Excludes: ".svn,*.map"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -64,15 +64,15 @@ Source: "System Files/*"; DestDir: "{app}/System Files"; Excludes: ".svn,*.map";
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 [Icons]
-Name: "{group}\Solar Uncertainty Integrator"; Filename: "{app}\sui.exe"  ; Check: Is64BitInstallMode
-Name: "{commondesktop}\Solar Uncertainty Integrator"; Filename: "{app}\sui.exe"; Tasks: desktopicon; Check: Is64BitInstallMode
+Name: "{group}\Solar Uncertainty Integrator"; Filename: "{app}\SUNI.exe"  ; Check: Is64BitInstallMode
+Name: "{commondesktop}\Solar Uncertainty Integrator"; Filename: "{app}\SUNI.exe"; Tasks: desktopicon; Check: Is64BitInstallMode
 
 [Registry]
-Root: HKCR; Subkey: "Applications\sui.exe"; ValueType: none; ValueName: ; ValueData: SUI; Flags: deletekey; Check: IsAdmin
+Root: HKCR; Subkey: "Applications\SUNI.exe"; ValueType: none; ValueName: ; ValueData: SUNI; Flags: deletekey; Check: IsAdmin
 
 
 [Run]
-Filename: "{app}\sui.exe"; Flags: postinstall skipifsilent unchecked; Description: "{cm:LaunchProgram,Solar Uncertainty Integrator}"; Check: Is64BitInstallMode
+Filename: "{app}\SUNI.exe"; Flags: postinstall skipifsilent unchecked; Description: "{cm:LaunchProgram,Solar Uncertainty Integrator}"; Check: Is64BitInstallMode
 
 
 [Code]

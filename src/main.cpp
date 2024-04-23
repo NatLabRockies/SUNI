@@ -2212,7 +2212,7 @@ bool MainWindow::InvokePython()
 				if (wxFileExists(fnOutputFile.GetFullPath())) {
 					wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
 					if (wxFileExists(sfn)) {
-						wxLaunchDefaultApplication(sfn);
+						//wxLaunchDefaultApplication(sfn); // Issue 41 - only display in popup
 						wxString s;
 						wxTextFile tFile;
 						tFile.Open(sfn);

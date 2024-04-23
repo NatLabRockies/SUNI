@@ -122,9 +122,12 @@ def compile_standard_report(results, cfg, proc_start_time):
     )
     counts, n_valid = _counts_from_results(results)
 
+    qc0_file = f"s_{cfg['StationID']}.qc0"
     lines = [
         f"Uncertainty Processing Report for {input_fn}",
-        # f"{cfg['StationID']}\n",
+        f"Station Name: {cfg['StationID']}",
+        f"Station ID: {cfg['StationID']}",
+        f"QC0 File: {qc0_file}",
         f"Processing date: {proc_date}",
         f"From {format_date(*start_time[:3], date_format)} "
         f"{start_time[3]}:{start_time[4]:02d} "

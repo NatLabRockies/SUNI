@@ -1223,7 +1223,15 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		{
 			wxFileDialog dlg(this, "Open Output File", wxEmptyString, wxEmptyString, "Output Files (*.csv)|*.csv", wxFD_OPEN);
 			if (dlg.ShowModal() == wxID_OK) {
-				OutputFile->SetValue(dlg.GetPath());
+				// Issue 58
+				wxFileName fullName(dlg.GetPath());
+				bool overwrite = true;
+				if (wxFileExists(fullName.GetFullPath())) {
+					if (wxMessageBox(fullName.GetName() + "." + fullName.GetExt() + " already exists.\nDo you want to replace it?", "Confirm Overwrite Output", wxYES_NO | wxICON_EXCLAMATION) != wxYES)
+						overwrite = false;
+				}
+				if (overwrite)
+					OutputFile->SetValue(dlg.GetPath());
 			}
 		}
 		break;

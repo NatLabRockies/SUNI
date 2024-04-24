@@ -136,6 +136,7 @@ public:
 protected:
 	virtual wxThread::ExitCode Entry();
 	char m_data[BUFSIZE]; // data from Entry
+	unsigned long m_bread_last; // update progress bar - last position of m_data read issue 38
 	wxCriticalSection m_dataCS; // protects m_data
 
 	void OnClose( wxCloseEvent & );

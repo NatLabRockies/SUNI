@@ -1642,11 +1642,15 @@ void MainWindow::UpdateProgressBar()
 	wxCriticalSectionLocker lock(m_dataCS);
 //	wxString ret = wxString::FromUTF8(m_data);
 	wxString ret(m_data);
+	ret = ret.Left(m_bread_last);
+	auto ndx = ret.Find("{");
+	if (ndx != wxNOT_FOUND)
+		ret = ret.Left(ndx);
 	wxArrayString as = wxSplit(ret, '\n');
 //	ret.Replace("\n", "");
 //	ret.Replace("\r", "");
 //	ret = ret.Trim().Right(2); // percent
-	if (as.GetCount() > 2) {// last value is garbled
+	if (as.GetCount() > 2) {// last value is \r\n
 		ret = as[as.GetCount() - 2];
 		ret.Replace("\r", "");
 	}
@@ -1665,7 +1669,8 @@ wxThread::ExitCode MainWindow::Entry()
 	size_t python_startup_delay = 0;
 	size_t offset = 0;
 	unsigned long m_bread;   //bytes read
-	unsigned long m_bread_last = 0;
+	//	unsigned long m_bread_last = 0;
+	m_bread_last = 0; // Issue 38
 	unsigned long m_avail;   //bytes available
 	unsigned long m_bread_err;   //bytes read
 	unsigned long m_bread_err_last = 0;
@@ -1731,7 +1736,7 @@ wxThread::ExitCode MainWindow::Entry()
 					UpdateProgressBar();
 				}
 			}
-			else if (m_bread_last > 3) // 100% - success
+			else if (m_bread_last > 0) // 100% - success
 			{
 				break;
 			}

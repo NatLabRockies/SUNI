@@ -1158,6 +1158,7 @@ void MainWindow::EnableStartButton(const bool& enable)
 {
 	m_bStart->Enable(enable);
 	m_bCancel->Enable(!enable);
+	Refresh();
 }
 
 
@@ -1200,6 +1201,8 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 			break;
 		}
 		EnableStartButton(false);
+		m_gProgress->SetValue(1); // Issue 37
+		wxGetApp().SafeYieldFor(m_bCancel, true); // Issue 37
 		try {
 			InvokePython();
 		}

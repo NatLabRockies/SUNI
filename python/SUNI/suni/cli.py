@@ -107,15 +107,13 @@ def _process(cfg, from_gui=True):
     else:
         results = run_sp(input_file, input_data, cfg, from_gui=from_gui)
 
-    int_cols = ["qcGHI", "qcDNI", "qcDHI", "uCode", "SQCcode"]
-    results[int_cols] = results[int_cols].astype(int)
-    results = pd.concat([input_data, results], axis=1)
+    results = pd.concat([input_data, results], axis=1).round(decimals=1)
 
     standard_report = compile_standard_report(results, cfg, proc_start_time)
     popup_report = compile_popup_report(results, cfg)
 
     results = _finalize_format(results, cfg)
-    results.to_csv(of, index=False, float_format="%.1f")
+    results.to_csv(of, index=False) # , float_format="%.1f")
     logger.info("Results written to %s", str(of))
 
     rf = Path(of).parent / f"{input_file.stem}_Report.txt"
@@ -140,6 +138,8 @@ def _finalize_format(results, cfg):
     else:
         date_col = "Date (MM/DD/YYYY)"
 
+    int_cols = ["qcGHI", "qcDNI", "qcDHI", "uCode", "SQCcode"]
+    results[int_cols] = results[int_cols].astype(int)
     for col in ["qcGHI", "qcDNI", "qcDHI"]:
         results[col] = results[col].map(lambda x: f"{x:02d}")
 

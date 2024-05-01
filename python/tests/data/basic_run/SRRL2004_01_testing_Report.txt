@@ -1,6 +1,5 @@
 Uncertainty Processing Report for SRRL2004_01_testing.csv
-Station Name: NRELSR
-Station ID: NRELSR
+Station ID: NRELSR (SRRL)
 QC0 File: s_NRELSR.qc0
 Processing date: 01/19/2024 10:39
 From 1/1/2004 0:00 to 1/2/2004 8:00 (1-minute interval)

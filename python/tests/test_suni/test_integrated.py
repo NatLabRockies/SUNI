@@ -52,8 +52,8 @@ def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
 
         with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
             if "Report" in fn:
-                assert truth.readlines()[:4] == test.readlines()[:4]
-                assert truth.readlines()[5:] == test.readlines()[5:]
+                assert truth.readlines()[:3] == test.readlines()[:3]
+                assert truth.readlines()[4:] == test.readlines()[4:]
             else:
                 assert truth.readlines() == test.readlines()
 

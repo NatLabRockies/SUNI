@@ -96,6 +96,15 @@ def compile_popup_report(results, cfg):
     return "\n".join(lines)
 
 
+def _get_station_name_from_file(qc0_fp):
+    """Get station name from QC0 file. """
+    with open(qc0_fp, "r") as fh:
+        line = fh.readline()
+    line = line.split(",")
+    assert len(line) >= 2
+    return line[1].strip()
+
+
 def compile_standard_report(results, cfg, proc_start_time):
     """Compile a standard report summary from the results.
 
@@ -122,9 +131,19 @@ def compile_standard_report(results, cfg, proc_start_time):
     )
     counts, n_valid = _counts_from_results(results)
 
+    qc0_file = f"s_{cfg['StationID']}.qc0"
+    qc0_fp = Path(cfg["SERIQCpath"]) / qc0_file
+    try:
+        station_name = _get_station_name_from_file(qc0_fp)
+    except KeyboardInterrupt:
+        raise
+    except Exception:
+        station_name = "UNKNOWN_STATION_NAME"
+
     lines = [
         f"Uncertainty Processing Report for {input_fn}",
-        # f"{cfg['StationID']}\n",
+        f"Station ID: {cfg['StationID']} ({station_name})",
+        f"QC0 File: {qc0_file}",
         f"Processing date: {proc_date}",
         f"From {format_date(*start_time[:3], date_format)} "
         f"{start_time[3]}:{start_time[4]:02d} "

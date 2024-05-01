@@ -39,6 +39,24 @@ System Uncertainty Mean: +/-2.36%
 Field Uncertainty Mean: +/-0.47%
 """
 
+def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
+    for fn in ["SRRL2004_01_Unc.csv", "SRRL2004_01_testing_Report.txt"]:
+        test_fp = tmp_cwd / fn
+        assert test_fp.exists()
+
+        if extended:
+            fn = fn.replace(".csv", "_extended.csv")
+            fn = fn.replace(".txt", "_extended.txt")
+
+        truth_fp = test_data_basic_run_dir / fn
+
+        with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
+            if "Report" in fn:
+                assert truth.readlines()[:3] == test.readlines()[:3]
+                assert truth.readlines()[4:] == test.readlines()[4:]
+            else:
+                assert truth.readlines() == test.readlines()
+
 
 # @pytest.mark.skip
 @pytest.mark.parametrize("config_ext", ("json", "ini"))
@@ -80,13 +98,7 @@ def test_basic_suni_run(
 
     assert len(list(tmp_cwd.glob("*"))) == 5
 
-    for fn in ["SRRL2004_01_Unc.csv", "SRRL2004_01_testing_Report.txt"]:
-        truth_fp = test_data_basic_run_dir / fn
-        test_fp = tmp_cwd / fn
-        assert test_fp.exists()
-
-        with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
-            assert truth.readlines()[2:] == test.readlines()[2:]
+    _validate_outputs(test_data_basic_run_dir, tmp_cwd)
 
 
 def test_gui_report(tmp_cwd, test_data_basic_run_dir, capsys):
@@ -112,13 +124,7 @@ def test_gui_report(tmp_cwd, test_data_basic_run_dir, capsys):
 
     assert len(list(tmp_cwd.glob("*"))) == 4
 
-    for fn in ["SRRL2004_01_Unc.csv", "SRRL2004_01_testing_Report.txt"]:
-        truth_fp = test_data_basic_run_dir / fn
-        test_fp = tmp_cwd / fn
-        assert test_fp.exists()
-
-        with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
-            assert truth.readlines()[2:] == test.readlines()[2:]
+    _validate_outputs(test_data_basic_run_dir, tmp_cwd)
 
 
 def test_gui_report_extended(tmp_cwd, test_data_basic_run_dir):
@@ -146,16 +152,7 @@ def test_gui_report_extended(tmp_cwd, test_data_basic_run_dir):
 
     assert len(list(tmp_cwd.glob("*"))) == 4
 
-    for fn in ["SRRL2004_01_Unc.csv", "SRRL2004_01_testing_Report.txt"]:
-        test_fp = tmp_cwd / fn
-        assert test_fp.exists()
-
-        fn = fn.replace(".csv", "_extended.csv")
-        fn = fn.replace(".txt", "_extended.txt")
-        truth_fp = test_data_basic_run_dir / fn
-
-        with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
-            assert truth.readlines()[2:] == test.readlines()[2:]
+    _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=True)
 
 
 def test_incompatible_data_format(tmp_cwd, test_data_basic_run_dir):

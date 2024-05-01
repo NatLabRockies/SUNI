@@ -44,35 +44,6 @@ def convert_to_year_first(date):
     return f"{year}-{month}-{day}"
 
 
-def compute_parameter_stats(param_sum, param_sum_sq, n_valid):
-    """Compute mean and standard deviation from parameter accumulations.
-
-    Parameters
-    ----------
-    param_sum : int | float
-        The sum of the parameter across all records.
-    param_sum_sq : int | float
-        The squared sum of the parameter across all records.
-    n_valid : int
-        Number of valid records.
-
-    Returns
-    -------
-    mean, std : int |float
-        Mean and standard deviation values fro parameter, or -9900 if
-        the statistic cannot be computed from the inputs.
-    """
-    mean = (param_sum / n_valid) if n_valid > 0 else -9900
-    if (divisor := (n_valid - 1)) > 0:
-        std = sqrt(
-            (round(param_sum_sq, 4) - round(param_sum**2 / n_valid, 4))
-            / divisor
-        )
-    else:
-        std = -9900
-    return mean, std
-
-
 def extract_time_from_input_data(row, date_format):
     """Convert DATE+MST to integer date components.
 

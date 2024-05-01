@@ -3,11 +3,7 @@
 from pathlib import Path
 
 from suni.framework import ErrorCode
-from suni.utilities import (
-    format_date,
-    extract_time_from_input_data,
-    compute_parameter_stats,
-)
+from suni.utilities import format_date, extract_time_from_input_data
 
 
 def _counts_from_results(results):
@@ -39,9 +35,7 @@ def _add_irradiance_stats(results, lines, n_valid, fn=2):
     out_params = ["GHI Mean U95", "DNI Mean U95", "DHI Mean U95"]
     col_names = ["U95GHI", "U95DNI", "U95DHI"]
     for param, col in zip(out_params, col_names):
-        param_sum = results[col].sum()
-        param_sum_sq = (results[col] ** 2).sum()
-        mean, std = compute_parameter_stats(param_sum, param_sum_sq, n_valid)
+        mean, std = results[col].describe()[1:3].fillna(-9900)
         lines.append(
             f"{param}: +/-{mean:.{fn}f}% | Standard deviation: {std:.{fn}f}"
         )
@@ -237,9 +231,7 @@ def _compile_test_report(cfg, results, input_fn, of):  # pragma: no cover
     out_params = ["U95GHI", "U95DNI", "U95DHI", "UoSys", "UoSysAbs", "Ufield"]
     lines.append("\nParameter,Mean,Stdev")
     for (param,) in out_params:
-        param_sum = results[param].sum()
-        param_sum_sq = (results[param] ** 2).sum()
-        mean, std = compute_parameter_stats(param_sum, param_sum_sq, n_valid)
+        mean, std = results[param].describe()[1:3].fillna(-9900)
 
         # fh.write(f"{param:<9},{mean:8.2f},{std:8.2f}\n")
         lines.append(f"{param},{mean:.2f},{std:.2f}")

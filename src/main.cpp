@@ -1739,7 +1739,7 @@ wxThread::ExitCode MainWindow::Entry()
 					UpdateProgressBar();
 				}
 			}
-			else if (m_bread_last > 0) // 100% - success
+			else if (m_bread_last > 3) // 100% - success
 			{
 				break;
 			}

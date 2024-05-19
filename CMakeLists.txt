@@ -171,7 +171,7 @@ if (UNIX)
             TARGET ${SUNI_EXE}
             POST_BUILD
             COMMAND rsync -a -v ${CMAKE_CURRENT_SOURCE_DIR}/python/* ${SUNI_APP}/Contents
-            COMMAND rm ${SUNI_APP}/Contents/test_script_ow.lk
+#            COMMAND rm ${SUNI_APP}/Contents/test_script_ow.lk
 #            COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/build_resources/Info-${SAM_NAME}.plist ${SUNI_APP}/Contents/Info.plist
             COMMAND mkdir -p ${SUNI_APP}/Contents/Frameworks
             COMMAND install_name_tool -change ${SSC_NAME} @executable_path/../Frameworks/${SSC_NAME} ${SUNI_APP}/Contents/MacOS/${SAM_NAME}

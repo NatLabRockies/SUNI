@@ -322,7 +322,7 @@ MainWindow::MainWindow()
 #ifdef __WXMSW__
 	SetIcon( wxICON( appicon ) );
 #endif
-
+/*
 #ifdef __WXOSX__
 	wxMenu *fileMenu = new wxMenu;
 	fileMenu->Append( wxID_NEW, "New project\tCtrl-N" );
@@ -367,6 +367,7 @@ MainWindow::MainWindow()
 	menuBar->Append( helpMenu, wxT("&Help")  );
 	SetMenuBar( menuBar );
 #endif
+ */
 	// for JSON type loading and saving
 	m_typeInt = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval"};
 	m_typeDouble = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN", "MaxSysUncert"};
@@ -1666,6 +1667,197 @@ void MainWindow::UpdateProgressBar()
 	}
 }
 
+#ifdef __WXOSX__
+wxThread::ExitCode MainWindow::Entry()
+{
+    bool success = true;
+    size_t python_startup_delay = 0;
+    size_t offset = 0;
+    unsigned long m_bread;   //bytes read
+    //    unsigned long m_bread_last = 0;
+    m_bread_last = 0; // Issue 38
+    unsigned long m_avail;   //bytes available
+    unsigned long m_bread_err;   //bytes read
+    unsigned long m_bread_err_last = 0;
+    unsigned long m_avail_err;   //bytes available
+    /*
+    PROCESS_INFORMATION m_pi;
+    STARTUPINFO m_si;
+    SECURITY_ATTRIBUTES m_sa;
+    HANDLE m_stdin_rd = NULL;
+    HANDLE m_stdout_wr = NULL;
+    HANDLE m_stdout_rd = NULL;
+    HANDLE m_stdin_wr = NULL;
+    HANDLE m_stderr_rd = NULL;
+    HANDLE m_stderr_wr = NULL;  //pipe handles
+
+    CA2T programpath(m_pythonpath.c_str());
+    CA2T programargs(m_pythonargs.c_str());
+
+
+    m_sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    m_sa.bInheritHandle = TRUE;
+    m_sa.lpSecurityDescriptor = NULL;
+    if (!CreatePipe(&m_stdout_rd, &m_stdout_wr, &m_sa, 0)) {
+        return  (wxThread::ExitCode)1;
+    }
+    if (!SetHandleInformation(m_stdout_rd, HANDLE_FLAG_INHERIT, 0)) {
+        return  (wxThread::ExitCode)1;
+    }
+    if (!CreatePipe(&m_stderr_rd, &m_stderr_wr, &m_sa, 0)) {
+        return  (wxThread::ExitCode)1;
+    }
+    if (!SetHandleInformation(m_stderr_rd, HANDLE_FLAG_INHERIT, 0)) {
+        return  (wxThread::ExitCode)1;
+    }
+
+    //set startupinfo for the spawned process
+    GetStartupInfo(&m_si);
+
+    m_si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+    m_si.wShowWindow = SW_HIDE; // for production
+//    m_si.wShowWindow = SW_SHOW; // for debugging
+    //set the new handles for the child process
+    m_si.hStdOutput = m_stdout_wr;
+    m_si.hStdError = m_stderr_wr;
+
+
+    char buffer[BUFSIZE];
+    char buffererr[BUFSIZE];
+
+    if (CreateProcess(programpath, programargs, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &m_si, &m_pi)) { // production
+        while (1) {
+            PeekNamedPipe(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, &m_avail, NULL);
+            //                PeekNamedPipe(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, &m_err_avail, NULL);
+            //                PeekNamedPipe(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, &m_out_avail, NULL);
+                            //check to see if there is any data to read from stdout
+            if (m_bread != 0) {
+                if (ReadFile(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, NULL)) {
+                    m_bread_last = m_bread;
+                    {
+                        wxCriticalSectionLocker lock(m_dataCS);
+                        memcpy(m_data + offset, buffer, BUFSIZE - 1);
+                    }
+                    wxLogStatus("%.*s", m_bread, buffer);
+                    UpdateProgressBar();
+                }
+            }
+            else if (m_bread_last > 3) // 100% - success
+            {
+                break;
+            }
+            else if (python_startup_delay < 100) {
+                python_startup_delay++;
+            }
+            else if (m_bread_last == 0){ // check for errors - endless loop with 2024.4.2 beta release
+                success = false;
+                // following not executed unless breakpoint in debug mode and then gets correct response
+                while(1) {
+                    PeekNamedPipe(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, &m_avail, NULL);
+                    if (m_bread_err != 0) {
+                        if (ReadFile(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, NULL)) {
+                            m_bread_err_last = m_bread_err;
+                            {
+                                wxCriticalSectionLocker lock(m_dataCS);
+                                memcpy(m_data + offset, buffererr, BUFSIZE - 1);
+                            }
+                            wxLogStatus("%.*s", m_bread_err, buffererr);
+                        }
+                    }
+                    else if (m_bread_err_last > 0) {
+                        break;
+                    }
+                    break; // out of stderr check
+                }
+                break; // out of no stdout
+            }
+            wxMilliSleep(5000); // address issue 39
+//            wxGetApp().SafeYieldFor((wxWindow*)g_logWindow, true);
+            if (m_cancelled) {
+                if (AttachConsole(m_pi.dwProcessId)) {
+                    // Disable Ctrl-C handling for our program
+                    SetConsoleCtrlHandler(NULL, true);
+
+                    GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0); // SIGINT
+
+                    //Re-enable Ctrl-C handling or any subsequently started
+                    //programs will inherit the disabled state.
+//                                SetConsoleCtrlHandler(NULL, false);
+//                                FreeConsole();
+//                                WaitForSingleObject(m_pi.hProcess, 10000);// exception
+//                                wxMilliSleep(10000);
+                    while (1) {
+                        PeekNamedPipe(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, &m_avail, NULL);
+                        if (m_bread_err != 0) {
+                            if (ReadFile(m_stderr_rd, buffererr, BUFSIZE - 1, &m_bread_err, NULL)) {
+                                m_bread_err_last = m_bread_err;
+                                wxLogStatus("%.*s", m_bread_err, buffererr);
+                            }
+                        }
+                        else if (m_bread_err_last > 0) {
+                            break;
+                        }
+                        wxMilliSleep(500);
+                    }
+                    break;
+                }
+                else {
+                    break; // console did not attach
+                }
+            }
+        } // main loop
+        CloseHandle(m_pi.hThread);
+        CloseHandle(m_pi.hProcess);
+    }
+    else {
+        success = false;
+        PeekNamedPipe(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, &m_avail, NULL);
+        //                PeekNamedPipe(m_stderr_rd, m_err_buf, BUFSIZE - 1, &m_err_bread, &m_err_avail, NULL);
+        //                PeekNamedPipe(m_stdin_rd, m_out_buf, BUFSIZE - 1, &m_out_bread, &m_out_avail, NULL);
+                        //check to see if there is any data to read from stdout
+        if (m_bread != 0) {
+            if (ReadFile(m_stdout_rd, buffer, BUFSIZE - 1, &m_bread, NULL)) {
+                m_bread_last = m_bread;
+                {
+                    wxCriticalSectionLocker lock(m_dataCS);
+                    memcpy(m_data + offset, buffer, BUFSIZE - 1);
+                }
+                wxLogStatus("%.*s", m_bread, buffer);
+            }
+        }
+
+    }
+
+    std::vector<HANDLE> handles = { m_stdin_rd, m_stdin_wr, m_stdout_rd, m_stdout_wr, m_stderr_rd, m_stderr_wr };
+    for (HANDLE handle : handles) {
+        if (handle && handle != INVALID_HANDLE_VALUE) {
+            CloseHandle(handle);
+        }
+    }
+    
+    if (m_cancelled) {
+        m_messages.Add("Process cancelled by user.");
+        wxString str(buffererr);
+        m_messages = wxSplit(str, '\n');
+    }
+    else if (success) {
+        wxString str(m_data);
+        m_messages = wxSplit(str, '\n');
+    }
+    else {
+        // success set to false but see note above about execution with breakpoints only!
+        wxString str(buffererr);
+        str = "Error:\nCheck log file using Shift+F4.\n" + str;
+        m_messages = wxSplit(str, '\n');
+    }
+    */
+    return  (wxThread::ExitCode)0;
+}
+
+#endif
+
+
+#ifdef __WXMSW__
 wxThread::ExitCode MainWindow::Entry()
 {
 	bool success = true;
@@ -1890,7 +2082,7 @@ void MainWindow::SendCtrlC(DWORD dwProcessId)
 
 
 
-#ifdef __WINDOWS__
+//#ifdef __WINDOWS__
 std::string MainWindow::CallPythonModuleWindows(const std::string& input_dict_as_text) {
 	STARTUPINFO si;
 	SECURITY_ATTRIBUTES sa;
@@ -2460,6 +2652,9 @@ bool SUNIApp::OnInit()
 	wxString fl_key = wxString::Format("first_load");
 	Settings().Read(fl_key, &first_load, true);
 	wxString configurationFile;
+    
+    
+    
 	if (first_load)
 	{
 		// register the first load

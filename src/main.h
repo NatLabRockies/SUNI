@@ -129,9 +129,10 @@ public:
 	void UpdateProgressBar();
 
 	bool SetupPython();
+#ifdef __WXMSW__
 	void SendCtrlC(DWORD dwProcessId);
 	void SendSIGINT(HANDLE hProcess);
-
+#endif
 
 protected:
 	virtual wxThread::ExitCode Entry();

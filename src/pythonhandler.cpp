@@ -157,8 +157,8 @@ bool InstallPythonWindows(const std::string& path, const PythonConfig& config){
 }
 
 bool InstallPythonUnix(const std::string& path, const PythonConfig& config){
-    std::string cmd = path + "/install_python.sh " + config.minicondaVersion + " " + config.pythonVersion + " " + path;
-    int rvalue = system(cmd.c_str());
+    std::string cmd = "bash \"" + path + "/install_python.sh\" " + config.minicondaVersion + " " + config.pythonVersion + " \"" + path + "\"";
+    int rvalue = system(cmd.c_str()); // fails with permission denied issue
     return (bool)rvalue;
 }
 

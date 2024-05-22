@@ -158,7 +158,7 @@ bool InstallPythonWindows(const std::string& path, const PythonConfig& config){
 
 bool InstallPythonUnix(const std::string& path, const PythonConfig& config){
     std::string cmd = "bash \"" + path + "/install_python.sh\" " + config.minicondaVersion + " " + config.pythonVersion + " \"" + path + "\"";
-    int rvalue = system(cmd.c_str()); // fails with permission denied issue
+    int rvalue = system(cmd.c_str()); // fails with permission denied issue without bash at beginning
     return (bool)rvalue;
 }
 
@@ -229,7 +229,18 @@ int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig
 #endif
 
 int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& package, const std::string& local_path){
-    std::string cmd = pip_exec + " install " + package.name + "==" + package.version;
+    std::string cmd = "bash \"" + pip_exec + "\" install " + package.name + "==" + package.version;
+    if (!package.localPackage.empty())
+        cmd =  "bash \"" + pip_exec + "\" --use-feature=in-tree-build install \"" + local_path + package.localPackage + " \"";
     int rvalue = system(cmd.c_str());
     return rvalue;
 }
+
+
+/*
+bool InstallPythonUnix(const std::string& path, const PythonConfig& config){
+    std::string cmd = "bash \"" + path + "/install_python.sh\" " + config.minicondaVersion + " " + config.pythonVersion + " \"" + path + "\"";
+    int rvalue = system(cmd.c_str()); // fails with permission denied issue without bash at beginning
+    return (bool)rvalue;
+}
+*/

@@ -2267,7 +2267,7 @@ void MainWindow::InstallPythonPackage(const std::string& pip_name) {
 	bool retval = InstallFromPipWindows(GetPythonConfigPath() + "\\" + pythonConfig.pipPath, packageConfig, GetPythonConfigPath() + "\\");
 #else
 	std::string pip_exec = GetPythonConfigPath() + "/" + pythonConfig.pipPath;
-	bool retval = InstallFromPip(pip_exec, packageConfig, GetPythonConfigPath() + "\\"); // TODO - test
+	bool retval = InstallFromPip(pip_exec, packageConfig, GetPythonConfigPath() + "/"); // TODO - test
 #endif
 	if (retval == 0) {
 		pythonConfig.packages.push_back(pip_name);

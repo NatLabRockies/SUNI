@@ -19,7 +19,7 @@ def _add_extended_report(results, lines, n_valid, include_pm=True):
     lines.append("")
     out_params = [
         "Urads Uncertainty Mean: +/-",
-        f"System Uncertainty Mean: {'+/-' if include_pm else ''}",
+        f"Mean of System Uncertainty ABS: {'+/-' if include_pm else ''}",
         "Field Uncertainty Mean: +/-",
     ]
     col_names = ["Urads", "UoSysAbs", "Ufield"]

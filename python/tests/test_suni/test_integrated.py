@@ -35,7 +35,7 @@ DNI Mean U95: +/-1.48% | Standard deviation: 0.61
 DHI Mean U95: +/-3.26% | Standard deviation: 0.37
 
 Urads Uncertainty Mean: +/-3.79%
-System Uncertainty Mean: +/-2.36%
+Mean of System Uncertainty ABS: +/-2.36%
 Field Uncertainty Mean: +/-0.47%
 """
 

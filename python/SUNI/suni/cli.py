@@ -92,6 +92,9 @@ def _process(cfg, from_gui=True):
     max_workers = cfg.get("max_workers")
     input_file = Path(cfg["InputFile"])
     of = cfg.get("OutputFile", f"{input_file.stem}_Unc.csv")
+    if not of.endswith(".csv"):
+        of = f"{of}.csv"
+    of = Path(of)
     input_data = _read_data(input_file)
 
     max_workers = os.cpu_count() if max_workers is None else max_workers
@@ -116,7 +119,7 @@ def _process(cfg, from_gui=True):
     results.to_csv(of, index=False) # , float_format="%.1f")
     logger.info("Results written to %s", str(of))
 
-    rf = Path(of).parent / f"{input_file.stem}_Report.txt"
+    rf = of.parent / f"{of.stem}_report.txt"
     with open(rf, "w") as fh:
         fh.write(standard_report)
     logger.info("\n---")
@@ -124,11 +127,7 @@ def _process(cfg, from_gui=True):
     logger.info("---\n")
     logger.info("Report written to %s", str(rf))
 
-    return_dict = {
-        "out_file": str(of),
-        # "report_file": str(rf),
-        "report": popup_report,
-    }
+    return_dict = {"out_file": str(of), "report": popup_report}
     return return_dict
 
 
@@ -158,6 +157,7 @@ def _finalize_format(results, cfg):
         "U95DHI": "DHI Uncertainty (+/-%)",
         "UoSys": "System Uncertainty (+/-%)",
         "Ufield": "Field Uncertainty (+/-%)",
+        "Urads": "Urads (+/-%)",
     }
 
     results = results.rename(columns=rename_mapping)
@@ -180,9 +180,13 @@ def _finalize_format(results, cfg):
         "DHI Uncertainty Code",
     ]
     if int(cfg.get("ExtendedRpt", 0)):
-        col_order += ["System Uncertainty (+/-%)", "Field Uncertainty (+/-%)"]
+        col_order += [
+            "System Uncertainty (+/-%)",
+            "Field Uncertainty (+/-%)",
+            "Urads (+/-%)",
+        ]
 
-    return results[col_order]
+    return results[col_order].fillna("-9900")
 
 
 def _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u):
@@ -229,7 +233,17 @@ def run_mp(input_file, input_data, cfg, max_workers, from_gui):
 
             for future in as_completed(futures):
                 row_ind = futures.pop(future)
-                data = future.result()
+                try:
+                    data = future.result()
+                except KeyboardInterrupt as cancel:
+                    raise cancel
+                except Exception as err:
+                    msg = (
+                        f"Error processing input data on line {row_ind + 2}:"
+                        f"\n{err}"
+                    )
+                    raise type(err)(msg)
+
                 results[row_ind] = data.as_result_dict()
                 progress_count += 1
                 if from_gui:
@@ -247,7 +261,18 @@ def run_sp(input_file, input_data, cfg, from_gui):
     nun_to_run = len(input_data)
     for ind, row_ind, row in _iter_df(input_file, input_data, from_gui):
         data = _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u)
-        data = Uprocess(data, pressure=820, temp=11)
+
+        try:
+            data = Uprocess(data, pressure=820, temp=11)
+        except KeyboardInterrupt as cancel:
+            raise cancel
+        except Exception as err:
+            msg = (
+                f"Error processing input data on line {row_ind + 2}:"
+                f"\n{err}"
+            )
+            raise type(err)(msg)
+
         results[row_ind] = data.as_result_dict()
         if from_gui:
             print(int(ind / nun_to_run * 100))

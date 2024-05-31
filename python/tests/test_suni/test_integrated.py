@@ -40,7 +40,7 @@ Field Uncertainty Mean: +/-0.47%
 """
 
 def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
-    for fn in ["SRRL2004_01_Unc.csv", "SRRL2004_01_testing_Report.txt"]:
+    for fn in ["SRRL2004_01_Unc.csv", "SRRL2004_01_Unc_report.txt"]:
         test_fp = tmp_cwd / fn
         assert test_fp.exists()
 
@@ -51,7 +51,7 @@ def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
         truth_fp = test_data_basic_run_dir / fn
 
         with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
-            if "Report" in fn:
+            if "report" in fn:
                 assert truth.readlines()[:3] == test.readlines()[:3]
                 assert truth.readlines()[4:] == test.readlines()[4:]
             else:
@@ -200,7 +200,7 @@ def test_report_no_cal_date(tmp_cwd, test_data_basic_run_dir):
     assert isinstance(out, dict)
     assert out["report"] == EXPECTED_EXTENDED_GUI_REPORT.strip("\n")
 
-    test_fp = tmp_cwd / "SRRL2004_01_testing_Report.txt"
+    test_fp = tmp_cwd / "SRRL2004_01_Unc_report.txt"
     with open(test_fp, "r") as test:
         report_text = test.read()
 

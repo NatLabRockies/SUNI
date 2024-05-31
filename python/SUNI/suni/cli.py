@@ -92,6 +92,9 @@ def _process(cfg, from_gui=True):
     max_workers = cfg.get("max_workers")
     input_file = Path(cfg["InputFile"])
     of = cfg.get("OutputFile", f"{input_file.stem}_Unc.csv")
+    if not of.endswith(".csv"):
+        of = f"{of}.csv"
+    of = Path(of)
     input_data = _read_data(input_file)
 
     max_workers = os.cpu_count() if max_workers is None else max_workers
@@ -116,7 +119,7 @@ def _process(cfg, from_gui=True):
     results.to_csv(of, index=False) # , float_format="%.1f")
     logger.info("Results written to %s", str(of))
 
-    rf = Path(of).parent / f"{input_file.stem}_Report.txt"
+    rf = of.parent / f"{of.stem}_report.txt"
     with open(rf, "w") as fh:
         fh.write(standard_report)
     logger.info("\n---")

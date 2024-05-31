@@ -39,6 +39,11 @@ Mean of System Uncertainty ABS: +/-2.36%
 Field Uncertainty Mean: +/-0.47%
 """
 
+def _no_9900_in_line(lines):
+    """Replace any -9900 instances. """
+    return [l.replace("-9900", "") for l in lines]
+
+
 def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
     for fn in ["SRRL2004_01_Unc.csv", "SRRL2004_01_Unc_report.txt"]:
         test_fp = tmp_cwd / fn
@@ -52,10 +57,16 @@ def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
 
         with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
             if "report" in fn:
-                assert truth.readlines()[:3] == test.readlines()[:3]
-                assert truth.readlines()[4:] == test.readlines()[4:]
+                assert (
+                    truth.readlines()[:3]
+                    == _no_9900_in_line(test.readlines()[:3])
+                )
+                assert (
+                    truth.readlines()[4:]
+                    == _no_9900_in_line(test.readlines()[4:])
+                )
             else:
-                assert truth.readlines() == test.readlines()
+                assert truth.readlines() == _no_9900_in_line(test.readlines())
 
 
 # @pytest.mark.skip

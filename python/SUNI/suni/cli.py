@@ -186,7 +186,7 @@ def _finalize_format(results, cfg):
             "Urads (+/-%)",
         ]
 
-    return results[col_order]
+    return results[col_order].fillna("-9900")
 
 
 def _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u):

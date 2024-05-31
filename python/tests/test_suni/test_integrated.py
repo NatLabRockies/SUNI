@@ -280,8 +280,8 @@ def test_seriqc_error_from_gui(tmp_cwd, test_data_dir):
     out = process_from_config(cfg, from_gui=True)
 
     expected_message = (
-        "SERIQCError:\nNon-zero SERIQC code: 2. Decoded to the following:"
-        "\n\t- Invalid month"
+        "SERIQCError:\nError processing input data on line 2:\nNon-zero "
+        "SERIQC code: 2. Decoded to the following:\n\t- Invalid month"
     )
     assert out == expected_message
 

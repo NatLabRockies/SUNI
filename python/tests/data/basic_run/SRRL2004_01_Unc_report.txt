@@ -18,6 +18,7 @@ Three-component records: 426 (22.2%)
 Above SERIQC Max: 0 (0.0%)
 Above Zenith Angle Max: 0 (0.0%)
 Below DNI Minimum: 5 (0.3%)
+Above Max System Uncertainty: 0 (0.0%)
 Mathematically Invalid: 0 (0.0%)
 Total Eligible Uncertainty Records: 421 (21.9%)
 

@@ -157,6 +157,7 @@ def _finalize_format(results, cfg):
         "U95DHI": "DHI Uncertainty (+/-%)",
         "UoSys": "System Uncertainty (+/-%)",
         "Ufield": "Field Uncertainty (+/-%)",
+        "Urads": "Urads (+/-%)",
     }
 
     results = results.rename(columns=rename_mapping)
@@ -179,7 +180,11 @@ def _finalize_format(results, cfg):
         "DHI Uncertainty Code",
     ]
     if int(cfg.get("ExtendedRpt", 0)):
-        col_order += ["System Uncertainty (+/-%)", "Field Uncertainty (+/-%)"]
+        col_order += [
+            "System Uncertainty (+/-%)",
+            "Field Uncertainty (+/-%)",
+            "Urads (+/-%)",
+        ]
 
     return results[col_order]
 

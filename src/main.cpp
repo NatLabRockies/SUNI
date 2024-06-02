@@ -2418,7 +2418,7 @@ bool MainWindow::InvokePython()
 				wxFileName fnInputFile = InputFile->GetValue();
 				wxFileName fnOutputFile = OutputFile->GetValue();
 				if (wxFileExists(fnOutputFile.GetFullPath())) {
-					wxString sfn = fnOutputFile.GetPath() + "/" + fnInputFile.GetName() + "_Report.txt";
+					wxString sfn = fnOutputFile.GetPath() + "/" + fnOutputFile.GetName() + "_report.txt";
 					if (wxFileExists(sfn)) {
 						//wxLaunchDefaultApplication(sfn); // Issue 41 - only display in popup
 						wxString s;

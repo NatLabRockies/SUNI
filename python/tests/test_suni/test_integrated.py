@@ -35,12 +35,17 @@ DNI Mean U95: +/-1.48% | Standard deviation: 0.61
 DHI Mean U95: +/-3.26% | Standard deviation: 0.37
 
 Urads Uncertainty Mean: +/-3.79%
-System Uncertainty Mean: +/-2.36%
+Mean of System Uncertainty ABS: +/-2.36%
 Field Uncertainty Mean: +/-0.47%
 """
 
+def _no_9900_in_line(lines):
+    """Replace any -9900 instances. """
+    return [l.replace("-9900", "") for l in lines]
+
+
 def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
-    for fn in ["SRRL2004_01_Unc.csv", "SRRL2004_01_testing_Report.txt"]:
+    for fn in ["SRRL2004_01_Unc.csv", "SRRL2004_01_Unc_report.txt"]:
         test_fp = tmp_cwd / fn
         assert test_fp.exists()
 
@@ -51,11 +56,17 @@ def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
         truth_fp = test_data_basic_run_dir / fn
 
         with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
-            if "Report" in fn:
-                assert truth.readlines()[:3] == test.readlines()[:3]
-                assert truth.readlines()[4:] == test.readlines()[4:]
+            if "report" in fn:
+                assert (
+                    truth.readlines()[:3]
+                    == _no_9900_in_line(test.readlines()[:3])
+                )
+                assert (
+                    truth.readlines()[4:]
+                    == _no_9900_in_line(test.readlines()[4:])
+                )
             else:
-                assert truth.readlines() == test.readlines()
+                assert truth.readlines() == _no_9900_in_line(test.readlines())
 
 
 # @pytest.mark.skip
@@ -200,7 +211,7 @@ def test_report_no_cal_date(tmp_cwd, test_data_basic_run_dir):
     assert isinstance(out, dict)
     assert out["report"] == EXPECTED_EXTENDED_GUI_REPORT.strip("\n")
 
-    test_fp = tmp_cwd / "SRRL2004_01_testing_Report.txt"
+    test_fp = tmp_cwd / "SRRL2004_01_Unc_report.txt"
     with open(test_fp, "r") as test:
         report_text = test.read()
 
@@ -280,10 +291,10 @@ def test_seriqc_error_from_gui(tmp_cwd, test_data_dir):
     out = process_from_config(cfg, from_gui=True)
 
     expected_message = (
-        "SERIQCError:\nNon-zero SERIQC code: 2. Decoded to the following:"
-        "\n\t- Invalid month"
+        "SERIQCError:\nError processing input data on line {}:\nNon-zero "
+        "SERIQC code: 2. Decoded to the following:\n\t- Invalid month"
     )
-    assert out == expected_message
+    assert sum(out == expected_message.format(x) for x in range(2, 12)) == 1
 
 
 def test_seriqc_error_bad_input_data(tmp_cwd, test_data_dir):

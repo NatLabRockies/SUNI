@@ -19,7 +19,7 @@ def _add_extended_report(results, lines, n_valid, include_pm=True):
     lines.append("")
     out_params = [
         "Urads Uncertainty Mean: +/-",
-        f"System Uncertainty Mean: {'+/-' if include_pm else ''}",
+        f"Mean of System Uncertainty ABS: {'+/-' if include_pm else ''}",
         "Field Uncertainty Mean: +/-",
     ]
     col_names = ["Urads", "UoSysAbs", "Ufield"]
@@ -174,6 +174,7 @@ def compile_standard_report(results, cfg, proc_start_time):
     )
     sq_max = counts[ErrorCode.QC_MAX]
     high_zen = counts[ErrorCode.HIGH_ZENITH]
+    high_uncertainty = counts[ErrorCode.HIGH_UNCERTAINTY]
     low_dni = counts[ErrorCode.LOW_DNI]
     math_invalid = counts[ErrorCode.ETR] + counts[ErrorCode.K_SPACE]
 
@@ -188,6 +189,8 @@ def compile_standard_report(results, cfg, proc_start_time):
         f"Above SERIQC Max: {sq_max:d} ({sq_max/len(results):.1%})",
         f"Above Zenith Angle Max: {high_zen:d} ({high_zen/len(results):.1%})",
         f"Below DNI Minimum: {low_dni:d} ({low_dni/len(results):.1%})",
+        f"Above Max System Uncertainty: {high_uncertainty:d} "
+        f"({high_uncertainty/len(results):.1%})",
         f"Mathematically Invalid: "
         f"{math_invalid:d} ({math_invalid/len(results):.1%})",
         f"Total Eligible Uncertainty Records: "

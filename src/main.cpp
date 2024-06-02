@@ -64,6 +64,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wx/filename.h>
 #include <wx/textfile.h>
 #include <wx/calctrl.h>
+#include <wx/bitmap.h>
+#include <wx/image.h>
 
 #include "main.h"
 #include "pythonhandler.h"
@@ -97,8 +99,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define popen _popen
 #define pclose _pclose
 #endif
-
-
 
 
 static PythonConfig pythonConfig;
@@ -612,6 +612,22 @@ MainWindow::MainWindow()
 	// add both columns to grid sizer
 //	wxFlexGridSizer* sizerTop = new wxFlexGridSizer(2, 2, wxSize(50, 50));
 	wxBoxSizer* sizerTop = new wxBoxSizer(wxVERTICAL);
+	// Issue 88
+	wxBoxSizer* szTitle = new wxBoxSizer(wxHORIZONTAL);
+	wxStaticText* sTitle = new wxStaticText(p, wxID_ANY, "Solar Uncertainty Integrator", wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+	sTitle->SetFont(p->GetFont().Scale(1.5));
+//	sTitle->SetLabelMarkup("< big > something else < / big>"); // build wxWidgets with wxUSE_MARKUP set
+	szTitle->Add(new wxStaticText(p, wxID_ANY, ""));
+	szTitle->AddStretchSpacer();
+	szTitle->Add(sTitle, 0, wxEXPAND, 5);
+	szTitle->AddStretchSpacer();
+	//szTitle->Add(new wxStaticText(p, wxID_ANY, ""));
+//	szTitle->Add(new wxBitmap(wxImage(_T("C:\\Users\\Jurgen\\Documents\\C++\\Dorienne-COPITRON\\copy_logo.jpg")).Rescale(wxSize(0, 72).GetWidth(), wxSize(0, 72).GetHeight())), wxPoint(32, 24), wxSize(0, 72), wxSIMPLE_BORDER, _T("ID_STATICBITMAP1"));
+	wxFileName path(GetAppPath() + "/System Files/header_app.gif");
+	szTitle->Add(new wxStaticBitmap(p, wxID_ANY, wxImage(path.GetFullPath())));
+
+	sizerTop->Add(szTitle, 0, wxEXPAND, 5);
+
 	sizerTop->AddSpacer(10);
 	sizerTop->Add(sizer0, 0, wxEXPAND, 5);
 	sizerTop->AddSpacer(15);

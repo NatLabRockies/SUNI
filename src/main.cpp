@@ -1229,7 +1229,11 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		EnableStartButton(true);
 		break;
 	case ID_BTN_CANCEL: // enable after running
-		m_cancelled = true;
+		// Issue 75 - add cancel prompt before cancelling
+		if (!m_cancelled) {
+			if (wxMessageBox("Cancel Processing? ", "Confirm Cancel", wxYES_NO | wxICON_EXCLAMATION) == wxYES)
+				m_cancelled = true;
+		}
 		break;
 	case ID_BTN_INPUTFILE:
 		{
@@ -2399,6 +2403,7 @@ bool MainWindow::InvokePython()
 		// user cancelled
 		if (m_cancelled) {
 			m_cancelled = false;
+			/*
 			wxString sPythonMessage = "";
 			for (size_t i = 0; i < strMessages.GetCount(); i++) {
 				if (strMessages[i].Lower().Find("interrupt") != wxNOT_FOUND)
@@ -2407,6 +2412,8 @@ bool MainWindow::InvokePython()
 			if (sPythonMessage.length() > 0)
 				sPythonMessage = "\nSUNI: " + sPythonMessage;
 			wxMessageBox("Uncertainty analysis cancelled." + sPythonMessage, "User Cancelled", wxICON_INFORMATION);
+			*/
+			wxMessageBox("Uncertainty analysis cancelled.", "User Cancelled", wxICON_INFORMATION);
 		}
 		else {
 			bool bError = false;

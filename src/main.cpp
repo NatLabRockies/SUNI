@@ -130,7 +130,8 @@ public:
 		long buttons,
 		const wxPoint& pos = wxDefaultPosition,
 		const wxSize& size = wxDefaultSize,
-		bool addButtonClose = false)
+		bool addButtonClose = false,
+		bool overrideCRLF = true)
 		: wxDialog(parent, wxID_ANY, title, pos, size, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) {
 		SetEscapeId(wxID_NONE);
 
@@ -144,7 +145,7 @@ public:
 			wrap = size.x - 40;
 
 		int nlpos = message.Find('\n');
-		if (nlpos > 0) {
+		if (overrideCRLF && (nlpos > 0)) {
 			wxStaticText* label1 = new wxStaticText(panel, wxID_ANY, message.Left(nlpos), wxDefaultPosition,
 				wxDefaultSize, wxALIGN_LEFT);
 			wxFont font(label1->GetFont());
@@ -163,14 +164,18 @@ public:
 		else {
 			wxStaticText* label = new wxStaticText(panel, wxID_ANY, message, wxDefaultPosition, wxDefaultSize,
 				wxALIGN_LEFT);
-			label->Wrap(wrap);
+//			label->Wrap(wrap);
 
 			szpnl->Add(label, 1, wxALL | wxEXPAND, 20);
 		}
 
 		if (addButtonClose) {
-			wxButton* buttonClose = new wxButton(this, wxID_OK, wxT("OK"));
-			szpnl->Add(buttonClose, 1, wxCENTER);
+			wxButton* buttonClose = new wxButton(panel, wxID_OK, wxT("OK"));
+			wxBoxSizer* szbtn = new wxBoxSizer(wxHORIZONTAL);
+			szbtn->Add(new wxStaticText(panel, wxID_ANY, " "));
+			szbtn->AddStretchSpacer();
+			szbtn->Add(buttonClose);
+			szpnl->Add(szbtn, 0, wxEXPAND, 2);
 		}
 
 		panel->SetSizer(szpnl);
@@ -202,6 +207,10 @@ public:
 	void Initialize() {
 		Layout();
 		Refresh();
+	}
+	void OnSize(wxSizeEvent &evt) {
+		Layout();
+		wxDialog::OnSize(evt);
 	}
 
 	void OnClose(wxCloseEvent&) {
@@ -2437,7 +2446,7 @@ bool MainWindow::InvokePython()
 				wxMessageBox(sError, "Error", wxICON_ERROR);
 			}
 			else {
-				// file retrieved to [Input File name]_Report.txt
+				// file retrieved to [Output File name]_Report.txt
 				wxFileName fnInputFile = InputFile->GetValue();
 				wxFileName fnOutputFile = OutputFile->GetValue();
 				if (wxFileExists(fnOutputFile.GetFullPath())) {
@@ -2450,7 +2459,11 @@ bool MainWindow::InvokePython()
 						s = tFile.GetFirstLine() + "\n";
 						while (!tFile.Eof())
 							s += tFile.GetNextLine() + "\n";
-						wxMessageBox(s, "Report", wxICON_NONE);
+						// Issue 76
+//						wxMessageBox(s, "Report", wxICON_NONE);p->FromDIP(wxSize(500,24)
+						MyMessageDialog dlg(this, s, "Report", wxCENTER, wxDefaultPosition, this->FromDIP(wxSize(800, 400)), true, false);
+						dlg.ShowModal();
+						//wxGetApp().SafeYieldFor(&dlg, true);
 					}
 				}
 				else {

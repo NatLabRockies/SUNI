@@ -43,6 +43,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AtlConv.h"
 #endif
 
+#include<wx/arrstr.h>
+#include<wx/utils.h>
+#include<wx/filename.h>
+
 #include "pythonhandler.h"
 #include "rapidjson/document.h"
 #include "rapidjson/istreamwrapper.h"
@@ -229,10 +233,40 @@ int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig
 #endif
 
 int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& package, const std::string& local_path){
-    std::string cmd = "bash \"" + pip_exec + "\" install " + package.name + "==" + package.version;
-    if (!package.localPackage.empty())
-        cmd =  "bash \"" + pip_exec + "\" --use-feature=in-tree-build install \"" + local_path + package.localPackage + " \"";
-    int rvalue = system(cmd.c_str());
+//    std::string cmd = "bash \"" + pip_exec + "\" install " + package.name + "==" + package.version;
+//    if (!package.localPackage.empty())
+//        cmd =  "bash \"" + pip_exec + "\" --use-feature=in-tree-build install \"" + local_path + package.localPackage + " \"";
+    wxString pipname = pip_exec;
+    wxString lpath = local_path;
+    wxFileName fnpip = wxFileName(pipname);
+    wxFileName fnlpath = wxFileName(lpath);
+    
+    wxString cmd = fnpip.GetFullPath() + " install " + package.name + "==" + package.version;
+    if (!package.localPackage.empty()) {
+ //       cmd = fnpip.GetFullPath() + " --use-feature=in-tree-build install .";
+        //       cmd = "./pip --use-feature=in-tree-build install ../../.";
+               cmd = "pip --use-feature=in-tree-build install .";
+        //if (!wxSetWorkingDirectory(fnpip.GetPath()))
+            if (!wxSetWorkingDirectory(lpath))
+     return -1;
+        
+    }
+    wxEnvVariableHashMap map;
+    if (wxGetEnvMap(&map)) {
+        // good - set path
+    }
+    auto cwd = wxGetCwd();
+//    map["PATH"]=cwd + ":" + map["PATH"];
+    auto x = fnpip.GetPath();
+//    cwd.Replace(" ", "\ ");
+    cwd = "\"" + cwd;
+    map["PATH"]=cwd + x.Right(x.size()-1) + "\":" + map["PATH"];
+    wxExecuteEnv env;
+    env.cwd = wxGetCwd();
+    env.env = map;
+ //   int rvalue = system(cmd.c_str());
+    wxArrayString stdOut, stdErr;
+    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_SYNC|wxEXEC_HIDE_CONSOLE, &env ) ;
     return rvalue;
 }
 

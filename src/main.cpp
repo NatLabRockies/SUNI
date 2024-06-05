@@ -726,6 +726,7 @@ void MainWindow::OnIdle(wxIdleEvent& evt)
 		if (CheckPythonPackage("suni"))
 			m_pythonInstalled = true;
 		else {
+            m_pythonInstalled = true;
 			wxBusyCursor wait;
 			MyMessageDialog dlg(this, "Installing the SUNI model.\nPlease note that it may take a few minutes to complete the initial installation.\nOnce installed, you will be able to estimate the solar uncertainty using the 'Start' button.", "Solar Uncertainty Integrator", wxCENTER);
 			dlg.Show();
@@ -733,7 +734,6 @@ void MainWindow::OnIdle(wxIdleEvent& evt)
 			InstallPython();
 			InstallPythonPackage("suni");
 			dlg.Close();
-			m_pythonInstalled = true;
 		}
 	}
 }
@@ -2295,7 +2295,8 @@ void MainWindow::InstallPythonPackage(const std::string& pip_name) {
 #ifdef __WXMSW__
 	bool retval = InstallFromPipWindows(GetPythonConfigPath() + "\\" + pythonConfig.pipPath, packageConfig, GetPythonConfigPath() + "\\");
 #else
-	std::string pip_exec = GetPythonConfigPath() + "/" + pythonConfig.pipPath;
+//    std::string pip_exec = GetPythonConfigPath() + "/" + pythonConfig.pipPath;
+    std::string pip_exec = pythonConfig.pipPath;
 	bool retval = InstallFromPip(pip_exec, packageConfig, GetPythonConfigPath() + "/"); // TODO - test
 #endif
 	if (retval == 0) {

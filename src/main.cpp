@@ -377,6 +377,8 @@ MainWindow::MainWindow()
 	SetMenuBar( menuBar );
 #endif
  */
+
+
 	// for JSON type loading and saving
 	m_typeInt = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval"};
 	m_typeDouble = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN", "MaxSysUncert"};
@@ -385,7 +387,8 @@ MainWindow::MainWindow()
 	m_pythonInstalled = false;
 
 	wxMenu *menu = new wxMenu ;
-	menu->Append(wxID_SAVEAS, "Save Configuration");
+	menu->Append(wxID_SAVE, "Save Configuration\tCtrl-S");
+	menu->Append(wxID_SAVEAS, "Save Configuration As");
 	menu->Append(wxID_OPEN, "Open Configuration");
 	menu->Append(wxID_EXIT, "Close");
 
@@ -666,6 +669,7 @@ MainWindow::MainWindow()
 	std::vector<wxAcceleratorEntry> entries;
 	entries.push_back(wxAcceleratorEntry(wxACCEL_SHIFT, WXK_F4, ID_INTERNAL_SHOWLOG));
 	entries.push_back(wxAcceleratorEntry(wxACCEL_SHIFT, WXK_F9, ID_INTERNAL_DATAFOLDER));
+	entries.push_back(wxAcceleratorEntry(wxACCEL_CTRL, 's', wxID_SAVE));
 	SetAcceleratorTable(wxAcceleratorTable(entries.size(), &entries[0]));
 
 
@@ -1204,6 +1208,12 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 					SetTitle(m_projectFileName);
 				}
 			}
+		}
+		break;
+	case wxID_SAVE:
+		{
+			if (!SaveConfiguration(m_projectFileName))
+				wxMessageBox("Error saving configuration file:\n\n" + m_projectFileName + "\n\n", "Notice", wxOK, this);
 		}
 		break;
 	case wxID_SAVEAS:
@@ -2486,15 +2496,48 @@ bool MainWindow::InvokePython()
 	return true;
 }
 
+wxString MainWindow::ReadTextFile(const wxString& sfn)
+{
+	wxString s;
+	wxTextFile tFile;
+	if (wxFileExists(sfn)) {
+		if (tFile.Open(sfn)) {
+			s = tFile.GetFirstLine() + "\n";
+			while (!tFile.Eof())
+				s += tFile.GetNextLine() + "\n";
+		}
+	}
+	return s;
+}
+
 void MainWindow::OnClose( wxCloseEvent &evt )
 {
 	Raise();
-	if ( !SaveConfiguration(m_projectFileName))
-	{
+	// issue 86 - save to LastCfgSave.json on close
+	wxFileName fn(m_projectFileName);
+//	if ( !SaveConfiguration(m_projectFileName))
+	wxString lastCfg = fn.GetPath() + "/LastCfgSave.json";
+	if (!SaveConfiguration(lastCfg)) {
 		evt.Veto();
 		return;
 	}
 	// save current configuration
+	// issue 86 - check for file changes
+	if (wxFileExists(m_projectFileName) && wxFileExists(lastCfg)) {
+		wxString s1 = ReadTextFile(m_projectFileName);
+		wxString s2 = ReadTextFile(lastCfg);
+		bool fileChanged = (s1.Len() > 0 && s2.Len() > 0);
+		if (fileChanged)
+			fileChanged = !(s1 == s2);
+		if (fileChanged) {
+			if (wxMessageBox(m_projectFileName + " has changed. Save changes?", "Configuration Changed", wxYES_NO) == wxYES) {
+				if (!SaveConfiguration(m_projectFileName))
+					wxMessageBox("Error saving configuration file:\n\n" + m_projectFileName + "\n\n", "Notice", wxOK, this);
+			}
+		}
+	}
+
+
 	;
 	SUNIApp::Settings().Write("configuration_file", m_projectFileName);
 

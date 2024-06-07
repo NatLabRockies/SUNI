@@ -128,6 +128,8 @@ public:
 
 	void UpdateProgressBar();
 
+	wxString ReadTextFile(const wxString& sfn);
+
 	bool SetupPython();
 #ifdef __WXMSW__
 	void SendCtrlC(DWORD dwProcessId);

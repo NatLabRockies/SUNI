@@ -243,9 +243,9 @@ int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& packa
     
     wxString cmd = fnpip.GetFullPath() + " install " + package.name + "==" + package.version;
     if (!package.localPackage.empty()) {
- //       cmd = fnpip.GetFullPath() + " --use-feature=in-tree-build install .";
+        cmd = fnpip.GetFullPath() + " --use-feature=in-tree-build install .";
         //       cmd = "./pip --use-feature=in-tree-build install ../../.";
-               cmd = "pip --use-feature=in-tree-build install .";
+ //              cmd = "pip --use-feature=in-tree-build install .";
         //if (!wxSetWorkingDirectory(fnpip.GetPath()))
             if (!wxSetWorkingDirectory(lpath))
      return -1;
@@ -259,14 +259,19 @@ int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& packa
 //    map["PATH"]=cwd + ":" + map["PATH"];
     auto x = fnpip.GetPath();
 //    cwd.Replace(" ", "\ ");
-    cwd = "\"" + cwd;
-    map["PATH"]=cwd + x.Right(x.size()-1) + "\":" + map["PATH"];
+//    cwd = "\"" + cwd;
+//    map["PATH"]="'" + cwd + x.Right(x.size()-1) + "'";// + "\":" + map["PATH"];
+    //map["PATH"]= cwd + x.Right(x.size()-1);// + "\":" + map["PATH"];
+    map["PATH"]= cwd + x.Right(x.size()-1) + ":$PATH";
+    map["PWD"]= cwd;
     wxExecuteEnv env;
-    env.cwd = wxGetCwd();
+ //   env.cwd = "'" + wxGetCwd() + "'";
+    env.cwd = cwd;
     env.env = map;
  //   int rvalue = system(cmd.c_str());
     wxArrayString stdOut, stdErr;
-    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_SYNC|wxEXEC_HIDE_CONSOLE, &env ) ;
+//    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_SYNC|wxEXEC_HIDE_CONSOLE, &env ) ;
+    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_ASYNC|wxEXEC_SHOW_CONSOLE, &env ) ;
     return rvalue;
 }
 

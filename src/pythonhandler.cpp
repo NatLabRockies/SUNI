@@ -46,6 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include<wx/arrstr.h>
 #include<wx/utils.h>
 #include<wx/filename.h>
+#include<wx/process.h>
 
 #include "pythonhandler.h"
 #include "rapidjson/document.h"
@@ -270,8 +271,11 @@ int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& packa
     env.env = map;
  //   int rvalue = system(cmd.c_str());
     wxArrayString stdOut, stdErr;
-//    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_SYNC|wxEXEC_HIDE_CONSOLE, &env ) ;
-    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_ASYNC|wxEXEC_SHOW_CONSOLE, &env ) ;
+//    cmd = "pwd";
+    wxProcess *process = new wxProcess(wxPROCESS_REDIRECT);
+    int rvalue = (int)wxExecute( cmd, wxEXEC_SYNC|wxEXEC_SHOW_CONSOLE, process, &env ) ;
+//    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_SYNC|wxEXEC_HIDE_CONSOLE, process ) ;
+//    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_ASYNC|wxEXEC_SHOW_CONSOLE, &env ) ;
     return rvalue;
 }
 

@@ -244,7 +244,10 @@ int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& packa
     
     wxString cmd = fnpip.GetFullPath() + " install " + package.name + "==" + package.version;
     if (!package.localPackage.empty()) {
-        cmd = fnpip.GetFullPath() + " --use-feature=in-tree-build install .";
+        //cmd = fnpip.GetFullPath() + " --use-feature=in-tree-build install .";
+        auto x = fnpip.GetPath();
+  //      cmd = "\"" + lpath + x.Right(x.size()-2) + "/pip\" --use-feature=in-tree-build install \"" + lpath + ".\"";
+        cmd = "pip install .";
         //       cmd = "./pip --use-feature=in-tree-build install ../../.";
  //              cmd = "pip --use-feature=in-tree-build install .";
         //if (!wxSetWorkingDirectory(fnpip.GetPath()))
@@ -261,9 +264,9 @@ int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& packa
     auto x = fnpip.GetPath();
 //    cwd.Replace(" ", "\ ");
 //    cwd = "\"" + cwd;
-//    map["PATH"]="'" + cwd + x.Right(x.size()-1) + "'";// + "\":" + map["PATH"];
+    map["PATH"]=lpath + x.Right(x.size()-2);// + "\":" + map["PATH"];
     //map["PATH"]= cwd + x.Right(x.size()-1);// + "\":" + map["PATH"];
-    map["PATH"]= cwd + x.Right(x.size()-1) + ":$PATH";
+//    map["PATH"]= cwd + x.Right(x.size()-1) + ":$PATH";
     map["PWD"]= cwd;
     wxExecuteEnv env;
  //   env.cwd = "'" + wxGetCwd() + "'";
@@ -272,9 +275,9 @@ int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& packa
  //   int rvalue = system(cmd.c_str());
     wxArrayString stdOut, stdErr;
 //    cmd = "pwd";
-    wxProcess *process = new wxProcess(wxPROCESS_REDIRECT);
-    int rvalue = (int)wxExecute( cmd, wxEXEC_SYNC|wxEXEC_SHOW_CONSOLE, process, &env ) ;
-//    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_SYNC|wxEXEC_HIDE_CONSOLE, process ) ;
+//    wxProcess *process = new wxProcess(wxPROCESS_REDIRECT);
+//    int rvalue = (int)wxExecute( cmd, wxEXEC_SYNC|wxEXEC_SHOW_CONSOLE, process, &env ) ;
+    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_SYNC|wxEXEC_HIDE_CONSOLE, &env ) ;
 //    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_ASYNC|wxEXEC_SHOW_CONSOLE, &env ) ;
     return rvalue;
 }

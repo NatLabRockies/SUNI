@@ -30,7 +30,7 @@ def _add_extended_report(results, lines, n_valid, include_pm=True):
     return lines
 
 
-def _add_irradiance_stats(results, lines, n_valid, fn=2):
+def _add_irradiance_stats(results, lines, fn=2):
     """Add irradiance summary lines to the report"""
     out_params = ["GHI Mean U95", "DNI Mean U95", "DHI Mean U95"]
     col_names = ["U95GHI", "U95DNI", "U95DHI"]
@@ -82,7 +82,7 @@ def compile_popup_report(results, cfg):
         f"Total eligible records: {n_valid:d} ({n_valid/len(results):.1%})",
         f"Exceeded SERIQC max: {sq_max:d} ({sq_max/len(results):.1%})\n",
     ]
-    lines = _add_irradiance_stats(results, lines, n_valid, fn=2)
+    lines = _add_irradiance_stats(results, lines, fn=2)
 
     if int(cfg.get("ExtendedRpt", 0)):
         lines = _add_extended_report(results, lines, n_valid, include_pm=True)
@@ -196,7 +196,7 @@ def compile_standard_report(results, cfg, proc_start_time):
         f"Total Eligible Uncertainty Records: "
         f"{n_valid:d} ({n_valid/len(results):.1%})\n",
     ]
-    lines = _add_irradiance_stats(results, lines, n_valid, fn=2)
+    lines = _add_irradiance_stats(results, lines, fn=2)
 
     if int(cfg.get("ExtendedRpt", 0)):
         lines = _add_extended_report(results, lines, n_valid, include_pm=False)

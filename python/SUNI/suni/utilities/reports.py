@@ -30,14 +30,20 @@ def _add_extended_report(results, lines, n_valid, include_pm=True):
     return lines
 
 
-def _add_irradiance_stats(results, lines, n_valid, fn=2):
+def _add_irradiance_stats(results, lines, fn=2):
     """Add irradiance summary lines to the report"""
     out_params = ["GHI Mean U95", "DNI Mean U95", "DHI Mean U95"]
     col_names = ["U95GHI", "U95DNI", "U95DHI"]
-    for param, col in zip(out_params, col_names):
-        mean, std = results[col].describe()[1:3].fillna(-9900)
+    stats = {
+        param: results[col].describe()[1:3].fillna(-9900)
+        for param, col in zip(out_params, col_names)
+    }
+    m_l = 3 + fn if any(v[0] >= 10 for v in stats.values()) else 2 + fn
+    s_l = 3 + fn if any(v[1] >= 10 for v in stats.values()) else 2 + fn
+    for param, (mean, std) in stats.items():
         lines.append(
-            f"{param}: +/-{mean:.{fn}f}% | Standard deviation: {std:.{fn}f}"
+            f"{param}: +/-{mean:>{m_l}.{fn}f}% | "
+            f"Standard deviation: {std:>{s_l}.{fn}f}"
         )
     return lines
 
@@ -82,7 +88,7 @@ def compile_popup_report(results, cfg):
         f"Total eligible records: {n_valid:d} ({n_valid/len(results):.1%})",
         f"Exceeded SERIQC max: {sq_max:d} ({sq_max/len(results):.1%})\n",
     ]
-    lines = _add_irradiance_stats(results, lines, n_valid, fn=2)
+    lines = _add_irradiance_stats(results, lines, fn=2)
 
     if int(cfg.get("ExtendedRpt", 0)):
         lines = _add_extended_report(results, lines, n_valid, include_pm=True)
@@ -147,24 +153,50 @@ def compile_standard_report(results, cfg, proc_start_time):
         "System Configuration:",
     ]
 
+    s_ns = {
+        "GHI": str(cfg["GHIid"]),
+        "DNI": str(cfg["DNIid"]),
+        "DHI": str(cfg["DHIid"]),
+    }
+    class_uncerts = {
+        "GHI": float(cfg["GHIclassUncert"]),
+        "DNI": float(cfg["DNIclassUncert"]),
+        "DHI": float(cfg["DHIclassUncert"]),
+    }
+    cal_uncerts = {
+        "GHI": float(cfg["GHIcalUncert"]),
+        "DNI": float(cfg["DNIcalUncert"]),
+        "DHI": float(cfg["DHIcalUncert"]),
+    }
+    rad_uncerts = {
+        "GHI": float(cfg["GHIradUncert"]),
+        "DNI": float(cfg["DNIradUncert"]),
+        "DHI": float(cfg["DHIradUncert"]),
+    }
+
+    sn_l = max(map(len, s_ns.values())) + 1
+    cl_l = 4 if any(v >= 10 for v in class_uncerts.values()) else 3
+    cal_l = 4 if any(v >= 10 for v in cal_uncerts.values()) else 3
+    rad_l = 4 if any(v >= 10 for v in rad_uncerts.values()) else 3
+
     out_params = ["GHI", "DNI", "DHI"]
     for param in out_params:
-        s_n = cfg[f"{param}id"]
+        s_n = s_ns[param]
         inst_class = cfg[f"{param}class"]
-        class_uncertainty = float(cfg[f"{param}classUncert"])
-        cal_uncertainty = float(cfg[f"{param}calUncert"])
+        class_uncertainty = class_uncerts[param]
+        cal_uncertainty = cal_uncerts[param]
         cal_due = cfg.get(f"{param}calDate") or "Not specified"
         due = cfg.get(f"{param}dueDate") or "Not specified"
-        rad_uncertainty = float(cfg[f"{param}radUncert"])
+        rad_uncertainty = rad_uncerts[param]
         line = " | ".join(
             [
-                f"{param}: s/n {s_n}",
+                f"{param}: s/n {s_n:>{sn_l}}",
                 f"Class: {inst_class}",
-                f"Class Uncert: +/-{class_uncertainty:.2f}%",
-                f"Cal Uncert: +/-{cal_uncertainty:.2f}%",
+                f"Class Uncert: +/-{class_uncertainty:>{cl_l}.1f}%",
+                f"Cal Uncert: +/-{cal_uncertainty:>{cal_l}.1f}%",
                 f"Cal Date: {cal_due}",
                 f"Due Date: {due}",
-                f"Radiometer Uncert: +/-{rad_uncertainty:.2f}%",
+                f"Radiometer Uncert: +/-{rad_uncertainty:>{rad_l}.1f}%",
             ]
         )
         lines.append(line)
@@ -196,7 +228,7 @@ def compile_standard_report(results, cfg, proc_start_time):
         f"Total Eligible Uncertainty Records: "
         f"{n_valid:d} ({n_valid/len(results):.1%})\n",
     ]
-    lines = _add_irradiance_stats(results, lines, n_valid, fn=2)
+    lines = _add_irradiance_stats(results, lines, fn=2)
 
     if int(cfg.get("ExtendedRpt", 0)):
         lines = _add_extended_report(results, lines, n_valid, include_pm=False)

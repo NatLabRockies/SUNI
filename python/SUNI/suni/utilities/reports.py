@@ -38,8 +38,8 @@ def _add_irradiance_stats(results, lines, fn=2):
         param: results[col].describe()[1:3].fillna(-9900)
         for param, col in zip(out_params, col_names)
     }
-    m_l = 3 + fn if any(v[0] >= 10 for v in stats.values()) else 2 + fn
-    s_l = 3 + fn if any(v[1] >= 10 for v in stats.values()) else 2 + fn
+    m_l = 3 + fn if any(v >= 10 for v, __ in stats.values()) else 2 + fn
+    s_l = 3 + fn if any(v >= 10 for __, v in stats.values()) else 2 + fn
     for param, (mean, std) in stats.items():
         lines.append(
             f"{param}: +/-{mean:>{m_l}.{fn}f}% | "

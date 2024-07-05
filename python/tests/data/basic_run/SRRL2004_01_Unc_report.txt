@@ -5,9 +5,9 @@ Processing date: 01/19/2024 10:39
 From 1/1/2004 0:00 to 1/2/2004 8:00 (1-minute interval)
 
 System Configuration:
-GHI: s/n 14003 | Class: A | Class Uncert: +/-2.40% | Cal Uncert: +/-1.90% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.10%
-DNI: s/n 190042 | Class: A | Class Uncert: +/-0.90% | Cal Uncert: +/-0.75% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-1.20%
-DHI: s/n 140033 | Class: A | Class Uncert: +/-2.40% | Cal Uncert: +/-1.90% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.10%
+GHI: s/n  14003 | Class: A | Class Uncert: +/-2.4% | Cal Uncert: +/-1.9% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.1%
+DNI: s/n 190042 | Class: A | Class Uncert: +/-0.9% | Cal Uncert: +/-0.8% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-1.2%
+DHI: s/n 140033 | Class: A | Class Uncert: +/-2.4% | Cal Uncert: +/-1.9% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.1%
 SERI QC Max: 87
 Zenith Angle Max: 80.0
 DNI Min: 25.0

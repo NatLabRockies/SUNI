@@ -105,6 +105,8 @@ public:
 	}
 };
 
+wxDEFINE_EVENT(myEVT_THREAD_UPDATE, wxThreadEvent);
+
 
 class MainWindow : public wxFrame, public wxThreadHelper
 {
@@ -135,6 +137,7 @@ public:
 	void SendCtrlC(DWORD dwProcessId);
 	void SendSIGINT(HANDLE hProcess);
 #endif
+    
 
 protected:
 	virtual wxThread::ExitCode Entry();
@@ -159,6 +162,8 @@ protected:
 	void OnActivate(wxActivateEvent&);
 	void OnSetFocus(wxFocusEvent& evt);
 	void OnIdle(wxIdleEvent& evt);
+    void OnThreadUpdate(wxThreadEvent& evt);
+    
 
 private:
 	wxPanel *m_pFiles, *m_pDefaults, *m_pInstruments, *m_pProcessing;

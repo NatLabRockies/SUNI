@@ -156,6 +156,7 @@ public:
 
 			wxStaticText* label2 = new wxStaticText(panel, wxID_ANY, message.Mid(nlpos + 1), wxDefaultPosition,
 				wxDefaultSize, wxALIGN_LEFT);
+            label2->SetForegroundColour(wxColour(0, 0, 120));
 			label2->Wrap(wrap);
 
 			szpnl->Add(label1, 0, wxTOP | wxLEFT | wxRIGHT | wxEXPAND, 20);
@@ -165,13 +166,15 @@ public:
 			wxStaticText* label = new wxStaticText(panel, wxID_ANY, message, wxDefaultPosition, wxDefaultSize,
 				wxALIGN_LEFT);
 //			label->Wrap(wrap);
+            label->SetForegroundColour(wxColour(0, 0, 120));
 
 			szpnl->Add(label, 1, wxALL | wxEXPAND, 20);
 		}
 
 		if (addButtonClose) {
 			wxButton* buttonClose = new wxButton(panel, wxID_OK, wxT("OK"));
-			wxBoxSizer* szbtn = new wxBoxSizer(wxHORIZONTAL);
+            buttonClose->SetForegroundColour(wxColour(0, 0, 120));
+            wxBoxSizer* szbtn = new wxBoxSizer(wxHORIZONTAL);
 			szbtn->Add(new wxStaticText(panel, wxID_ANY, " "));
 			szbtn->AddStretchSpacer();
 			szbtn->Add(buttonClose);
@@ -324,10 +327,13 @@ int set_python_path(const char* abs_path) {
 		return 0;
 }
 
+
 MainWindow::MainWindow()
 	: wxFrame( 0, wxID_ANY, wxString("Solar Uncertainty Integrator"),
 		wxDefaultPosition, wxSize( 1100, 700 ) )
 {
+    Bind(myEVT_THREAD_UPDATE, &MainWindow::OnThreadUpdate, this);
+
 #ifdef __WXMSW__
 	SetIcon( wxICON( appicon ) );
 #endif
@@ -1682,13 +1688,52 @@ public:
 
 };
 */
+void MainWindow::OnThreadUpdate(wxThreadEvent& event)
+{
+    wxString ret = event.GetString();
+#ifdef __WXMSW__
+    ret = ret.Left(m_bread_last);
+#endif
+    auto ndx = ret.Find("{");
+    if (ndx != wxNOT_FOUND)
+        ret = ret.Left(ndx);
+    wxArrayString as = wxSplit(ret, '\n');
+//    ret.Replace("\n", "");
+//    ret.Replace("\r", "");
+//    ret = ret.Trim().Right(2); // percent
+#ifdef __WXMSW__
+    if (as.GetCount() > 2) {// last value is \r\n
+        ret = as[as.GetCount() - 2];
+        ret.Replace("\r", "");
+    }
+#else
+    if (as.GetCount() > 0) {
+        ret = as[0];
+    }
+#endif
+    
+    double dret;
+    int current = m_gProgress->GetValue();
+    if (current < 0) current = 0;
+    if (ret.ToDouble(&dret)) {
+        if (dret - current > 0) {
+            m_gProgress->SetValue((int)dret);
+            wxSafeYield();
+            m_gProgress->Update();
+            m_gProgress->Refresh();
+        }
+    }
+}
 
+/*
 void MainWindow::UpdateProgressBar()
 {
 	wxCriticalSectionLocker lock(m_dataCS);
 //	wxString ret = wxString::FromUTF8(m_data);
 	wxString ret(m_data);
+#ifdef __WXMSW__
 	ret = ret.Left(m_bread_last);
+#endif
 	auto ndx = ret.Find("{");
 	if (ndx != wxNOT_FOUND)
 		ret = ret.Left(ndx);
@@ -1696,18 +1741,30 @@ void MainWindow::UpdateProgressBar()
 //	ret.Replace("\n", "");
 //	ret.Replace("\r", "");
 //	ret = ret.Trim().Right(2); // percent
+#ifdef __WXMSW__
 	if (as.GetCount() > 2) {// last value is \r\n
 		ret = as[as.GetCount() - 2];
 		ret.Replace("\r", "");
 	}
-	double dret;
+#else
+    if (as.GetCount() > 0) {
+        ret = as[0];
+    }
+#endif
+    
+    double dret;
 	int current = m_gProgress->GetValue();
 	if (current < 0) current = 0;
 	if (ret.ToDouble(&dret)) {
-		if (dret - current > 0)
-			m_gProgress->SetValue((int)dret);
+        if (dret - current > 0) {
+            m_gProgress->SetValue((int)dret);
+            wxSafeYield();
+            m_gProgress->Update();
+            m_gProgress->Refresh();
+        }
 	}
 }
+*/
 
 #ifdef __WXOSX__
 wxThread::ExitCode MainWindow::Entry()
@@ -1727,8 +1784,14 @@ wxThread::ExitCode MainWindow::Entry()
         while (fgets(buffer, sizeof(buffer), file_pipe)) {
             wxCriticalSectionLocker lock(m_dataCS);
             memcpy(m_data , buffer, BUFSIZE - 1);
+            wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
+            event->SetString(m_data);
+            wxQueueEvent(this,event);
+            wxMilliSleep(50);
         }
-        UpdateProgressBar();
+        wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
+        event->SetString(m_data);
+        wxQueueEvent(this,event);
         wxMilliSleep(5000); // address issue 39
         if (fgets(buffer_stop, sizeof(buffer_stop), file_pipe)==NULL)
             break; // both buffer and bufferstop are null

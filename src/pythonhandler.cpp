@@ -43,6 +43,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AtlConv.h"
 #endif
 
+#include<wx/arrstr.h>
+#include<wx/utils.h>
+#include<wx/filename.h>
+#include<wx/process.h>
+
 #include "pythonhandler.h"
 #include "rapidjson/document.h"
 #include "rapidjson/istreamwrapper.h"
@@ -157,8 +162,8 @@ bool InstallPythonWindows(const std::string& path, const PythonConfig& config){
 }
 
 bool InstallPythonUnix(const std::string& path, const PythonConfig& config){
-    std::string cmd = path + "/install_python.sh " + config.minicondaVersion + " " + config.pythonVersion + " " + path;
-    int rvalue = system(cmd.c_str());
+    std::string cmd = "bash \"" + path + "/install_python.sh\" " + config.minicondaVersion + " " + config.pythonVersion + " \"" + path + "\"";
+    int rvalue = system(cmd.c_str()); // fails with permission denied issue without bash at beginning
     return (bool)rvalue;
 }
 
@@ -229,7 +234,59 @@ int InstallFromPipWindows(const std::string& pip_exec, const PythonPackageConfig
 #endif
 
 int InstallFromPip(const std::string& pip_exec, const PythonPackageConfig& package, const std::string& local_path){
-    std::string cmd = pip_exec + " install " + package.name + "==" + package.version;
-    int rvalue = system(cmd.c_str());
+//    std::string cmd = "bash \"" + pip_exec + "\" install " + package.name + "==" + package.version;
+//    if (!package.localPackage.empty())
+//        cmd =  "bash \"" + pip_exec + "\" --use-feature=in-tree-build install \"" + local_path + package.localPackage + " \"";
+    wxString pipname = pip_exec;
+    wxString lpath = local_path;
+    wxFileName fnpip = wxFileName(pipname);
+    wxFileName fnlpath = wxFileName(lpath);
+    
+    wxString cmd = fnpip.GetFullPath() + " install " + package.name + "==" + package.version;
+    if (!package.localPackage.empty()) {
+        //cmd = fnpip.GetFullPath() + " --use-feature=in-tree-build install .";
+        auto x = fnpip.GetPath();
+  //      cmd = "\"" + lpath + x.Right(x.size()-2) + "/pip\" --use-feature=in-tree-build install \"" + lpath + ".\"";
+        cmd = "pip install .";
+        //       cmd = "./pip --use-feature=in-tree-build install ../../.";
+ //              cmd = "pip --use-feature=in-tree-build install .";
+        //if (!wxSetWorkingDirectory(fnpip.GetPath()))
+            if (!wxSetWorkingDirectory(lpath))
+     return -1;
+        
+    }
+    wxEnvVariableHashMap map;
+    if (wxGetEnvMap(&map)) {
+        // good - set path
+    }
+    auto cwd = wxGetCwd();
+//    map["PATH"]=cwd + ":" + map["PATH"];
+    auto x = fnpip.GetPath();
+//    cwd.Replace(" ", "\ ");
+//    cwd = "\"" + cwd;
+    map["PATH"]=lpath + x.Right(x.size()-2);// + "\":" + map["PATH"];
+    //map["PATH"]= cwd + x.Right(x.size()-1);// + "\":" + map["PATH"];
+//    map["PATH"]= cwd + x.Right(x.size()-1) + ":$PATH";
+    map["PWD"]= cwd;
+    wxExecuteEnv env;
+ //   env.cwd = "'" + wxGetCwd() + "'";
+    env.cwd = cwd;
+    env.env = map;
+ //   int rvalue = system(cmd.c_str());
+    wxArrayString stdOut, stdErr;
+//    cmd = "pwd";
+//    wxProcess *process = new wxProcess(wxPROCESS_REDIRECT);
+//    int rvalue = (int)wxExecute( cmd, wxEXEC_SYNC|wxEXEC_SHOW_CONSOLE, process, &env ) ;
+    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_SYNC|wxEXEC_HIDE_CONSOLE, &env ) ;
+//    int rvalue = (int)wxExecute( cmd, stdOut, stdErr, wxEXEC_ASYNC|wxEXEC_SHOW_CONSOLE, &env ) ;
     return rvalue;
 }
+
+
+/*
+bool InstallPythonUnix(const std::string& path, const PythonConfig& config){
+    std::string cmd = "bash \"" + path + "/install_python.sh\" " + config.minicondaVersion + " " + config.pythonVersion + " \"" + path + "\"";
+    int rvalue = system(cmd.c_str()); // fails with permission denied issue without bash at beginning
+    return (bool)rvalue;
+}
+*/

@@ -128,10 +128,13 @@ public:
 
 	void UpdateProgressBar();
 
+	wxString ReadTextFile(const wxString& sfn);
+
 	bool SetupPython();
+#ifdef __WXMSW__
 	void SendCtrlC(DWORD dwProcessId);
 	void SendSIGINT(HANDLE hProcess);
-
+#endif
 
 protected:
 	virtual wxThread::ExitCode Entry();

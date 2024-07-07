@@ -100,19 +100,29 @@ include(${wxWidgets_USE_FILE})
 
 # Setup Application
 # setup icons if desired
+if (APPLE)
+	set(MACOSX_BUNDLE_ICON_FILE SAM.icns)
+	set(SUNI_ICON ${CMAKE_CURRENT_SOURCE_DIR}/build_resources/SUNI.icns)
+	set_source_files_properties(${SUNI_ICON} PROPERTIES
+		MACOSX_PACKAGE_LOCATION "Resources")
+elseif(WIN32)
+	set(SUNI_ICON ${CMAKE_CURRENT_SOURCE_DIR}/build_resources/SUNI.rc)
+endif()
 
 # have to make executables with different names so the .app's have different names
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_executable(SUNId
 			WIN32
 			MACOSX_BUNDLE
-			${SUNI_SRC})
+			${SUNI_SRC}
+            ${SUNI_ICON})
 	set(SUNI_EXE SUNId)
 else() # if Release or if MSVC multigenerator
 	add_executable(SUNI
 			WIN32
 			MACOSX_BUNDLE
-			${SUNI_SRC})
+			${SUNI_SRC}
+            ${SUNI_ICON})
 	set(SUNI_EXE SUNI)
 endif()
 

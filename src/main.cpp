@@ -1780,14 +1780,21 @@ wxThread::ExitCode MainWindow::Entry()
         return  (wxThread::ExitCode)0;
     }
 
+//    size_t num_gets=0;
     while (1) {
         while (fgets(buffer, sizeof(buffer), file_pipe)) {
             wxCriticalSectionLocker lock(m_dataCS);
             memcpy(m_data , buffer, BUFSIZE - 1);
-            wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
-            event->SetString(m_data);
-            wxQueueEvent(this,event);
-            wxMilliSleep(50);
+//            if (num_gets > 5) {
+                wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
+                event->SetString(m_data);
+                wxQueueEvent(this,event);
+                wxMilliSleep(10);
+//                num_gets = 0;
+//            }
+            if (m_cancelled)
+                break;
+//            num_gets++;
         }
         wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
         event->SetString(m_data);
@@ -1799,7 +1806,7 @@ wxThread::ExitCode MainWindow::Entry()
             break;
     }
     pclose(file_pipe);
-     if (m_cancelled) {
+    if (m_cancelled) {
         m_messages.Add("Process cancelled by user.");
         wxString str(buffer);
         m_messages = wxSplit(str, '\n');
@@ -2400,7 +2407,7 @@ bool MainWindow::InvokePython()
 							s += tFile.GetNextLine() + "\n";
 						// Issue 76
 //						wxMessageBox(s, "Report", wxICON_NONE);p->FromDIP(wxSize(500,24)
-						MyMessageDialog dlg(this, s, "Report", wxCENTER, wxDefaultPosition, this->FromDIP(wxSize(800, 400)), true, false);
+						MyMessageDialog dlg(this, s, "Report", wxCENTER, wxDefaultPosition, this->FromDIP(wxSize(1000, 600)), true, false);
 						dlg.ShowModal();
 						//wxGetApp().SafeYieldFor(&dlg, true);
 					}

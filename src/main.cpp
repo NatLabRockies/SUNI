@@ -1718,9 +1718,9 @@ void MainWindow::OnThreadUpdate(wxThreadEvent& event)
     if (ret.ToDouble(&dret)) {
         if (dret - current > 0) {
             m_gProgress->SetValue((int)dret);
-            wxSafeYield();
-            m_gProgress->Update();
-            m_gProgress->Refresh();
+//            wxSafeYield();
+//            m_gProgress->Update();
+//            m_gProgress->Refresh();
         }
     }
 }
@@ -1892,7 +1892,11 @@ wxThread::ExitCode MainWindow::Entry()
 						memcpy(m_data + offset, buffer, BUFSIZE - 1);
 					}
 					wxLogStatus("%.*s", m_bread, buffer);
-					UpdateProgressBar();
+//					UpdateProgressBar();
+					wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
+					event->SetString(m_data);
+					wxQueueEvent(this, event);
+
 				}
 			}
 			else if (m_bread_last > 3) // 100% - success

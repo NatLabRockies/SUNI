@@ -1691,6 +1691,8 @@ public:
 void MainWindow::OnThreadUpdate(wxThreadEvent& event)
 {
     wxString ret = event.GetString();
+    wxLogStatus("%s", (const char*)(ret.c_str()));
+
 #ifdef __WXMSW__
     ret = ret.Left(m_bread_last);
 #endif
@@ -1780,21 +1782,16 @@ wxThread::ExitCode MainWindow::Entry()
         return  (wxThread::ExitCode)0;
     }
 
-//    size_t num_gets=0;
     while (1) {
         while (fgets(buffer, sizeof(buffer), file_pipe)) {
             wxCriticalSectionLocker lock(m_dataCS);
             memcpy(m_data , buffer, BUFSIZE - 1);
-//            if (num_gets > 5) {
-                wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
-                event->SetString(m_data);
-                wxQueueEvent(this,event);
-                wxMilliSleep(10);
-//                num_gets = 0;
-//            }
+            wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
+            event->SetString(m_data);
+            wxQueueEvent(this,event);
+            wxMilliSleep(10);
             if (m_cancelled)
                 break;
-//            num_gets++;
         }
         wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
         event->SetString(m_data);
@@ -1806,20 +1803,25 @@ wxThread::ExitCode MainWindow::Entry()
             break;
     }
     pclose(file_pipe);
+    
+    wxString str(m_data);
+    success = (str.Left(11)=="{'out_file'");
+    
     if (m_cancelled) {
         m_messages.Add("Process cancelled by user.");
         wxString str(buffer);
         m_messages = wxSplit(str, '\n');
     }
     else if (success) {
-        wxString str(m_data);
+//        wxString str(m_data);
         m_messages = wxSplit(str, '\n');
     }
     else {
         // success set to false but see note above about execution with breakpoints only!
-        wxString str(buffer);
-        str = "Error:\nCheck log file using Shift+F4.\n" + str;
-        m_messages = wxSplit(str, '\n');
+//        wxString str(buffer);
+        wxString str_error = wxString::FromAscii(file_pipe->_p);
+        str_error = "Error:\nCheck log file using Shift+F4.\n" + str_error;
+        m_messages = wxSplit(str_error, '\n');
     }
 
     return  (wxThread::ExitCode)0;
@@ -2377,13 +2379,18 @@ bool MainWindow::InvokePython()
 			if (strMessages.GetCount() > 0) {
 				for (size_t i = 0; i < strMessages.GetCount() -1; i++) {
 					bError = bError || strMessages[i].Lower().Find("error") != wxNOT_FOUND;
+                    // skip irrelevant messages per macos testing p.55
+                    wxString last_part = strMessages[i].Right(1);
+                    bool skip_str = (last_part == "," || last_part == ";" || last_part == "}");
 					// do not include number only lines per issue 40
-					double tmp;
-					wxString stmp = strMessages[i];
-					stmp.Replace("\r", "");
-					if (bError && !stmp.ToDouble(&tmp)) {
-						sError += strMessages[i] + "\n";
-					}
+                    if (!skip_str) {
+                        double tmp;
+                        wxString stmp = strMessages[i];
+                        stmp.Replace("\r", "");
+                        if (bError && !stmp.ToDouble(&tmp)) {
+                            sError += strMessages[i] + "\n";
+                        }
+                    }
 				}
 			}
 

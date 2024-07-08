@@ -182,10 +182,11 @@ if (UNIX)
         add_custom_command(
             TARGET ${SUNI_EXE}
             POST_BUILD
-            COMMAND rsync -a -v "${SUNINRELDIR}/deploy/Configuration Files" ${SUNI_APP}/Contents/MacOS
-            COMMAND rsync -a -v "${SUNINRELDIR}/deploy/System Files" ${SUNI_APP}/Contents/MacOS
-            COMMAND rsync -a -v "${SUNINRELDIR}/deploy/Instrument Files" ${SUNI_APP}/Contents/MacOS
-            COMMAND rsync -a -v ${CMAKE_CURRENT_SOURCE_DIR}/python/* ${SUNI_APP}/Contents/MacOS
+            COMMAND mkdir -p ${SUNI_APP}/Contents/runtime
+            COMMAND rsync -a -v "${SUNINRELDIR}/deploy/Configuration Files" ${SUNI_APP}/Contents/runtime
+            COMMAND rsync -a -v "${SUNINRELDIR}/deploy/System Files" ${SUNI_APP}/Contents/runtime
+            COMMAND rsync -a -v "${SUNINRELDIR}/deploy/Instrument Files" ${SUNI_APP}/Contents/runtime
+            COMMAND rsync -a -v ${CMAKE_CURRENT_SOURCE_DIR}/python/* ${SUNI_APP}/Contents/runtime
             COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/build_resources/Info-${SUNI_NAME}.plist ${SUNI_APP}/Contents/Info.plist
 #            COMMAND mkdir -p ${SUNI_APP}/Contents/Frameworks
 #            COMMAND install_name_tool -change ${SSC_NAME} @executable_path/../Frameworks/${SSC_NAME} ${SUNI_APP}/Contents/MacOS/${SAM_NAME}

@@ -641,7 +641,7 @@ MainWindow::MainWindow()
 	szTitle->AddStretchSpacer();
 	//szTitle->Add(new wxStaticText(p, wxID_ANY, ""));
 //	szTitle->Add(new wxBitmap(wxImage(_T("C:\\Users\\Jurgen\\Documents\\C++\\Dorienne-COPITRON\\copy_logo.jpg")).Rescale(wxSize(0, 72).GetWidth(), wxSize(0, 72).GetHeight())), wxPoint(32, 24), wxSize(0, 72), wxSIMPLE_BORDER, _T("ID_STATICBITMAP1"));
-	wxFileName path(GetAppPath() + "/System Files/header_app.gif");
+    wxFileName path(SUNIApp::GetRuntimePath() + "/System Files/header_app.gif");
 	szTitle->Add(new wxStaticBitmap(p, wxID_ANY, wxImage(path.GetFullPath())));
 
 	sizerTop->Add(szTitle, 0, wxEXPAND, 5);
@@ -1005,7 +1005,7 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 void MainWindow::GetInstrumentPyranometerDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert )
 {
 	wxCSVData csv;
-	wxFileName path(GetAppPath() + "/Instrument Files/Upyranometer.csv");
+    wxFileName path(SUNIApp::GetRuntimePath() + "/Instrument Files/Upyranometer.csv");
 	path.Normalize();
 	if (!csv.ReadFile(path.GetFullPath())) {
 		wxMessageBox("Error opening instrument file:\n\n" + path.GetFullPath() + "\n\n", "Notice", wxOK, this);
@@ -1029,7 +1029,7 @@ void MainWindow::GetInstrumentPyranometerDataBaseUncertainties(const wxString& i
 void MainWindow::GetInstrumentPyrheliometerDataBaseUncertainties(const wxString& instClass, wxString* classUncert, wxString* calUncert)
 {
 	wxCSVData csv;
-	wxFileName path(GetAppPath() + "/Instrument Files/Upyrheliometer.csv");
+    wxFileName path(SUNIApp::GetRuntimePath() + "/Instrument Files/Upyrheliometer.csv");
 	path.Normalize();
 	if (!csv.ReadFile(path.GetFullPath())) {
 		wxMessageBox("Error opening instrument file:\n\n" + path.GetFullPath() + "\n\n", "Notice", wxOK, this);
@@ -1321,7 +1321,7 @@ wxString MainWindow::GetAppPath()
 
 std::string MainWindow::GetPythonConfigPath() 
 {
-	wxFileName path(GetAppPath() + "/System Files");
+    wxFileName path(SUNIApp::GetRuntimePath() + "/System Files");
 	path.Normalize();
 	return path.GetFullPath().ToStdString();
 }
@@ -2422,7 +2422,7 @@ bool MainWindow::InvokePython()
 				else {
 					sError = "Python run unsuccessful \n" + m_pythonpath + m_pythonargs;
 					wxMessageBox(sError, "Error", wxICON_ERROR);
-					wxString sfn = GetAppPath() + "/System Files/error.txt";
+                    wxString sfn = SUNIApp::GetRuntimePath() + "/System Files/error.txt";
 					wxTextFile tFile(sfn);
 					tFile.AddLine(m_pythonpath + m_pythonargs);
 					tFile.Write();
@@ -2681,7 +2681,7 @@ bool SUNIApp::OnInit()
 	{
 		// register the first load
 		Settings().Write(fl_key, false);
-		configurationFile = GetAppPath() + "/Configuration Files/CfgDefaultsV001.json";
+		configurationFile = GetRuntimePath() + "/Configuration Files/CfgDefaultsV001.json";
 	}
 	else
 	{

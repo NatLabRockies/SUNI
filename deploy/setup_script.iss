@@ -26,8 +26,8 @@ ArchitecturesInstallIn64BitMode=x64
 
 
 ; UPDATE THESE TO MATCH THE VERSION
-AppVerName=SUNI 2024.6.7
-DefaultDirName={sd}\SUNI\2024.6.7
+AppVerName=SUNI 2024.7.9
+DefaultDirName={sd}\SUNI\2024.7.9
 
 AppPublisher=National Renewable Energy Laboratory
 AppPublisherURL=

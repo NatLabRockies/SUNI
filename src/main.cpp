@@ -2527,7 +2527,12 @@ wxString SUNIApp::GetAppPath()
 
 wxString SUNIApp::GetRuntimePath()
 {
-	wxFileName path( GetAppPath() + "/../runtime/" );
+#ifdef __WXMSW__
+	wxFileName path( GetAppPath() );
+#else
+	wxFileName path(GetAppPath() + "/../runtime/");
+#endif
+
 //	path.Normalize();
 	if (!path.IsAbsolute())
 		path.MakeAbsolute();

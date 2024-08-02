@@ -1,0 +1,31 @@
+Uncertainty Processing Report for SRRL_LoUnc_062020.csv
+Station ID: NRELSR (SRRL)
+QC0 File: s_NRELSR.qc0
+Processing date: 07/03/2024 18:51
+From 6/1/2020 4:37 to 6/30/2020 19:30 (1-minute interval)
+
+System Configuration:
+GHI: s/n  100174 | Class: A | Class Uncert: +/-2.4% | Cal Uncert: +/-0.0% | Cal Date: 05/05/2019 | Due Date: 05/05/2020 | Radiometer Uncert: +/-2.4%
+DNI: s/n  140108 | Class: A | Class Uncert: +/-0.9% | Cal Uncert: +/-0.8% | Cal Date: 05/05/2019 | Due Date: 05/05/2020 | Radiometer Uncert: +/-1.2%
+DHI: s/n  010046 | Class: A | Class Uncert: +/-2.4% | Cal Uncert: +/-1.0% | Cal Date: 05/05/2019 | Due Date: 05/05/2020 | Radiometer Uncert: +/-2.6%
+SERI QC Max: 89
+Zenith Angle Max: 80.0
+DNI Min: -10.0
+System Uncertainty Max: 100.0
+
+Input Data Records: 26758
+Three-component records: 22656 (84.7%)
+Above SERIQC Max: 0 (0.0%)
+Above Zenith Angle Max: 0 (0.0%)
+Below DNI Minimum: 0 (0.0%)
+Above Max System Uncertainty: 0 (0.0%)
+Mathematically Invalid: 0 (0.0%)
+Total Eligible Uncertainty Records: 22656 (84.7%)
+
+GHI Mean U95: +/-2.45% | Standard deviation: 0.48
+DNI Mean U95: +/-1.27% | Standard deviation: 0.56
+DHI Mean U95: +/-2.65% | Standard deviation: 0.46
+
+Urads Uncertainty Mean: +/-3.25%
+Mean of System Uncertainty ABS: 0.96%
+Field Uncertainty Mean: +/-0.10%

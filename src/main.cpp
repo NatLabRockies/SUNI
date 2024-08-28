@@ -632,12 +632,15 @@ MainWindow::MainWindow()
 	wxBoxSizer* sizerTop = new wxBoxSizer(wxVERTICAL);
 	// Issue 88
 	wxBoxSizer* szTitle = new wxBoxSizer(wxHORIZONTAL);
-	wxStaticText* sTitle = new wxStaticText(p, wxID_ANY, "Solar Uncertainty Integrator", wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
-	sTitle->SetFont(p->GetFont().Scale(1.5));
+    wxFileName pathSUNI(SUNIApp::GetRuntimePath() + "/System Files/SUNI_icon_rev1.jpg");
+    szTitle->Add(new wxStaticBitmap(p, wxID_ANY, wxImage(pathSUNI.GetFullPath())));
+
+    wxStaticText* sTitle = new wxStaticText(p, wxID_ANY, "Solar Uncertainty Integrator", wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_VERTICAL);
+    sTitle->SetFont(p->GetFont().Scale(2.0));
 //	sTitle->SetLabelMarkup("< big > something else < / big>"); // build wxWidgets with wxUSE_MARKUP set
-	szTitle->Add(new wxStaticText(p, wxID_ANY, ""));
+//	szTitle->Add(new wxStaticText(p, wxID_ANY, ""));
 	szTitle->AddStretchSpacer();
-	szTitle->Add(sTitle, 0, wxEXPAND, 5);
+	szTitle->Add(sTitle, 0, wxALIGN_CENTER_VERTICAL, 5);
 	szTitle->AddStretchSpacer();
 	//szTitle->Add(new wxStaticText(p, wxID_ANY, ""));
 //	szTitle->Add(new wxBitmap(wxImage(_T("C:\\Users\\Jurgen\\Documents\\C++\\Dorienne-COPITRON\\copy_logo.jpg")).Rescale(wxSize(0, 72).GetWidth(), wxSize(0, 72).GetHeight())), wxPoint(32, 24), wxSize(0, 72), wxSIMPLE_BORDER, _T("ID_STATICBITMAP1"));

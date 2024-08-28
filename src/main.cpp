@@ -1150,11 +1150,15 @@ bool MainWindow::UpdateStationIDs(const wxString& dir)
 	else {
 		wxDir folder(dir);
 		wxArrayString files;
-		folder.GetAllFiles(dir, &files, "s_*.qc0", wxDIR_FILES);
+		// Issue #93 - case sensitive - issue on non-Windows platforms
+//		folder.GetAllFiles(dir, &files, "s_*.qc0", wxDIR_FILES); // works on Windows - case insensitive file structure
+		folder.GetAllFiles(dir, &files, "*.??0", wxDIR_FILES); 
 		wxArrayString filenames;
 		for (auto& f : files) {
 			wxFileName fn = f;
+			if (fn.GetExt().Upper() != "QC0") continue;
 			wxString fnStationID = fn.GetName();
+			if (fnStationID.Left(2).Upper() != "S_") continue;
 			fnStationID = fnStationID.Right(fnStationID.length() - 2);
 			wxTextFile tf(f);
 			tf.Open();

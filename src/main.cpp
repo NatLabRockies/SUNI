@@ -1208,11 +1208,14 @@ void MainWindow::EnableStartButton(const bool& enable)
 void MainWindow::OnCommand( wxCommandEvent &evt )
 {
 	wxString dir;
+
+	// issue 74 - store configuration files in user data dir SUNIApp::GetUserLocalDataDir 
+
 	switch( evt.GetId() )
 	{
 	case wxID_OPEN:
 		{
-			wxFileDialog dlg(this, "Open Configuration File", wxEmptyString, wxEmptyString, "Configuration Files (*.json)|*.json", wxFD_OPEN );
+			wxFileDialog dlg(this, "Open Configuration File", SUNIApp::GetUserLocalDataDir(), wxEmptyString, "Configuration Files (*.json)|*.json", wxFD_OPEN);
 			if (dlg.ShowModal() == wxID_OK) {
 				if (!OpenConfiguration(dlg.GetPath()))
 					wxMessageBox("Error opening configuration file:\n\n" + dlg.GetPath() + "\n\n", "Notice", wxOK, this);
@@ -1231,7 +1234,7 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		break;
 	case wxID_SAVEAS:
 		{
-			wxFileDialog dlg(this, "Save Configuration File", wxEmptyString, wxEmptyString, "Configuration Files (*.json)|*.json", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+			wxFileDialog dlg(this, "Save Configuration File", SUNIApp::GetUserLocalDataDir(), wxEmptyString, "Configuration Files (*.json)|*.json", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 			if (dlg.ShowModal() == wxID_OK)
 				if (!SaveConfiguration(dlg.GetPath()))
 					wxMessageBox("Error saving configuration file:\n\n" + dlg.GetPath() + "\n\n", "Notice", wxOK, this);
@@ -2670,10 +2673,9 @@ bool SUNIApp::OnInit()
 		return false;
 	}
 
-	g_config = new wxConfig("SolarUncertaintyIntegrator", "NREL");// mem leak
+	g_config = new wxConfig("SolarUncertaintyIntegrator", "NREL");
 
 	wxInitAllImageHandlers();
-
 
 
 	FileHistory().Load(Settings());

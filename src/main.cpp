@@ -1255,7 +1255,7 @@ void MainWindow::OnCommand( wxCommandEvent &evt )
 		EnableStartButton(false);
 		m_gProgress->SetValue(1); // Issue 37
         // following line causes mac build to crash
-#ifdef _MSWWX_
+#ifdef __WXMSW__
 		wxGetApp().SafeYieldFor(m_bCancel, true); // Issue 37
 #endif
 		try {
@@ -1915,14 +1915,14 @@ wxThread::ExitCode MainWindow::Entry()
 					wxThreadEvent* event = new wxThreadEvent(myEVT_THREAD_UPDATE);
 					event->SetString(m_data);
 					wxQueueEvent(this, event);
-
 				}
 			}
 			else if (m_bread_last > 3) // 100% - success
 			{
 				break;
 			}
-			else if (python_startup_delay < 100) {
+			else if (python_startup_delay < 10000) { // 10,000 steps for initial startup and subsequent progress changes
+				wxMilliSleep(500); // address issue 82 - 8 minute startup delay = 480s = 960 * 0.5s sleep
 				python_startup_delay++;
 			}
 			else if (m_bread_last == 0){ // check for errors - endless loop with 2024.4.2 beta release
@@ -1948,7 +1948,8 @@ wxThread::ExitCode MainWindow::Entry()
 				break; // out of no stdout
 			}
 			wxMilliSleep(5000); // address issue 39
-//			wxGetApp().SafeYieldFor((wxWindow*)g_logWindow, true);
+//			wxMilliSleep(50); // use to force issue 82 on fast machine before adding to python_startup_delay above to address issue 82
+			//			wxGetApp().SafeYieldFor((wxWindow*)g_logWindow, true);
 			if (m_cancelled) {
 				if (AttachConsole(m_pi.dwProcessId)) {
 					// Disable Ctrl-C handling for our program
@@ -2023,7 +2024,7 @@ wxThread::ExitCode MainWindow::Entry()
 	else { 
 		// success set to false but see note above about execution with breakpoints only!
 		wxString str(buffererr);
-		str = "Error:\nCheck log file using Shift+F4.\n" + str;
+		str = "Error:\nCheck log file using Shift+F4 and then click Start.\n" + str;
 		m_messages = wxSplit(str, '\n');
 	}
 	
@@ -2352,6 +2353,7 @@ bool MainWindow::InvokePython()
 
 		while (GetThread() && GetThread()->IsRunning()) {
 			wxGetApp().Yield(); // to update progress bar
+			wxMilliSleep(1000);
 		}
 
 

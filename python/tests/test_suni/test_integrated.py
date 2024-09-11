@@ -349,5 +349,20 @@ def test_basic_run_new_instrument_uncertainty(
     assert "err_fp" not in out
 
 
+def test_extra_field(tmp_cwd, test_data_dir):
+    """Test that extra fields in the input file don;t crash the program"""
+
+    ef_dir = test_data_dir / "extra_fields"
+    shutil.copy(ef_dir / "b1_extra_field_testing.csv", tmp_cwd)
+    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    out = process_from_config(cfg, from_gui=False)
+    test_results = pd.read_csv(out["out_file"])
+    assert len(test_results) == 6
+
+
 if __name__ == "__main__":
     pytest.main(["-q", "--show-capture=all", Path(__file__), "-rapP"])

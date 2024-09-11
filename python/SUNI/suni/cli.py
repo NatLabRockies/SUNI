@@ -75,6 +75,7 @@ def _read_data(input_file):
         input_file,
         header=0,
         names=["DATE", "MST", "GHI", "DNI", "DHI"],
+        index_col=False,
     )
     if isinstance(input_data.index, pd.MultiIndex):
         msg = (

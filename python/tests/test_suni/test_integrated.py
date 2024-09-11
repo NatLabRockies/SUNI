@@ -183,7 +183,7 @@ def test_incompatible_data_format(tmp_cwd, test_data_basic_run_dir):
         process_from_config(cfg, from_gui=False)
 
     assert "Input date" in str(error)
-    assert "incompatible with data format (1: YYYY-MM-DD)" in str(error)
+    assert "incompatible with data format 1: YYYY-MM-DD" in str(error)
 
 
 def test_report_no_cal_date(tmp_cwd, test_data_basic_run_dir):
@@ -297,30 +297,6 @@ def test_seriqc_error_from_gui(tmp_cwd, test_data_dir):
     assert sum(out == expected_message.format(x) for x in range(2, 12)) == 1
 
 
-def test_seriqc_error_bad_input_data(tmp_cwd, test_data_dir):
-    """Test that a non-zero SERIQC code writes error to file for bad input"""
-
-    shutil.copy(test_data_dir / "SRRL1987_05.csv", tmp_cwd / "SRRL1987_05.csv")
-    shutil.copy(test_data_dir / "s_NRELSR.qc0", tmp_cwd)
-    assert len(list(tmp_cwd.glob("*"))) == 2
-
-    with open(test_data_dir / "basic_run" / "sample_config.json") as fh:
-        cfg = json.load(fh)
-
-    cfg["InputFile"] = "SRRL1987_05.csv"
-    cfg["OutputFile"] = "SRRL1987_05_Unc.csv"
-    cfg["max_workers"] = 2
-
-    out = process_from_config(cfg, from_gui=True)
-
-    expected_message = (
-        "SUNIInputDataError:\nFound incorrect number of columns in input "
-        "data! Ensure your input data has exactly the following columns: "
-        '["DATE", "TIME", "GHI", "DNI", "DHI"]'
-    )
-    assert out == expected_message
-
-
 def test_basic_run_new_instrument_uncertainty(
     tmp_cwd, test_data_basic_run_dir
 ):
@@ -347,6 +323,40 @@ def test_basic_run_new_instrument_uncertainty(
 
     out = process_from_config(cfg, from_gui=True)
     assert "err_fp" not in out
+
+
+def test_extra_field(tmp_cwd, test_data_dir):
+    """Test that extra fields in the input file don't crash the program"""
+
+    ef_dir = test_data_dir / "extra_fields"
+    shutil.copy(ef_dir / "b1_extra_field_testing.csv", tmp_cwd)
+    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    out = process_from_config(cfg, from_gui=False)
+    test_results = pd.read_csv(out["out_file"])
+    assert len(test_results) == 6
+
+def test_missing_fields(tmp_cwd, test_data_dir):
+    """Test that missing fields in the input file raise correct error"""
+
+    mf_dir = test_data_dir / "missing_fields"
+    shutil.copy(mf_dir / "b1_missing_field_testing.csv", tmp_cwd)
+    shutil.copy(mf_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    assert len(list(tmp_cwd.glob("*"))) == 2
+
+    with open(mf_dir / "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    with pytest.raises(ValueError) as error:
+        process_from_config(cfg, from_gui=False)
+
+    assert "Found incorrect number of columns in input data!" in str(error)
+    assert "Ensure your input data starts with at least" in str(error)
+    assert '"DATE", "TIME", "GHI", "DNI", "DHI"' in str(error)
 
 
 if __name__ == "__main__":

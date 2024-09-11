@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """SUNI base utilities"""
-from math import sqrt
 
 
 def format_date(year, month, day, year_first=False):
@@ -75,7 +74,7 @@ def extract_time_from_input_data(row, date_format):
         date_fmt_msg = {0: "0: MM/DD/YYYY", 1: "1: YYYY-MM-DD"}
         msg = (
             f"Input date ({date}) incompatible with data format "
-            f"({date_fmt_msg[date_format]})"
+            f"{date_fmt_msg[date_format]}"
         )
         raise ValueError(msg) from None
 

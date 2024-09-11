@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """SUNI base utilities"""
-from math import sqrt
 
 
 def format_date(year, month, day, year_first=False):

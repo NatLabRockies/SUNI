@@ -1,7 +1,7 @@
 {
     "StationID": "NRELSR",
     "InputFile": "b1_extra_field_testing.csv",
-    "OutputFile": "b1_extra_field_testin_Unc.csv",
+    "OutputFile": "b1_extra_field_testing_Unc.csv",
     "SERIQCpath": ".",
     "Interval": 1,
     "GHIid": "14003",

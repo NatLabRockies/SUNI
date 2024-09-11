@@ -71,20 +71,21 @@ def process_from_config(cfg, from_gui=True):
 
 
 def _read_data(input_file):
-    input_data = pd.read_csv(
-        input_file,
-        header=0,
-        names=["DATE", "MST", "GHI", "DNI", "DHI"],
-        index_col=False,
-    )
-    if isinstance(input_data.index, pd.MultiIndex):
+    try:
+        input_data = pd.read_csv(
+            input_file,
+            header=0,
+            names=["DATE", "MST", "GHI", "DNI", "DHI"],
+            index_col=False,
+        )
+    except pd.errors.ParserError:
         msg = (
             "Found incorrect number of columns in input data! Ensure your "
-            "input data has exactly the following columns: "
+            "input data starts with at least the following columns: "
             '["DATE", "TIME", "GHI", "DNI", "DHI"]'
         )
         logger.error(msg)
-        raise SUNIInputDataError(msg)
+        raise SUNIInputDataError(msg) from None
     return input_data
 
 

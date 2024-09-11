@@ -350,7 +350,7 @@ def test_basic_run_new_instrument_uncertainty(
 
 
 def test_extra_field(tmp_cwd, test_data_dir):
-    """Test that extra fields in the input file don;t crash the program"""
+    """Test that extra fields in the input file don't crash the program"""
 
     ef_dir = test_data_dir / "extra_fields"
     shutil.copy(ef_dir / "b1_extra_field_testing.csv", tmp_cwd)
@@ -362,6 +362,25 @@ def test_extra_field(tmp_cwd, test_data_dir):
     out = process_from_config(cfg, from_gui=False)
     test_results = pd.read_csv(out["out_file"])
     assert len(test_results) == 6
+
+def test_missing_fields(tmp_cwd, test_data_dir):
+    """Test that missing fields in the input file raise correct error"""
+
+    mf_dir = test_data_dir / "missing_fields"
+    shutil.copy(mf_dir / "b1_missing_field_testing.csv", tmp_cwd)
+    shutil.copy(mf_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    assert len(list(tmp_cwd.glob("*"))) == 2
+
+    with open(mf_dir / "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    with pytest.raises(ValueError) as error:
+        process_from_config(cfg, from_gui=False)
+
+    assert "Found incorrect number of columns in input data!" in str(error)
+    assert "Ensure your input data starts with at least" in str(error)
+    assert '"DATE", "TIME", "GHI", "DNI", "DHI"' in str(error)
 
 
 if __name__ == "__main__":

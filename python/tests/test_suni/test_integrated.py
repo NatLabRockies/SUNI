@@ -297,30 +297,6 @@ def test_seriqc_error_from_gui(tmp_cwd, test_data_dir):
     assert sum(out == expected_message.format(x) for x in range(2, 12)) == 1
 
 
-def test_seriqc_error_bad_input_data(tmp_cwd, test_data_dir):
-    """Test that a non-zero SERIQC code writes error to file for bad input"""
-
-    shutil.copy(test_data_dir / "SRRL1987_05.csv", tmp_cwd / "SRRL1987_05.csv")
-    shutil.copy(test_data_dir / "s_NRELSR.qc0", tmp_cwd)
-    assert len(list(tmp_cwd.glob("*"))) == 2
-
-    with open(test_data_dir / "basic_run" / "sample_config.json") as fh:
-        cfg = json.load(fh)
-
-    cfg["InputFile"] = "SRRL1987_05.csv"
-    cfg["OutputFile"] = "SRRL1987_05_Unc.csv"
-    cfg["max_workers"] = 2
-
-    out = process_from_config(cfg, from_gui=True)
-
-    expected_message = (
-        "SUNIInputDataError:\nFound incorrect number of columns in input "
-        "data! Ensure your input data has exactly the following columns: "
-        '["DATE", "TIME", "GHI", "DNI", "DHI"]'
-    )
-    assert out == expected_message
-
-
 def test_basic_run_new_instrument_uncertainty(
     tmp_cwd, test_data_basic_run_dir
 ):

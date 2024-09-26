@@ -741,7 +741,7 @@ void MainWindow::OnIdle(wxIdleEvent& evt)
 		else {
             m_pythonInstalled = true;
 			wxBusyCursor wait;
-			MyMessageDialog dlg(this, "Installing the SUNI model.\nPlease note that it may take a few minutes to complete the initial installation.\nOnce installed, you will be able to estimate the solar uncertainty using the 'Start' button.", "Solar Uncertainty Integrator", wxCENTER);
+			MyMessageDialog dlg(this, "Installing the Solar Uncertainty Integrator (SUNI).\nPlease note that it may take a few minutes to complete  this one-time installation.\nOnce installed, you will be able to begin a process configuration.", "Solar Uncertainty Integrator", wxCENTER);
 			dlg.Show();
 			wxGetApp().SafeYieldFor(& dlg, true);
 			InstallPython();

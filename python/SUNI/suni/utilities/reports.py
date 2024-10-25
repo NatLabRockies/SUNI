@@ -163,6 +163,11 @@ def compile_standard_report(results, cfg, proc_start_time):
         "DNI": float(cfg["DNIclassUncert"]),
         "DHI": float(cfg["DHIclassUncert"]),
     }
+    class_uncerts_edited = {
+        "GHI": int(cfg.get("GHIclassModFlg", 0)),
+        "DNI": int(cfg.get("DNIclassModFlg", 0)),
+        "DHI": int(cfg.get("DHIclassModFlg", 0)),
+    }
     cal_uncerts = {
         "GHI": float(cfg["GHIcalUncert"]),
         "DNI": float(cfg["DNIcalUncert"]),
@@ -174,7 +179,7 @@ def compile_standard_report(results, cfg, proc_start_time):
         "DHI": float(cfg["DHIradUncert"]),
     }
 
-    sn_l = max(map(len, s_ns.values())) + 1
+    sn_l = max(map(len, s_ns.values()))
     cl_l = 4 if any(v >= 10 for v in class_uncerts.values()) else 3
     cal_l = 4 if any(v >= 10 for v in cal_uncerts.values()) else 3
     rad_l = 4 if any(v >= 10 for v in rad_uncerts.values()) else 3
@@ -188,18 +193,22 @@ def compile_standard_report(results, cfg, proc_start_time):
         cal_due = cfg.get(f"{param}calDate") or "Not specified"
         due = cfg.get(f"{param}dueDate") or "Not specified"
         rad_uncertainty = rad_uncerts[param]
-        line = " | ".join(
+        line = "| ".join(
             [
-                f"{param}: s/n {s_n:>{sn_l}}",
-                f"Class: {inst_class}",
-                f"Class Uncert: +/-{class_uncertainty:>{cl_l}.1f}%",
-                f"Cal Uncert: +/-{cal_uncertainty:>{cal_l}.1f}%",
-                f"Cal Date: {cal_due}",
-                f"Due Date: {due}",
+                f"{param}: s/n {s_n:>{sn_l}} ",
+                f"Class: {inst_class} ",
+                f"Class Uncert: +/-{class_uncertainty:>{cl_l}.1f}%"
+                f"{'*' if class_uncerts_edited[param] else ' '}",
+                f"Cal Uncert: +/-{cal_uncertainty:>{cal_l}.1f}% ",
+                f"Cal Date: {cal_due} ",
+                f"Due Date: {due} ",
                 f"Radiometer Uncert: +/-{rad_uncertainty:>{rad_l}.1f}%",
             ]
         )
         lines.append(line)
+
+    if any(class_uncerts_edited.values()):
+        lines.append("   * indicates user override")
 
     three_comp = (
         len(results) - counts[ErrorCode.SERIQC] - counts[ErrorCode.THREE_COMP]

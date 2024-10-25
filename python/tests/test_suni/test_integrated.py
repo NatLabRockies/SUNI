@@ -40,6 +40,7 @@ Mean of System Uncertainty ABS: +/-2.36%
 Field Uncertainty Mean: +/-0.47%
 """
 
+
 def _no_9900_in_line(lines):
     """Replace any -9900 instances. """
     return [line.replace("-9900", "") for line in lines]
@@ -495,11 +496,12 @@ def test_missing_field_values(tmp_cwd, test_data_dir):
     out = process_from_config(cfg, from_gui=True)
 
     expected_message = (
-        f"SUNIInputDataError:\nError processing input data on line {7}:"
+        "SUNIInputDataError:\nError processing input data on line 7:"
         "\nOne or more solar irradiance values are missing. Please "
         "indicate missing data using the value '99999'"
     )
     assert out == expected_message
+
 
 if __name__ == "__main__":
     pytest.main(["-q", "--show-capture=all", Path(__file__), "-rapP"])

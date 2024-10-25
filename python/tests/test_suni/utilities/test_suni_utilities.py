@@ -45,6 +45,16 @@ def test_extract_time_from_input_data(data_in, expected):
     assert extract_time_from_input_data(time, date_format) == expected
 
 
+def test_extract_time_from_input_data_bad_date():
+    """Test the `extract_time_from_input_data` function with bad date input"""
+
+    time = {"DATE": 1, "MST": "5:15"}
+    with pytest.raises(ValueError) as err:
+        assert extract_time_from_input_data(time, 0)
+
+    assert "incompatible with data format" in str(err)
+
+
 @pytest.mark.parametrize(
     "ghi, dni, dhi, expected",
     (

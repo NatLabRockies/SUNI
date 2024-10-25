@@ -21,17 +21,12 @@ from suni.utilities.reports import (
     compile_standard_report,
 )
 from suni.utilities.configs import data_from_ini, data_from_json
+from suni.utilities import SUNIInputDataError
 
 
 logger = logging.getLogger(__name__)
-
-
 MIN_RECORDS_PER_PROCESS = 5
 CHUNK_SIZE = 50
-
-
-class SUNIInputDataError(ValueError):
-    """SUNI input data error"""
 
 
 @click.command(no_args_is_help=True)

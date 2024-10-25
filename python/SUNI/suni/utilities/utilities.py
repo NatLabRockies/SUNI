@@ -78,7 +78,16 @@ def extract_time_from_input_data(row, date_format):
         )
         raise ValueError(msg) from None
 
-    hour, minute = map(int, row["MST"].split(":"))
+    time = row["MST"]
+    try:
+        hour, minute = map(int, time.split(":"))
+    except (AttributeError, ValueError):
+        date_fmt_msg = {0: "0: MM/DD/YYYY", 1: "1: YYYY-MM-DD"}
+        msg = (
+            f"Input time ({time}) incompatible with expected time format HH:MM"
+        )
+        raise ValueError(msg) from None
+
     return year, month, day, hour, minute
 
 

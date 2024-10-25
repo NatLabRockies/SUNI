@@ -45,22 +45,31 @@ def test_extract_time_from_input_data(data_in, expected):
     assert extract_time_from_input_data(time, date_format) == expected
 
 
-def test_extract_time_from_input_data_bad_date():
+@pytest.mark.parametrize("test_value", ["1", 1])
+def test_extract_time_from_input_data_bad_date(test_value):
     """Test the `extract_time_from_input_data` function with bad date input"""
 
-    time = {"DATE": 1, "MST": "5:15"}
+    time = {"DATE": test_value, "MST": "5:15"}
     with pytest.raises(ValueError) as err:
         assert extract_time_from_input_data(time, 0)
 
     assert "incompatible with data format" in str(err)
 
 
+@pytest.mark.parametrize("test_value", ["1", 1])
+def test_extract_time_from_input_data_bad_time(test_value):
+    """Test the `extract_time_from_input_data` function with bad time input"""
+
+    time = {"DATE": "1/1/2021", "MST": test_value}
+    with pytest.raises(ValueError) as err:
+        assert extract_time_from_input_data(time, 0)
+
+    assert "incompatible with expected time format HH:MM" in str(err)
+
+
 @pytest.mark.parametrize(
     "ghi, dni, dhi, expected",
-    (
-        (1, 1, 1, (1, 1, 1)),
-        (-9999, 1, 9999, (9999, 1, 9999)),
-    ),
+    ((1, 1, 1, (1, 1, 1)), (-9999, 1, 9999, (9999, 1, 9999))),
 )
 def test_extract_irradiance_from_input_data(ghi, dni, dhi, expected):
     """Test the `extract_irradiance_from_input_data` function"""

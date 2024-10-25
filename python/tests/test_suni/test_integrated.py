@@ -41,7 +41,7 @@ Field Uncertainty Mean: +/-0.47%
 
 def _no_9900_in_line(lines):
     """Replace any -9900 instances. """
-    return [l.replace("-9900", "") for l in lines]
+    return [line.replace("-9900", "") for line in lines]
 
 
 def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):

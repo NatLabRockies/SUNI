@@ -57,17 +57,13 @@ def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
         truth_fp = test_data_basic_run_dir / fn
 
         with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
+            truth_body = truth.readlines()
+            test_body = _no_9900_in_line(test.readlines())
             if "report" in fn:
-                assert (
-                    truth.readlines()[:3]
-                    == _no_9900_in_line(test.readlines()[:3])
-                )
-                assert (
-                    truth.readlines()[4:]
-                    == _no_9900_in_line(test.readlines()[4:])
-                )
+                assert truth_body[:3] == test_body[:3]
+                assert truth_body[4:] == test_body[4:]
             else:
-                assert truth.readlines() == _no_9900_in_line(test.readlines())
+                assert truth_body == test_body
 
 
 # @pytest.mark.skip

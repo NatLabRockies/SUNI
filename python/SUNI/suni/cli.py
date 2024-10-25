@@ -230,16 +230,9 @@ def run_mp(input_file, input_data, cfg, max_workers, from_gui):
 
             for future in as_completed(futures):
                 row_ind = futures.pop(future)
-                try:
-                    data = future.result()
-                except KeyboardInterrupt as cancel:
-                    raise cancel
-                except Exception as err:
-                    msg = (
-                        f"Error processing input data on line {row_ind + 2}:"
-                        f"\n{err}"
-                    )
-                    raise type(err)(msg)
+                data = _row_ind_in_raised_exception(
+                    row_ind, lambda: future.result()
+                )
 
                 results[row_ind] = data.as_result_dict()
                 progress_count += 1
@@ -257,18 +250,12 @@ def run_sp(input_file, input_data, cfg, from_gui):
     ghi_rad_u, dni_rad_u, dhi_rad_u = extract_rad_uncertainty(cfg)
     nun_to_run = len(input_data)
     for ind, row_ind, row in _iter_df(input_file, input_data, from_gui):
-        data = _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u)
-
-        try:
-            data = Uprocess(data, pressure=820, temp=11)
-        except KeyboardInterrupt as cancel:
-            raise cancel
-        except Exception as err:
-            msg = (
-                f"Error processing input data on line {row_ind + 2}:"
-                f"\n{err}"
-            )
-            raise type(err)(msg)
+        data = _row_ind_in_raised_exception(
+            row_ind, _row_to_data, row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u
+        )
+        data = _row_ind_in_raised_exception(
+            row_ind, Uprocess, data, pressure=820, temp=11
+        )
 
         results[row_ind] = data.as_result_dict()
         if from_gui:
@@ -316,10 +303,22 @@ def _submit_for_processing(
 ):
     future_to_row = {}
     for row_ind, row in data_chunk.iterrows():
-        data = _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u)
+        data = _row_ind_in_raised_exception(
+            row_ind, _row_to_data, row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u
+        )
         future = executor.submit(Uprocess, data, pressure=820, temp=11)
         future_to_row[future] = row_ind
     return future_to_row
 
 
-# python -c "import json; from suni.cli import process_from_config; fh = open('sample_config.json'); cfg = json.load(fh); fh.close(); process_from_config(cfg)"
+def _row_ind_in_raised_exception(row_ind, func, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except KeyboardInterrupt as cancel:
+        raise cancel
+    except Exception as err:
+        msg = (
+            f"Error processing input data on line {row_ind + 2}:"
+            f"\n{err}"
+        )
+        raise type(err)(msg)

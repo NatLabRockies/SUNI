@@ -3,6 +3,7 @@
 import json
 import shutil
 from pathlib import Path
+from itertools import product
 
 import pytest
 import pandas as pd
@@ -41,7 +42,7 @@ Field Uncertainty Mean: +/-0.47%
 
 def _no_9900_in_line(lines):
     """Replace any -9900 instances. """
-    return [l.replace("-9900", "") for l in lines]
+    return [line.replace("-9900", "") for line in lines]
 
 
 def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
@@ -56,17 +57,13 @@ def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
         truth_fp = test_data_basic_run_dir / fn
 
         with open(truth_fp, "r") as truth, open(test_fp, "r") as test:
+            truth_body = truth.readlines()
+            test_body = _no_9900_in_line(test.readlines())
             if "report" in fn:
-                assert (
-                    truth.readlines()[:3]
-                    == _no_9900_in_line(test.readlines()[:3])
-                )
-                assert (
-                    truth.readlines()[4:]
-                    == _no_9900_in_line(test.readlines()[4:])
-                )
+                assert truth_body[:3] == test_body[:3]
+                assert truth_body[4:] == test_body[4:]
             else:
-                assert truth.readlines() == _no_9900_in_line(test.readlines())
+                assert truth_body == test_body
 
 
 # @pytest.mark.skip
@@ -357,6 +354,45 @@ def test_missing_fields(tmp_cwd, test_data_dir):
     assert "Found incorrect number of columns in input data!" in str(error)
     assert "Ensure your input data starts with at least" in str(error)
     assert '"DATE", "TIME", "GHI", "DNI", "DHI"' in str(error)
+
+@pytest.mark.parametrize("flags", list(product([0, 1], [0, 1], [0, 1])))
+def test_editable_class_uncertainty(tmp_cwd, test_data_dir, flags):
+    """Test that the report highlights a user-edited uncertainty."""
+
+    ef_dir = test_data_dir / "extra_fields"
+    shutil.copy(ef_dir / "b1_extra_field_testing.csv", tmp_cwd)
+    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    config_opts = ["GHIclassModFlg", "DNIclassModFlg", "DHIclassModFlg"]
+    for opt, flag in zip(config_opts, flags):
+        if flag:  # leave option out of config completely if it's false
+            cfg[opt] = flag
+    out = process_from_config(cfg)
+
+    assert isinstance(out, dict)
+    assert len(list(tmp_cwd.glob("*"))) == 4
+
+    test_fp = tmp_cwd / "b1_extra_field_testing_Unc_report.txt"
+    assert test_fp.exists()
+
+    with open(test_fp, "r") as test:
+        test_body = _no_9900_in_line(test.readlines())
+
+    expected = "*| Cal Uncert"
+    for ln, flag in zip([7, 8, 9], flags):
+        if flag:
+            assert expected in test_body[ln]
+        else:
+            assert expected not in test_body[ln]
+
+    footnote = "   * indicates user override\n"
+    if any(flags):
+        assert test_body[10] == footnote
+    else:
+        assert test_body[10] != footnote
 
 
 if __name__ == "__main__":

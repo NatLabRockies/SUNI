@@ -297,6 +297,91 @@ def test_seriqc_error_from_gui(tmp_cwd, test_data_dir):
     assert sum(out == expected_message.format(x) for x in range(2, 12)) == 1
 
 
+def test_date_parse_error_from_gui(tmp_cwd, test_data_dir):
+    """Test that SUNI gives the expected message for bad date input"""
+
+    ef_dir = test_data_dir / "extra_fields"
+    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+    df = pd.read_csv(
+        ef_dir / "b1_extra_field_testing.csv",
+        header=0,
+        names=["DATE", "MST", "GHI", "DNI", "DHI"],
+        index_col=False,
+    )
+    df.loc[0, "DATE"] = 1
+    df[["DATE", "MST", "GHI", "DNI", "DHI"]].to_csv(
+        tmp_cwd / "b1_extra_field_testing.csv", index=False
+    )
+
+    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    out = process_from_config(cfg, from_gui=True)
+    expected_message = (
+        "SUNIInputDataError:\nError processing input data on line 2:\n"
+        "Input date (1) incompatible with date format 0: MM/DD/YYYY"
+    )
+    assert out == expected_message
+
+
+def test_time_parse_error_from_gui(tmp_cwd, test_data_dir):
+    """Test that SUNI gives the expected message for bad time input"""
+
+    ef_dir = test_data_dir / "extra_fields"
+    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+    df = pd.read_csv(
+        ef_dir / "b1_extra_field_testing.csv",
+        header=0,
+        names=["DATE", "MST", "GHI", "DNI", "DHI"],
+        index_col=False,
+    )
+    df.loc[2, "MST"] = 1
+    df[["DATE", "MST", "GHI", "DNI", "DHI"]].to_csv(
+        tmp_cwd / "b1_extra_field_testing.csv", index=False
+    )
+
+    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    out = process_from_config(cfg, from_gui=True)
+    expected_message = (
+        "SUNIInputDataError:\nError processing input data on line 4:\n"
+        "Input time (1) incompatible with expected time format HH:MM"
+    )
+    assert out == expected_message
+
+
+@pytest.mark.parametrize("irr_data", [("GHI", 3), ("DNI", 4), ("DHI", 5)])
+def test_irradiance_parse_error_from_gui(tmp_cwd, test_data_dir, irr_data):
+    """Test that SUNI gives the expected message for bad time input"""
+
+    ef_dir = test_data_dir / "extra_fields"
+    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+    df = pd.read_csv(
+        ef_dir / "b1_extra_field_testing.csv",
+        header=0,
+        names=["DATE", "MST", "GHI", "DNI", "DHI"],
+        index_col=False,
+    )
+    test_var, ind = irr_data
+    df.loc[ind, test_var] = "a"
+    df[["DATE", "MST", "GHI", "DNI", "DHI"]].to_csv(
+        tmp_cwd / "b1_extra_field_testing.csv", index=False
+    )
+
+    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    out = process_from_config(cfg, from_gui=True)
+    expected_message = (
+        f"SUNIInputDataError:\nError processing input data on line {ind + 2}:"
+        "\nOne or more of the following solar irradiance values cannot be "
+        "parsed as a number"
+    )
+    assert expected_message in out
+    assert f"'{test_var}': 'a'" in out
+
+
 def test_basic_run_new_instrument_uncertainty(
     tmp_cwd, test_data_basic_run_dir
 ):

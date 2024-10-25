@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """SUNI base utilities"""
 
+class SUNIInputDataError(ValueError):
+    """SUNI input data error"""
+
 
 def format_date(year, month, day, year_first=False):
     """Format date into string.
@@ -63,6 +66,11 @@ def extract_time_from_input_data(row, date_format):
         Tuple of ints corresponding to the
         (year, month, day, hour, minute) represented by "DATE" and "MST"
         in the `row` input.
+
+    Raises
+    ------
+    SUNIInputDataError
+        If the input data is not convertible to a date and/or time.
     """
     date = row["DATE"]
     try:
@@ -70,15 +78,23 @@ def extract_time_from_input_data(row, date_format):
             year, month, day = map(int, date.split("-"))
         else:
             month, day, year = map(int, date.split("/"))
-    except ValueError:
+    except (AttributeError, ValueError):
         date_fmt_msg = {0: "0: MM/DD/YYYY", 1: "1: YYYY-MM-DD"}
         msg = (
-            f"Input date ({date}) incompatible with data format "
+            f"Input date ({date}) incompatible with date format "
             f"{date_fmt_msg[date_format]}"
         )
-        raise ValueError(msg) from None
+        raise SUNIInputDataError(msg) from None
 
-    hour, minute = map(int, row["MST"].split(":"))
+    time = row["MST"]
+    try:
+        hour, minute = map(int, time.split(":"))
+    except (AttributeError, ValueError):
+        msg = (
+            f"Input time ({time}) incompatible with expected time format HH:MM"
+        )
+        raise SUNIInputDataError(msg) from None
+
     return year, month, day, hour, minute
 
 
@@ -100,7 +116,21 @@ def extract_irradiance_from_input_data(row):
     array-like
         "GHI", "DNI", and "DHI" values, where NaN representation is
         positive (required by SERIQC).
+
+    Raises
+    ------
+    SUNIInputDataError
+        If any of the solar irradiance values are not convertible to a
+        float.
     """
-    irradiance = row[["GHI", "DNI", "DHI"]].astype(float)
+    values = row[["GHI", "DNI", "DHI"]]
+    try:
+        irradiance = values.astype(float)
+    except ValueError:
+        msg = (
+            f"One or more of the following solar irradiance values cannot "
+            f"be parsed as a number: {values.to_dict()}"
+        )
+        raise SUNIInputDataError(msg) from None
     irradiance[irradiance < -9900] *= -1
     return irradiance

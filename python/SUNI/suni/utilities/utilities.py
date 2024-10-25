@@ -117,6 +117,14 @@ def extract_irradiance_from_input_data(row):
         "GHI", "DNI", and "DHI" values, where NaN representation is
         positive (required by SERIQC).
     """
-    irradiance = row[["GHI", "DNI", "DHI"]].astype(float)
+    values = row[["GHI", "DNI", "DHI"]]
+    try:
+        irradiance = values.astype(float)
+    except ValueError:
+        msg = (
+            f"One or more of the following solar irradiance values cannot "
+            f"be parsed as a number: {values.to_dict()}"
+        )
+        raise SUNIInputDataError(msg) from None
     irradiance[irradiance < -9900] *= -1
     return irradiance

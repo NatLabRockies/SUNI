@@ -444,5 +444,26 @@ def test_missing_fields(tmp_cwd, test_data_dir):
     assert '"DATE", "TIME", "GHI", "DNI", "DHI"' in str(error)
 
 
+def test_missing_field_values(tmp_cwd, test_data_dir):
+    """Test that missing fields in the input file raise correct error"""
+
+    mf_dir = test_data_dir / "missing_field_value"
+    shutil.copy(mf_dir / "b1_missing_field_value_testing.csv", tmp_cwd)
+    shutil.copy(mf_dir / "s_NRELSR.qc0", tmp_cwd)
+
+    assert len(list(tmp_cwd.glob("*"))) == 2
+
+    with open(mf_dir / "sample_config.json") as fh:
+        cfg = json.load(fh)
+
+    out = process_from_config(cfg, from_gui=True)
+
+    expected_message = (
+        f"SUNIInputDataError:\nError processing input data on line {7}:"
+        "\nOne or more solar irradiance values are missing. Please "
+        "indicate missing data using the value '99999'"
+    )
+    assert out == expected_message
+
 if __name__ == "__main__":
     pytest.main(["-q", "--show-capture=all", Path(__file__), "-rapP"])

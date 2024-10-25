@@ -9,6 +9,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import click
 from tqdm import tqdm
+import numpy as np
 import pandas as pd
 
 from suni.framework import Uprocess, uDat
@@ -96,6 +97,16 @@ def _read_data(input_file):
         )
         logger.error(msg)
         raise SUNIInputDataError(msg) from None
+
+    missing_values = input_data[["GHI", "DNI", "DHI"]].T.isna().any()
+    if missing_values.any():
+        row_ind = np.where(missing_values)[0][0]
+        msg = (
+            f"Error processing input data on line {row_ind + 2}:\n"
+            "One or more solar irradiance values are missing. Please "
+            "indicate missing data using the value '99999'"
+        )
+        raise SUNIInputDataError(msg)
     return input_data
 
 

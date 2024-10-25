@@ -81,7 +81,7 @@ def extract_time_from_input_data(row, date_format):
     except (AttributeError, ValueError):
         date_fmt_msg = {0: "0: MM/DD/YYYY", 1: "1: YYYY-MM-DD"}
         msg = (
-            f"Input date ({date}) incompatible with data format "
+            f"Input date ({date}) incompatible with date format "
             f"{date_fmt_msg[date_format]}"
         )
         raise SUNIInputDataError(msg) from None

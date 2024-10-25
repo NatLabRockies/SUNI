@@ -183,7 +183,7 @@ def test_incompatible_data_format(tmp_cwd, test_data_basic_run_dir):
         process_from_config(cfg, from_gui=False)
 
     assert "Input date" in str(error)
-    assert "incompatible with data format 1: YYYY-MM-DD" in str(error)
+    assert "incompatible with date format 1: YYYY-MM-DD" in str(error)
 
 
 def test_report_no_cal_date(tmp_cwd, test_data_basic_run_dir):

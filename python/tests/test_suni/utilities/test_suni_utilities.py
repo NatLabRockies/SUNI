@@ -54,7 +54,7 @@ def test_extract_time_from_input_data_bad_date(test_value):
     with pytest.raises(SUNIInputDataError) as err:
         assert extract_time_from_input_data(time, 0)
 
-    assert "incompatible with data format" in str(err)
+    assert "incompatible with date format" in str(err)
 
 
 @pytest.mark.parametrize("test_value", ["1", 1])

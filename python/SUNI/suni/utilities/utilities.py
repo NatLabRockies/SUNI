@@ -90,7 +90,6 @@ def extract_time_from_input_data(row, date_format):
     try:
         hour, minute = map(int, time.split(":"))
     except (AttributeError, ValueError):
-        date_fmt_msg = {0: "0: MM/DD/YYYY", 1: "1: YYYY-MM-DD"}
         msg = (
             f"Input time ({time}) incompatible with expected time format HH:MM"
         )

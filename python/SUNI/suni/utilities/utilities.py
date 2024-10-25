@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """SUNI base utilities"""
 
+class SUNIInputDataError(ValueError):
+    """SUNI input data error"""
+
 
 def format_date(year, month, day, year_first=False):
     """Format date into string.
@@ -63,6 +66,11 @@ def extract_time_from_input_data(row, date_format):
         Tuple of ints corresponding to the
         (year, month, day, hour, minute) represented by "DATE" and "MST"
         in the `row` input.
+
+    Raises
+    ------
+    SUNIInputDataError
+        If the input data is not convertible to a date and/or time.
     """
     date = row["DATE"]
     try:
@@ -76,7 +84,7 @@ def extract_time_from_input_data(row, date_format):
             f"Input date ({date}) incompatible with data format "
             f"{date_fmt_msg[date_format]}"
         )
-        raise ValueError(msg) from None
+        raise SUNIInputDataError(msg) from None
 
     time = row["MST"]
     try:
@@ -86,7 +94,7 @@ def extract_time_from_input_data(row, date_format):
         msg = (
             f"Input time ({time}) incompatible with expected time format HH:MM"
         )
-        raise ValueError(msg) from None
+        raise SUNIInputDataError(msg) from None
 
     return year, month, day, hour, minute
 

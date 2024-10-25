@@ -3,6 +3,7 @@
 import json
 import shutil
 from pathlib import Path
+from itertools import product
 
 import pytest
 import pandas as pd

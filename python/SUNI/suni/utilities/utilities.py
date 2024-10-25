@@ -116,6 +116,12 @@ def extract_irradiance_from_input_data(row):
     array-like
         "GHI", "DNI", and "DHI" values, where NaN representation is
         positive (required by SERIQC).
+
+    Raises
+    ------
+    SUNIInputDataError
+        If any of the solar irradiance values are not convertible to a
+        float.
     """
     values = row[["GHI", "DNI", "DHI"]]
     try:

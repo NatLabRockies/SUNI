@@ -109,9 +109,9 @@ enum { __idFirst = wxID_HIGHEST+592,
 	ID_BTN_INPUTFILE, ID_BTN_OUTPUTFILE, ID_BTN_SERIQCPATH,
 	ID_TXT_INPUTFILE, ID_TXT_OUTPUTFILE, ID_TXT_SERIQCPATH,
 	ID_CMB_SERI_QC, ID_CMB_INTERVAL,
-	ID_GHIid, ID_GHImodel, ID_GHIclass, ID_GHIclassUncert, ID_GHIcalUncert, ID_GHIcalDate, ID_GHIdueDate, ID_GHIradUncert,
-	ID_DNIid, ID_DNImodel, ID_DNIclass, ID_DNIclassUncert, ID_DNIcalUncert, ID_DNIcalDate, ID_DNIdueDate, ID_DNIradUncert,
-	ID_DHIid, ID_DHImodel, ID_DHIclass, ID_DHIclassUncert, ID_DHIcalUncert, ID_DHIcalDate, ID_DHIdueDate, ID_DHIradUncert,
+	ID_GHIid, ID_GHImodel, ID_GHIclass, ID_GHIclassUncert, ID_GHIclassModFlg, ID_GHIcalUncert, ID_GHIcalDate, ID_GHIdueDate, ID_GHIradUncert,
+	ID_DNIid, ID_DNImodel, ID_DNIclass, ID_DNIclassUncert, ID_DNIclassModFlg, ID_DNIcalUncert, ID_DNIcalDate, ID_DNIdueDate, ID_DNIradUncert,
+	ID_DHIid, ID_DHImodel, ID_DHIclass, ID_DHIclassUncert, ID_DHIclassModFlg, ID_DHIcalUncert, ID_DHIcalDate, ID_DHIdueDate, ID_DHIradUncert,
 	ID_MaxQC, ID_MinDNI, ID_MaxZEN, ID_MaxSysUncert, ID_DateFormat1, ID_DateFormat2, ID_ExtendedRpt, 
 	ID_BTN_START, ID_BTN_CANCEL, ID_PROGRESS, ID_CALENDAR, ID_NODATE,
 	__idInternalFirst,
@@ -302,11 +302,11 @@ BEGIN_EVENT_TABLE( MainWindow, wxFrame )
 	EVT_BUTTON(ID_BTN_OUTPUTFILE, MainWindow::OnCommand)
 	EVT_BUTTON(ID_BTN_SERIQCPATH, MainWindow::OnCommand)
 	EVT_TEXT(ID_TXT_SERIQCPATH, MainWindow::OnCommand)
-	EVT_TEXT(ID_GHIclassUncert, MainWindow::UpdateGHIUncertainty)
+	EVT_TEXT(ID_GHIclassUncert, MainWindow::OnGHIClassUncertainty)
 	EVT_TEXT(ID_GHIcalUncert, MainWindow::OnGHICalUncertainty)
-	EVT_TEXT(ID_DNIclassUncert, MainWindow::UpdateDNIUncertainty)
+	EVT_TEXT(ID_DNIclassUncert, MainWindow::OnDNIClassUncertainty)
 	EVT_TEXT(ID_DNIcalUncert, MainWindow::OnDNICalUncertainty)
-	EVT_TEXT(ID_DHIclassUncert, MainWindow::UpdateDHIUncertainty)
+	EVT_TEXT(ID_DHIclassUncert, MainWindow::OnDHIClassUncertainty)
 	EVT_TEXT(ID_DHIcalUncert, MainWindow::OnDHICalUncertainty)
 	EVT_COMBOBOX(ID_GHIclass, MainWindow::UpdateClassCalGHIUncertainty)
 	EVT_COMBOBOX(ID_DHIclass, MainWindow::UpdateClassCalDHIUncertainty)
@@ -386,7 +386,7 @@ MainWindow::MainWindow()
 
 
 	// for JSON type loading and saving
-	m_typeInt = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval"};
+	m_typeInt = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval", "GHIclassModFlag" , "DNIclassModFlag" , "DHIclassModFlag" };
 	m_typeDouble = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN", "MaxSysUncert"};
 
 	m_mainMenuBar = new wxMenuBar;
@@ -444,12 +444,13 @@ MainWindow::MainWindow()
 	asClass.Add("C");
 	wxStaticBoxSizer* sizer1 = new wxStaticBoxSizer(wxVERTICAL, p, "Instruments and Uncertainty");
 	//sizer1->GetStaticBox()->SetWindowStyleFlag(wxSIMPLE_BORDER);
-	wxFlexGridSizer* grdInstruments = new wxFlexGridSizer(4, 9, 10, 15);
+	wxFlexGridSizer* grdInstruments = new wxFlexGridSizer(4, 10, 10, 15);
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, " ", wxDefaultPosition, p->FromDIP(wxSize(50, 24))));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument ID",wxDefaultPosition, p->FromDIP(wxSize(150,50))));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument model", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Instrument class", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Class Uncertainty (+/- %)", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
+	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "  ", wxDefaultPosition, p->FromDIP(wxSize(25, 50))));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Uncertainty (+/- %)", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Calibration Date", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
 	grdInstruments->Add(new wxStaticText(p, wxID_ANY, "Due Date", wxDefaultPosition, p->FromDIP(wxSize(75, 50))));
@@ -460,8 +461,10 @@ MainWindow::MainWindow()
 	GHImodel->SetSizeHints(p->FromDIP(wxSize(150, 24)));
 	GHIclass = new wxComboBox(p, ID_GHIclass, "A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "GHIclass");
 	GHIclass->SetSizeHints(p->FromDIP(wxSize(50, 24)));
-	GHIclassUncert = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "GHIclassUncert");
+	GHIclassUncert = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIclassUncert");
 	GHIclassUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
+	GHIclassModFlg = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "GHIclassModFlg");
+	GHIclassModFlg->SetSizeHints(p->FromDIP(wxSize(10, 24)));
 	GHIcalUncert = new wxTextCtrl(p, ID_GHIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIcalUncert");
 	GHIcalUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
 	GHIcalDate = new wxTextCtrl(p, ID_GHIcalDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "GHIcalDate");
@@ -477,6 +480,7 @@ MainWindow::MainWindow()
 	grdInstruments->Add(GHImodel);
 	grdInstruments->Add(GHIclass);
 	grdInstruments->Add(GHIclassUncert);
+	grdInstruments->Add(GHIclassModFlg);
 	grdInstruments->Add(GHIcalUncert);
 	grdInstruments->Add(GHIcalDate);
 	grdInstruments->Add(GHIdueDate);
@@ -488,8 +492,10 @@ MainWindow::MainWindow()
 	DNImodel->SetSizeHints(p->FromDIP(wxSize(150, 24)));
 	DNIclass = new wxComboBox(p, ID_DNIclass,"A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "DNIclass");
 	DNIclass->SetSizeHints(p->FromDIP(wxSize(50, 24)));
-	DNIclassUncert = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DNIclassUncert");
+	DNIclassUncert = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIclassUncert");
 	DNIclassUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
+	DNIclassModFlg = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DNIclassModFlg");
+	DNIclassModFlg->SetSizeHints(p->FromDIP(wxSize(10, 24)));
 	DNIcalUncert = new wxTextCtrl(p, ID_DNIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIcalUncert");
 	DNIcalUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
 	DNIcalDate = new wxTextCtrl(p, ID_DNIcalDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DNIcalDate");
@@ -505,6 +511,7 @@ MainWindow::MainWindow()
 	grdInstruments->Add(DNImodel);
 	grdInstruments->Add(DNIclass);
 	grdInstruments->Add(DNIclassUncert);
+	grdInstruments->Add(DNIclassModFlg);
 	grdInstruments->Add(DNIcalUncert);
 	grdInstruments->Add(DNIcalDate);
 	grdInstruments->Add(DNIdueDate);
@@ -516,8 +523,10 @@ MainWindow::MainWindow()
 	DHImodel->SetSizeHints(p->FromDIP(wxSize(150, 24)));
 	DHIclass = new wxComboBox(p, ID_DHIclass, "A", wxDefaultPosition, wxDefaultSize, asClass, wxCB_READONLY, wxDefaultValidator, "DHIclass");
 	DHIclass->SetSizeHints(p->FromDIP(wxSize(50, 24)));
-	DHIclassUncert = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIclassUncert");
+	DHIclassUncert = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIclassUncert");
 	DHIclassUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
+	DHIclassModFlg = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIclassModFlg");
+	DHIclassModFlg->SetSizeHints(p->FromDIP(wxSize(10, 24)));
 	DHIcalUncert = new wxTextCtrl(p, ID_DHIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIcalUncert");
 	DHIcalUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
 	DHIcalDate = new wxTextCtrl(p, ID_DHIcalDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIcalDate");
@@ -533,6 +542,7 @@ MainWindow::MainWindow()
 	grdInstruments->Add(DHImodel);
 	grdInstruments->Add(DHIclass);
 	grdInstruments->Add(DHIclassUncert);
+	grdInstruments->Add(DHIclassModFlg);
 	grdInstruments->Add(DHIcalUncert);
 	grdInstruments->Add(DHIcalDate);
 	grdInstruments->Add(DHIdueDate);
@@ -838,8 +848,16 @@ bool MainWindow::OpenConfiguration(const wxString& filename)
 						wxString val;
 						if (m_typeDouble.Index(widgetName) != wxNOT_FOUND)//(jValue->value.IsDouble())
 							val = wxString::Format("%g", jValue->value.GetDouble());
-						else if (m_typeInt.Index(widgetName) != wxNOT_FOUND)//(jValue->value.IsInt())
+						else if (m_typeInt.Index(widgetName) != wxNOT_FOUND) {//(jValue->value.IsInt()) 
 							val = wxString::Format("%d", jValue->value.GetInt());
+							// issue 102 exception
+							if ((widgetName == "GHIclassModFlg") || (widgetName == "DNHIclassModFlg") || (widgetName == "DHIclassModFlg")) {
+								if (val == "1")
+									val = "*";
+								else
+									val = "";
+							}
+						}
 						else //if (jValue->value.IsString())
 							val = jValue->value.GetString();
 						//else
@@ -951,8 +969,17 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 			wxString val = ((wxTextCtrl*)widget)->GetValue();
 			if (m_typeDouble.Index(widgetName) != wxNOT_FOUND) 
 				jValue = wxAtof(val);
-			else if (m_typeInt.Index(widgetName) != wxNOT_FOUND)
-				jValue = wxAtoi(val);
+			else if (m_typeInt.Index(widgetName) != wxNOT_FOUND) {
+				// issue 102 exception
+				if ((widgetName == "GHIclassModFlg") || (widgetName == "DNHIclassModFlg") || (widgetName == "DHIclassModFlg")) {
+					if (val == "*")
+						jValue = 1;
+					else
+						jValue = 0;
+				}
+				else
+					jValue = wxAtoi(val);
+			}
 			else
 				jValue.SetString(val.c_str(), doc.GetAllocator());
 			doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());
@@ -1059,7 +1086,9 @@ void MainWindow::UpdateClassCalGHIUncertainty(wxCommandEvent& evt)
 	wxString classUncert = "";
 	wxString calUncert = "";
 	GetInstrumentPyranometerDataBaseUncertainties(instClass, &classUncert, &calUncert);
-	GHIclassUncert->SetValue(classUncert);
+	GHIclassUncert->ChangeValue(classUncert);
+	GHIclassUncert->SetBackgroundColour(*wxWHITE); // Database per issue 102
+	GHIclassModFlg->ChangeValue("");
 	GHIcalUncert->ChangeValue(calUncert);
 	GHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
 	UpdateGHIUncertainty(evt);
@@ -1071,7 +1100,9 @@ void MainWindow::UpdateClassCalDHIUncertainty(wxCommandEvent& evt)
 	wxString classUncert = "";
 	wxString calUncert = "";
 	GetInstrumentPyranometerDataBaseUncertainties(instClass, &classUncert, &calUncert);
-	DHIclassUncert->SetValue(classUncert);
+	DHIclassUncert->ChangeValue(classUncert);
+	DHIclassUncert->SetBackgroundColour(*wxWHITE); // Database per issue 102
+	DHIclassModFlg->ChangeValue("");
 	DHIcalUncert->ChangeValue(calUncert);
 	DHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
 	UpdateDHIUncertainty(evt);
@@ -1083,7 +1114,9 @@ void MainWindow::UpdateClassCalDNIUncertainty(wxCommandEvent& evt)
 	wxString classUncert = "";
 	wxString calUncert = "";
 	GetInstrumentPyrheliometerDataBaseUncertainties(instClass, &classUncert, &calUncert);
-	DNIclassUncert->SetValue(classUncert);
+	DNIclassUncert->ChangeValue(classUncert);
+	DNIclassUncert->SetBackgroundColour(*wxWHITE); // Database per issue 102
+	DNIclassModFlg->ChangeValue("");
 	DNIcalUncert->ChangeValue(calUncert);
 	DNIcalUncert->SetBackgroundColour(*wxGREEN); // Database
 	UpdateDNIUncertainty(evt);
@@ -1105,6 +1138,27 @@ void MainWindow::OnDNICalUncertainty(wxCommandEvent& evt)
 void MainWindow::OnDHICalUncertainty(wxCommandEvent& evt)
 {
 	DHIcalUncert->SetBackgroundColour(*wxWHITE);
+	UpdateDHIUncertainty(evt);
+}
+
+void MainWindow::OnGHIClassUncertainty(wxCommandEvent& evt)
+{
+	GHIclassUncert->SetBackgroundColour(*wxGREEN);
+	GHIclassModFlg->ChangeValue("*");
+	UpdateGHIUncertainty(evt);
+}
+
+void MainWindow::OnDNIClassUncertainty(wxCommandEvent& evt)
+{
+	DNIclassUncert->SetBackgroundColour(*wxGREEN);
+	DNIclassModFlg->ChangeValue("*");
+	UpdateDNIUncertainty(evt);
+}
+
+void MainWindow::OnDHIClassUncertainty(wxCommandEvent& evt)
+{
+	DHIclassUncert->SetBackgroundColour(*wxGREEN);
+	DHIclassModFlg->ChangeValue("*");
 	UpdateDHIUncertainty(evt);
 }
 

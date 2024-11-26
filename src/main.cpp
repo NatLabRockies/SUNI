@@ -386,7 +386,7 @@ MainWindow::MainWindow()
 
 
 	// for JSON type loading and saving
-	m_typeInt = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval", "GHIclassModFlag" , "DNIclassModFlag" , "DHIclassModFlag" };
+	m_typeInt = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval", "GHIclassModFlg" , "DNIclassModFlg" , "DHIclassModFlg" };
 	m_typeDouble = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN", "MaxSysUncert"};
 
 	m_mainMenuBar = new wxMenuBar;
@@ -463,8 +463,9 @@ MainWindow::MainWindow()
 	GHIclass->SetSizeHints(p->FromDIP(wxSize(50, 24)));
 	GHIclassUncert = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIclassUncert");
 	GHIclassUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
-	GHIclassModFlg = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "GHIclassModFlg");
-	GHIclassModFlg->SetSizeHints(p->FromDIP(wxSize(10, 24)));
+	GHIclassModFlg = new wxStaticText(p, ID_GHIclassModFlg, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, "GHIclassModFlg");
+//	GHIclassModFlg = new wxTextCtrl(p, ID_GHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "GHIclassModFlg");
+	GHIclassModFlg->SetSizeHints(p->FromDIP(wxSize(20, 24)));
 	GHIcalUncert = new wxTextCtrl(p, ID_GHIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "GHIcalUncert");
 	GHIcalUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
 	GHIcalDate = new wxTextCtrl(p, ID_GHIcalDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "GHIcalDate");
@@ -494,8 +495,9 @@ MainWindow::MainWindow()
 	DNIclass->SetSizeHints(p->FromDIP(wxSize(50, 24)));
 	DNIclassUncert = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIclassUncert");
 	DNIclassUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
-	DNIclassModFlg = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DNIclassModFlg");
-	DNIclassModFlg->SetSizeHints(p->FromDIP(wxSize(10, 24)));
+	DNIclassModFlg = new wxStaticText(p, ID_GHIclassModFlg, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, "DNIclassModFlg");
+	//	DNIclassModFlg = new wxTextCtrl(p, ID_DNIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DNIclassModFlg");
+	DNIclassModFlg->SetSizeHints(p->FromDIP(wxSize(20, 24)));
 	DNIcalUncert = new wxTextCtrl(p, ID_DNIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DNIcalUncert");
 	DNIcalUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
 	DNIcalDate = new wxTextCtrl(p, ID_DNIcalDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DNIcalDate");
@@ -525,8 +527,9 @@ MainWindow::MainWindow()
 	DHIclass->SetSizeHints(p->FromDIP(wxSize(50, 24)));
 	DHIclassUncert = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIclassUncert");
 	DHIclassUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
-	DHIclassModFlg = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIclassModFlg");
-	DHIclassModFlg->SetSizeHints(p->FromDIP(wxSize(10, 24)));
+	DHIclassModFlg = new wxStaticText(p, ID_GHIclassModFlg, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, "DHIclassModFlg");
+	//	DHIclassModFlg = new wxTextCtrl(p, ID_DHIclassUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIclassModFlg");
+	DHIclassModFlg->SetSizeHints(p->FromDIP(wxSize(20, 24)));
 	DHIcalUncert = new wxTextCtrl(p, ID_DHIcalUncert, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, "DHIcalUncert");
 	DHIcalUncert->SetSizeHints(p->FromDIP(wxSize(50, 24)));
 	DHIcalDate = new wxTextCtrl(p, ID_DHIcalDate, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY, wxDefaultValidator, "DHIcalDate");
@@ -799,8 +802,8 @@ bool MainWindow::CheckInputs()
 		wxString typeName = ci->GetClassName();
 		wxString widgetName = widget->GetName();
 		if (typeName == "wxTextCtrl") {
-			// dates can be blank
-			if (widgetName.Lower().Find("date") == wxNOT_FOUND)
+			// dates and classModFlg can be blank
+			if ((widgetName.Lower().Find("date") == wxNOT_FOUND) && (widgetName.Lower().Find("classmodflg") == wxNOT_FOUND))
 				ret = ret && (((wxTextCtrl*)widget)->GetValue().length() > 0);
 		}
 		else if (typeName == "wxComboBox") {
@@ -850,13 +853,15 @@ bool MainWindow::OpenConfiguration(const wxString& filename)
 							val = wxString::Format("%g", jValue->value.GetDouble());
 						else if (m_typeInt.Index(widgetName) != wxNOT_FOUND) {//(jValue->value.IsInt()) 
 							val = wxString::Format("%d", jValue->value.GetInt());
+							/*
 							// issue 102 exception
-							if ((widgetName == "GHIclassModFlg") || (widgetName == "DNHIclassModFlg") || (widgetName == "DHIclassModFlg")) {
+							if ((widgetName == "GHIclassModFlg") || (widgetName == "DNIclassModFlg") || (widgetName == "DHIclassModFlg")) {
 								if (val == "1")
 									val = "*";
 								else
 									val = "";
 							}
+							*/
 						}
 						else //if (jValue->value.IsString())
 							val = jValue->value.GetString();
@@ -897,6 +902,20 @@ bool MainWindow::OpenConfiguration(const wxString& filename)
 						}
 						else
 							ret = false;// throw error?
+					}
+					else if (typeName == "wxStaitcText") {
+						wxString val;
+						if (m_typeInt.Index(widgetName) != wxNOT_FOUND) {//(jValue->value.IsInt()) 
+							val = wxString::Format("%d", jValue->value.GetInt());
+							// issue 102 exception
+							if ((widgetName == "GHIclassModFlg") || (widgetName == "DNIclassModFlg") || (widgetName == "DHIclassModFlg")) {
+								if (val == "1")
+									val = "*";
+								else
+									val = "";
+							}
+							((wxStaticText*)widget)->SetLabel(val);
+						}
 					}
 				}
 			}
@@ -970,14 +989,16 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 			if (m_typeDouble.Index(widgetName) != wxNOT_FOUND) 
 				jValue = wxAtof(val);
 			else if (m_typeInt.Index(widgetName) != wxNOT_FOUND) {
+				/*
 				// issue 102 exception
-				if ((widgetName == "GHIclassModFlg") || (widgetName == "DNHIclassModFlg") || (widgetName == "DHIclassModFlg")) {
+				if ((widgetName == "GHIclassModFlg") || (widgetName == "DNIclassModFlg") || (widgetName == "DHIclassModFlg")) {
 					if (val == "*")
 						jValue = 1;
 					else
 						jValue = 0;
 				}
 				else
+				*/
 					jValue = wxAtoi(val);
 			}
 			else
@@ -1012,7 +1033,17 @@ bool MainWindow::SaveConfiguration(const wxString& filename)
 			}
 			doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());
 		}
-//		else // like group boxes or static boxes - not a failure.
+		else if (typeName == "wxStaticText") {
+			wxString val = ((wxStaticText*)widget)->GetLabel();
+			if ((widgetName == "GHIclassModFlg") || (widgetName == "DNIclassModFlg") || (widgetName == "DHIclassModFlg")) {
+				if (val == "*")
+					jValue = 1;
+				else
+					jValue = 0;
+				doc.AddMember(rapidjson::Value(widgetName.c_str(), (rapidjson::SizeType)widgetName.size(), doc.GetAllocator()).Move(), jValue.Move(), doc.GetAllocator());
+			}
+		}
+		//		else // like group boxes or static boxes - not a failure.
 //			ret = false;// throw error?
 	}
 	/*
@@ -1088,7 +1119,7 @@ void MainWindow::UpdateClassCalGHIUncertainty(wxCommandEvent& evt)
 	GetInstrumentPyranometerDataBaseUncertainties(instClass, &classUncert, &calUncert);
 	GHIclassUncert->ChangeValue(classUncert);
 	GHIclassUncert->SetBackgroundColour(*wxWHITE); // Database per issue 102
-	GHIclassModFlg->ChangeValue("");
+	GHIclassModFlg->SetLabel("");
 	GHIcalUncert->ChangeValue(calUncert);
 	GHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
 	UpdateGHIUncertainty(evt);
@@ -1102,7 +1133,7 @@ void MainWindow::UpdateClassCalDHIUncertainty(wxCommandEvent& evt)
 	GetInstrumentPyranometerDataBaseUncertainties(instClass, &classUncert, &calUncert);
 	DHIclassUncert->ChangeValue(classUncert);
 	DHIclassUncert->SetBackgroundColour(*wxWHITE); // Database per issue 102
-	DHIclassModFlg->ChangeValue("");
+	DHIclassModFlg->SetLabel("");
 	DHIcalUncert->ChangeValue(calUncert);
 	DHIcalUncert->SetBackgroundColour(*wxGREEN); // Database
 	UpdateDHIUncertainty(evt);
@@ -1116,7 +1147,7 @@ void MainWindow::UpdateClassCalDNIUncertainty(wxCommandEvent& evt)
 	GetInstrumentPyrheliometerDataBaseUncertainties(instClass, &classUncert, &calUncert);
 	DNIclassUncert->ChangeValue(classUncert);
 	DNIclassUncert->SetBackgroundColour(*wxWHITE); // Database per issue 102
-	DNIclassModFlg->ChangeValue("");
+	DNIclassModFlg->SetLabel("");
 	DNIcalUncert->ChangeValue(calUncert);
 	DNIcalUncert->SetBackgroundColour(*wxGREEN); // Database
 	UpdateDNIUncertainty(evt);
@@ -1144,21 +1175,21 @@ void MainWindow::OnDHICalUncertainty(wxCommandEvent& evt)
 void MainWindow::OnGHIClassUncertainty(wxCommandEvent& evt)
 {
 	GHIclassUncert->SetBackgroundColour(*wxGREEN);
-	GHIclassModFlg->ChangeValue("*");
+	GHIclassModFlg->SetLabel("*");
 	UpdateGHIUncertainty(evt);
 }
 
 void MainWindow::OnDNIClassUncertainty(wxCommandEvent& evt)
 {
 	DNIclassUncert->SetBackgroundColour(*wxGREEN);
-	DNIclassModFlg->ChangeValue("*");
+	DNIclassModFlg->SetLabel("*");
 	UpdateDNIUncertainty(evt);
 }
 
 void MainWindow::OnDHIClassUncertainty(wxCommandEvent& evt)
 {
 	DHIclassUncert->SetBackgroundColour(*wxGREEN);
-	DHIclassModFlg->ChangeValue("*");
+	DHIclassModFlg->SetLabel("*");
 	UpdateDHIUncertainty(evt);
 }
 

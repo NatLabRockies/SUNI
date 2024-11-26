@@ -173,11 +173,11 @@ private:
 	wxMenuBar *m_mainMenuBar;
 
 	wxButton *m_bInputFile, *m_bOutputFile, *m_bSERIQCPath, *m_bStart, *m_bCancel;
-
+	wxStaticText *GHIclassModFlg, *DNIclassModFlg, *DHIclassModFlg;
 	wxTextCtrl *InputFile, *OutputFile, *SERIQCpath;
-	wxTextCtrl *GHIid, *GHImodel, *GHIclassUncert, *GHIclassModFlg, *GHIcalUncert, *GHIcalDate, *GHIdueDate, *GHIradUncert;
-	wxTextCtrl *DNIid, *DNImodel, *DNIclassUncert, *DNIclassModFlg, *DNIcalUncert, *DNIcalDate, *DNIdueDate, *DNIradUncert;
-	wxTextCtrl *DHIid, *DHImodel, *DHIclassUncert, *DHIclassModFlg, *DHIcalUncert, *DHIcalDate, *DHIdueDate, *DHIradUncert;
+	wxTextCtrl *GHIid, *GHImodel, *GHIclassUncert,  *GHIcalUncert, *GHIcalDate, *GHIdueDate, *GHIradUncert;
+	wxTextCtrl *DNIid, *DNImodel, *DNIclassUncert,  *DNIcalUncert, *DNIcalDate, *DNIdueDate, *DNIradUncert;
+	wxTextCtrl *DHIid, *DHImodel, *DHIclassUncert,  *DHIcalUncert, *DHIcalDate, *DHIdueDate, *DHIradUncert;
 
 //	wxSpinCtrl* MaxQC, * MinDNI, * MaxZEN;
 	// wxSpinCtrl for integer values only

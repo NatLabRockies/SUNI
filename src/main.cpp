@@ -386,8 +386,8 @@ MainWindow::MainWindow()
 
 
 	// for JSON type loading and saving
-	m_typeInt = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval", "GHIclassModFlg" , "DNIclassModFlg" , "DHIclassModFlg" };
-	m_typeDouble = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN", "MaxSysUncert"};
+	std::string m_typeInt[] = { "DateFormat","ExtendedRRpt", "MaxQC", "Interval", "GHIclassModFlg" , "DNIclassModFlg" , "DHIclassModFlg" };
+	std::string m_typeDouble[] = {"GHIclassUncert", "GHIcalUncert", "GHIradUncert","DNIclassUncert", "DNIcalUncert", "DNIradUncert","DHIclassUncert", "DHIcalUncert", "DHIradUncert", "MinDNI", "MaxZEN", "MaxSysUncert"};
 
 	m_mainMenuBar = new wxMenuBar;
 	m_pythonInstalled = false;

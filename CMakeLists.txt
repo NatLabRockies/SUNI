@@ -177,7 +177,7 @@ SET(CMAKE_SKIP_BUILD_RPATH)
 
 if (UNIX)
     if (APPLE)
-        file(TO_CMAKE_PATH $ENV{SUNINRELDIR} SUNINRELDIR)
+        file(TO_CMAKE_PATH ${CMAKE_CURRENT_SOURCE_DIR} SUNINRELDIR)
 
         add_custom_command(
             TARGET ${SUNI_EXE}

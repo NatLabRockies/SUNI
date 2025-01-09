@@ -1,0 +1,41 @@
+#${ARCH}  is either x86_64 or arm64 to build universal binary from Makefile
+
+SRCDIR = ./src
+RESOURCEDIR = ./resource
+DEPLOYDIR = ./deploy
+VPATH = $(SRCDIR)
+
+
+SUNIDIR = ../../SUNI
+BUILDDIR = ../../build/Release
+CC = gcc -mmacosx-version-min=12
+CXX = g++ -mmacosx-version-min=12 -arch ${ARCH}
+CFLAGS = -g -DLK_USE_WXWIDGETS -I. -I$(SRCDIR)  `wx-config-3 --cflags`  -DWX_PRECOMP -O2  -DWX_PRECOMP -O2 -fno-common
+CXXFLAGS = $(CFLAGS) -std=gnu++11 
+LDFLAGS =  -arch ${ARCH} `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` `wx-config-3 --libs propgrid` `wx-config-3 --libs richtext` `wx-config-3 --libs webview` -lm -lcurl
+
+TARGET = SUNI_${ARCH}
+
+
+OBJECTS = csv.o \
+	pythonhandler.o \
+	main.o
+
+
+all: $(TARGET)
+
+
+$(TARGET): $(OBJECTS) 
+	$(CXX) -g -o $@ $^ $(LDFLAGS)
+
+DEPENDS = $(OBJECTS:.o=.d)
+
+-include $(DEPENDS)
+
+%.d: %.cpp
+	$(CXX) -MM $(CXXFLAGS) $^ > $*.d
+	@cp -f $*.d $*.d.tmp
+	@sed -e 's/.*://' -e 's/\\$$//' < $*.d.tmp | fmt -1 | \
+	sed -e 's/^ *//' -e 's/$$/:/' >> $*.d
+	@rm -f $*.d.tmp
+

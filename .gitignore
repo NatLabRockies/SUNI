@@ -28,3 +28,5 @@ deploy/Configuration Files/basic_run/
 deploy/Configuration Files/validation/
 
 deploy/SUNI-install.exe
+
+build_osx/codesign_sj.sh

@@ -1,0 +1,7 @@
+attrs
+click
+matplotlib
+numpy
+pandas
+pvlib
+tqdm

@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>files</key>
+	<dict>
+		<key>Resources/SUNI.icns</key>
+		<data>
+		MLHy4oG+svxqMEwKreMqF6mz6UQ=
+		</data>
+	</dict>
+	<key>files2</key>
+	<dict>
+		<key>Resources/SUNI.icns</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			dlEcy6+PKhPrN2iPgQShRJgDp1QeGffg/SkkFiZ/OU8=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/CfgDefaultsV001.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			tYNTpZn8rsJnkK+j/T+UnM2LUL1dI1nAJ+lOVJD0Ko8=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/MacOS.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			EKgkvBR1jV+BQAnuy18y8kaY9GljXQ7nnKb9Op1BbiE=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/SRRL2004_01_Unc.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Z6dyz3jvw6AOHHpqWtExF1sXmHzLf8PQvszWOI6GqRo=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/SRRL2004_01_Unc_extended.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Q2NHYXc+7VLbvakpL7szuTOPuDcml4GtwnUFjmoO7XM=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/SRRL2004_01_Unc_report.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			M1qPerVi9oLBwyWvDBIq9FTeCQ2JTQU7zZIVjSawfD4=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/SRRL2004_01_Unc_report_extended.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			54xeVlvCrH3ndpHgl+MBVO/5GS6YWE1EpmjTbv7ftv8=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/SRRL2004_01_testing.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			pVqm/HPEhz3qgE3RD8c2lc0ceQRm7czGM/Ygq4d0GA4=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/SRRL2004_01_testing_Report.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			xtiIot0sjVUTpY+4/7Farz8jCThG1IC6kQ8JG7Qx6Q0=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/SRRL2004_01_testing_Report_extended.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			/LPZ88C47GK+G1AxGHG/6+MZkr5USAsWu7sPWjutFyM=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/s_NRELSR.qc0</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Ru4kOSwT28RIrqPXFAlm1vlqKySJN2AoT7WYGlch9VI=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/sample_config.ini</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			+sdc+naIvt523wkO/9KPNGCVN4iCRru7iA2MK7KxcTk=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/basic_run/sample_config.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			vobSf5ZBq+tBqmj5rp/S64mWueIGjMSLz3UWSmiuGSE=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/validation/SGP_BRS.ini</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			MARSu0VpWBp7y0f4vIw/YKcXicUFF4xoPuFS0G4RsrM=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/validation/SGP_BRS.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			/bW4PaGRrA7I700rUJ4MKeWP+q6tZ85dn+8yuZjo5t0=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/validation/brs.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			cF6JS1ivh++MdfsQRczIORkZz0BurqiWrwN9I05uRbA=
+			</data>
+		</dict>
+		<key>runtime/Configuration Files/validation/s_BRS.QC0</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			u3WNVtdqzd8XREHzDuUffmeyLfWSSY2H3UCjbkxIJtk=
+			</data>
+		</dict>
+		<key>runtime/Instrument Files/Upyranometer.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			iC9ZMwNcKD3jxwxjt/12yDF6I2O9CNDxmVgN/vJl71o=
+			</data>
+		</dict>
+		<key>runtime/Instrument Files/Upyrheliometer.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			1BbojnkaRb9Ajm+n8eaCxkXvDH+z2GN0PSuQTxdAeHY=
+			</data>
+		</dict>
+		<key>runtime/System Files/NREL_suni_gui-0.1.0-py3-none-any.whl</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			wXs5aNC7YupV0aev5GqOsV0h4GqA2NYLEthM3ZxT5Wk=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/.gitignore</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			sfzNL10fDTimk16XbwjVqf/K8tozNVFsNDctBWEeRgs=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/c_code/seri_qc.c</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			R7hxyummK/uROMwUKxu8EbQ77LYmRY1+MaEB/3uu94U=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/c_code/seri_qc.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			tfrBaCh72KsYbnRyW8l+oU7bmpYO0tx6YGT5BYHijNo=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/c_code/solpos.c</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			DT7F9/Q1mOvE703kk+n7XVnNJNCts0DApX8mKV9DYGA=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/c_code/solpos.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			r20sRIPPVVTk1L5Inpk1O13LrfbuO7Qu8IIP3/6OGPI=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/c_code/spa.c</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			yDkLMkVMXNgmAl1RVo943woyHrVPthc4s3ZlWkRn8ws=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/c_code/spa.h</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			F1b+1uJFbD21GX1UPcXXegwhARtv3fndcf0BJpfEJkM=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/requirements.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			k3mVc9Kq5I9HJf4sjINJpVZIjf9ONYPBDrPdqlB6710=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/seriqc/__init__.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			oLtilyKOCZPA0lgS6HIMWpaBpRI46XGzq025IYWN6Ac=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/seriqc/exec.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			lvqHvBfuVcqZyFQFnVCWigRWuYr9tM4UzTrbJ9Yex9k=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/seriqc/functions.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			bgkFMypcbPffYmcQwGZejUCr4+sCzTU+XU73oCFr8+0=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/seriqc/gompertz_curve_points.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			zVk5E4K7ek4z6QHL/fJtG7+1QrmobIHSgFEU0M+zByo=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/seriqc/gompertz_curves.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			/qZC31jyyU7+jDbImRBv8DvEGgt7xeVFkYPeRad8Ue0=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/seriqc/qcfit.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			zs3NBtGSaGUKgyqNcmQvV1eTU3x2TlFSKAeF4HlAPUM=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/seriqc/solar.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			BgyxsTsRZtQJTCbRmoU9QlqPQqM+uRyVXO/oDMX4jcg=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/seriqc/utilities.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			+gakruVD+28MK7IAwES4Er8HahU5fckmPiEjx8KxL+c=
+			</data>
+		</dict>
+		<key>runtime/System Files/SERIQC/setup.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			KXMgmALuPYuHNSUHIHAJf81/Sxyn18iruw7UnMXf1v8=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/README.md</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			O6UxyRqniLLxikF7F8BoS3nssmf4cDa7eiM1Q3fmf2Q=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/requirements.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			/OSEMjO3Zga11EX2BlbpQxZQyk7+Dx2jH8QcSdIwgH4=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/setup.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			1Jep6vFu8WkmQBeTnd7NtQm8d7xVhLYuaBZPb1+bwY8=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/__init__.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ca4TUwzyqw2tfF9tdsYOP62s59Ay/diIq+oaHvqdCRc=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/cli.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			/1jdZb9CPvwR1Ctd9J0buM6Xzcr9xCTnornyZo98F84=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/framework.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			/mfQueblyH/w1B5RmUZaufWBM3w7DQGIS39FfpeHaKI=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/instrument_database/Upyranometer.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			iC9ZMwNcKD3jxwxjt/12yDF6I2O9CNDxmVgN/vJl71o=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/instrument_database/Upyrheliometer.csv</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			1BbojnkaRb9Ajm+n8eaCxkXvDH+z2GN0PSuQTxdAeHY=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/instrument_uncertainty.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Qs2h3cihAGaHBgBTYEUdHwxEFHt0Eqc86Evmq7SjhIE=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/merge.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			9mNQFnxwnLBEMPJ+YLlitN8OGL7v8OXMtcMrVhKyotU=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/utilities/__init__.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			6s2NV47XSUeOaZYn0VLREDMHLVyRpdU8KRNkV6gQSqQ=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/utilities/configs.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			2+ENUw60/6BF5lsdkY42wVldUS+u/VCGVMo2Brqy14I=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/utilities/reports.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			PfOtyPQdYY+c4QJCKPSFJ8mbpGQRnXFXmmxH/HQ/Z7Y=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI/suni/utilities/utilities.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			wQ6/EkyBqfDIotB2gV2L/ZHH99GmiIQAOWbGmxLx0aE=
+			</data>
+		</dict>
+		<key>runtime/System Files/SUNI_icon_rev1.jpg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			xTU+m+RJXrMRaaxQR8K12lAlFyVMbJ4bom7RCzaoXkA=
+			</data>
+		</dict>
+		<key>runtime/System Files/header_app.gif</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			WKrL/h/sagE3OrkO5agdGXN6BDkcX66f052NEyz9EWU=
+			</data>
+		</dict>
+		<key>runtime/System Files/install_python.ps1</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			KbcGFJx0hTkljnh7lD1R7CaKvUDXiUGVzKVyHx1TQJs=
+			</data>
+		</dict>
+		<key>runtime/System Files/install_python.sh</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			cMrVVbYGlMjMVKxz4NT5yWn0Kq6scx57Vbk/5gp5xi4=
+			</data>
+		</dict>
+		<key>runtime/System Files/python_config.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			b264Ss7q6SmBSfnvY5a1Ms3rkTE4yDVHzFzLbCBVzUk=
+			</data>
+		</dict>
+		<key>runtime/System Files/requirements.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			hNYa/62AoYAVz6IBuuu3vV6VAGqZ66vevopllijzlbw=
+			</data>
+		</dict>
+		<key>runtime/System Files/setup.py</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			OqxL5t6zcIdFELQ0itg3daTyBqT8sTTvhU1MF9to820=
+			</data>
+		</dict>
+		<key>runtime/System Files/suni.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			65VYgSCkTlCJOTOnDYyRe1ZQZnaTjf0mT+4KtOuxXoA=
+			</data>
+		</dict>
+	</dict>
+	<key>rules</key>
+	<dict>
+		<key>^Resources/</key>
+		<true/>
+		<key>^Resources/.*\.lproj/</key>
+		<dict>
+			<key>optional</key>
+			<true/>
+			<key>weight</key>
+			<real>1000</real>
+		</dict>
+		<key>^Resources/.*\.lproj/locversion.plist$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>1100</real>
+		</dict>
+		<key>^Resources/Base\.lproj/</key>
+		<dict>
+			<key>weight</key>
+			<real>1010</real>
+		</dict>
+		<key>^version.plist$</key>
+		<true/>
+	</dict>
+	<key>rules2</key>
+	<dict>
+		<key>.*\.dSYM($|/)</key>
+		<dict>
+			<key>weight</key>
+			<real>11</real>
+		</dict>
+		<key>^(.*/)?\.DS_Store$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>2000</real>
+		</dict>
+		<key>^(Frameworks|SharedFrameworks|PlugIns|Plug-ins|XPCServices|Helpers|MacOS|Library/(Automator|Spotlight|LoginItems))/</key>
+		<dict>
+			<key>nested</key>
+			<true/>
+			<key>weight</key>
+			<real>10</real>
+		</dict>
+		<key>^.*</key>
+		<true/>
+		<key>^Info\.plist$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+		<key>^PkgInfo$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+		<key>^Resources/</key>
+		<dict>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+		<key>^Resources/.*\.lproj/</key>
+		<dict>
+			<key>optional</key>
+			<true/>
+			<key>weight</key>
+			<real>1000</real>
+		</dict>
+		<key>^Resources/.*\.lproj/locversion.plist$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>1100</real>
+		</dict>
+		<key>^Resources/Base\.lproj/</key>
+		<dict>
+			<key>weight</key>
+			<real>1010</real>
+		</dict>
+		<key>^[^/]+$</key>
+		<dict>
+			<key>nested</key>
+			<true/>
+			<key>weight</key>
+			<real>10</real>
+		</dict>
+		<key>^embedded\.provisionprofile$</key>
+		<dict>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+		<key>^version\.plist$</key>
+		<dict>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+	</dict>
+</dict>
+</plist>

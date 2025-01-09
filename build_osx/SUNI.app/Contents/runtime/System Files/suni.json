@@ -1,0 +1,6 @@
+{
+	"min_python_version": "3.11",
+	"run_cmd": "import os; import json; from suni.cli import process_from_config; fh = open('<input>'); cfg = json.load(fh); fh.close(); out = process_from_config(cfg); print(out)",
+	"version": "0.1.0",
+	"local_package": "."
+}

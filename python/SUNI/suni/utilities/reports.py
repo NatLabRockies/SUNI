@@ -4,6 +4,7 @@ from pathlib import Path
 
 from suni.framework import ErrorCode
 from suni.utilities import format_date, extract_time_from_input_data
+from suni.version import __version__
 
 
 def _counts_from_results(results):
@@ -27,6 +28,9 @@ def _add_extended_report(results, lines, n_valid, include_pm=True):
         param_sum = results[col].sum()
         mean = (param_sum / n_valid) if n_valid > 0 else -9900
         lines.append(f"{param}{mean:.2f}%")
+
+    lines.append("")
+    lines.append(f"SUNI v{__version__}")
     return lines
 
 

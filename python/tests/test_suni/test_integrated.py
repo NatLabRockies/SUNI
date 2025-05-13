@@ -12,6 +12,7 @@ from suni.cli import main, process_from_config
 from suni.framework import SERIQCError
 from suni.utilities import convert_to_year_first
 import suni.instrument_uncertainty
+from suni.version import __version__
 
 EXPECTED_GUI_REPORT = """
 Uncertainty Processing Report for SRRL2004_01_testing.csv NRELSR
@@ -24,7 +25,7 @@ GHI Mean U95: +/-3.26% | Standard deviation: 0.37
 DNI Mean U95: +/-1.48% | Standard deviation: 0.61
 DHI Mean U95: +/-3.26% | Standard deviation: 0.37
 """
-EXPECTED_EXTENDED_GUI_REPORT = """
+EXPECTED_EXTENDED_GUI_REPORT = f"""
 Uncertainty Processing Report for SRRL2004_01_testing.csv NRELSR
 
 Beginning: 2004-1-1 0:00, Ending: 2004-1-2 8:00, Data records: 1921
@@ -38,6 +39,8 @@ DHI Mean U95: +/-3.26% | Standard deviation: 0.37
 Urads Uncertainty Mean: +/-3.79%
 Mean of System Uncertainty ABS: +/-2.36%
 Field Uncertainty Mean: +/-0.47%
+
+SUNI v{__version__}
 """
 
 
@@ -62,7 +65,11 @@ def _validate_outputs(test_data_basic_run_dir, tmp_cwd, extended=False):
             test_body = _no_9900_in_line(test.readlines())
             if "report" in fn:
                 assert truth_body[:3] == test_body[:3]
-                assert truth_body[4:] == test_body[4:]
+                if extended:
+                    assert truth_body[4:] == test_body[4:-2]
+                    assert test_body[-2:] == ["\n", f"SUNI v{__version__}"]
+                else:
+                    assert truth_body[4:] == test_body[4:]
             else:
                 assert truth_body == test_body
 

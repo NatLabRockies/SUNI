@@ -1,6 +1,7 @@
 """
 setup.py
 """
+import os
 from pathlib import Path
 
 from setuptools import setup, find_packages
@@ -8,7 +9,11 @@ from setuptools import setup, find_packages
 
 HERE = Path(__file__).parent.resolve()
 README = "TBD"
-VERSION = "0.1.0"
+with open(os.path.join(HERE, "suni", "version.py"), encoding="utf-8") as f:
+    VERSION = f.read()
+
+VERSION = VERSION.split('=')[-1].strip().strip('"').strip("'")
+
 
 with open("requirements.txt") as f:
     INSTALL_REQUIREMENTS = f.read().splitlines()

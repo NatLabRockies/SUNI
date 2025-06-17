@@ -29,8 +29,6 @@ def _add_extended_report(results, lines, n_valid, include_pm=True):
         mean = (param_sum / n_valid) if n_valid > 0 else -9900
         lines.append(f"{param}{mean:.2f}%")
 
-    lines.append("")
-    lines.append(f"SUNI v{__version__}")
     return lines
 
 
@@ -97,6 +95,8 @@ def compile_popup_report(results, cfg):
     if int(cfg.get("ExtendedRpt", 0)):
         lines = _add_extended_report(results, lines, n_valid, include_pm=True)
 
+    lines.append("")
+    lines.append(f"SUNI v{__version__}")
     return "\n".join(lines)
 
 
@@ -246,6 +246,8 @@ def compile_standard_report(results, cfg, proc_start_time):
     if int(cfg.get("ExtendedRpt", 0)):
         lines = _add_extended_report(results, lines, n_valid, include_pm=False)
 
+    lines.append("")
+    lines.append(f"SUNI v{__version__}")
     return "\n".join(lines)
 
 

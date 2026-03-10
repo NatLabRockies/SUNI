@@ -1,0 +1,56 @@
+name: Installation Issue
+description: Report issues installing SUNI on your system
+
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Installation check
+      options:
+        - label: >
+            I have read the User Manual.
+          required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: >
+        Please provide the output of ``import platform; print(platform.platform())``
+    validations:
+      required: true
+  - type: dropdown
+    id: method
+    attributes:
+      label: Installation Method
+      description: >
+        Please provide how you tried to install SUNI from a clean environment.
+      options:
+        - GUI (executable installer)
+        - GUI (from source)
+        - CLI
+    validations:
+      required: true
+  - type: input
+    id: suni
+    attributes:
+      label: SUNI Version
+      description: >
+        Please provide the version of SUNI you are trying to install.
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python/C++ and XCode Version
+      description: >
+        For GUI, please provide the installed version of C++ and XCode. For CLI, please provide the installed version of Python.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Installation Logs
+      description: >
+        If possible, please copy and paste the installation logs when attempting to install SUNI.
+      value: >
+        Replace this line with the installation logs

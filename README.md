@@ -1,6 +1,12 @@
-# SolarUncertaintyIntegrator
+# SUNI
 
-Attached is the latest specifications document with revised user interface and changes to pseudocode. In summary:
+Solar Uncertianty Integrator (SUNI) determines the uncertainty of high-resolution, subhourly, solar irradiance data by incorporating operational uncertainties
+identified by [SERI QC](https://docs.nrel.gov/docs/legosti/old/5608.pdf),
+an existing data quality assessment
+function, with estimates of radiometer measurement uncertainties determined by the [NLR’s “Radiometer Data Uncertainty Analysis” application](https://midcdmz.nrel.gov/radiometer_uncert.xlsx)
+for the specific radiometers in use.
+
+<!-- Attached is the latest specifications document with revised user interface and changes to pseudocode. In summary:
 ![image](https://github.com/sjanzou/SolarUncertaintyIntegrator/assets/6498311/3d854ba1-9b1c-4768-a86a-ca733d407783)
 
  
@@ -24,4 +30,4 @@ Paage 37. Progress bar (near top of file loop). If I understand Steve’s email 
  
 Page 59. Instrument database. This has been greatly simplified with Aron’s new uncertainty paradigm. It is now just two small files holding the class uncertainty and default calibration uncertainty. This could be easily hard-wired into the code, but I chose the file approach with the possibility (likelihood?) that the numbers will change in the future or that other classes could be added. It’s easier to drop in new data files than redistribute new program files. Any thoughts on this?
  
-Page 60. Configuration files. You likely have a better way to implement and name configuration files. Take it and run with it!
+Page 60. Configuration files. You likely have a better way to implement and name configuration files. Take it and run with it! -->

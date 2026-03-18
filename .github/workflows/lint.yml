@@ -41,6 +41,6 @@ jobs:
           VALIDATE_YAML: false
           DEFAULT_BRANCH: origin/main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LINTER_RULES_PATH: /python/
-          PYTHON_PYLINT_CONFIG_FILE: .pylintrc
-          FILTER_REGEX_INCLUDE: python/(?!tests)(.*)/
+          LINTER_RULES_PATH: /CLI/
+          PYTHON_PYLINT_CONFIG_FILE: CLI/.pylintrc
+          FILTER_REGEX_INCLUDE: CLI/(?!tests)(.*)/

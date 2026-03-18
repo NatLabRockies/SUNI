@@ -6,6 +6,161 @@ an existing data quality assessment
 function, with estimates of radiometer measurement uncertainties determined by the [NLR’s “Radiometer Data Uncertainty Analysis” application](https://midcdmz.nrel.gov/radiometer_uncert.xlsx)
 for the specific radiometers in use.
 
+
+## Installation
+
+We offer two installations options - Graphical User Interface (GUI) and Command Line Interface (CLI) to explore SUNI.
+
+### GUI
+
+The exectuables can be downloaded for Windows and MacOS from the Releases page of this repository.
+
+Please allow a few mintues to complete the one-time installation. Once installed, you will be able to begin a process configuration.
+
+#### Example Workflow
+Three types of input files are required to run SUNI software. Refer to the ``example`` folder to understand what input files are needed.
+
+1. Configuration File (refer to ``example/sample_config.json``) with the contents as follows:
+
+```
+{
+    "InputFile": "SRRL2004_01_testing.csv",
+    "OutputFile": "SRRL2004_01_Unc.csv",
+    "SERIQCpath": ".",
+    "StationID": "NRELSR",
+    "Interval": 1,
+    "GHIid": "14003",
+    "GHImodel": "CMP22",
+    "GHIclass": "A",
+    "GHIclassUncert": 2.4,
+    "GHIclassModFlg": 1,
+    "GHIcalUncert": 1.9,
+    "GHIcalDate": "2019-05-05",
+    "GHIdueDate": "2020-05-05",
+    "GHIradUncert": 3.1,
+    "DNIid": "190042",
+    "DNImodel": "CHP1",
+    "DNIclass": "A",
+    "DNIclassUncert": 0.9,
+    "DNIclassModFlg": 1,
+    "DNIcalUncert": 0.75,
+    "DNIcalDate": "2019-05-05",
+    "DNIdueDate": "2020-05-05",
+    "DNIradUncert": 1.2,
+    "DHIid": "140033",
+    "DHImodel": "CMP22",
+    "DHIclass": "A",
+    "DHIclassUncert": 2.4,
+    "DHIclassModFlg": 1,
+    "DHIcalUncert": 1.9,
+    "DHIcalDate": "2019-05-05",
+    "DHIdueDate": "2020-05-05",
+    "DHIradUncert": 3.1,
+    "MaxQC": 89,
+    "MinDNI": 25.0,
+    "MaxZEN": 80.0,
+    "MaxSysUncert": 100.0,
+    "ExtendedRpt": 0,
+    "DateFormat": 0
+}
+```
+
+
+2. Solar Irradiance Data (refer to ``example/SRRL2004_01_testing.csv``) with Date, Time, GHI, DNI, DHI fields.
+
+Note that the name should be matched with ``InputFile`` from the configuration file.
+
+3. SERI QC File (refer to ``example/s_NRELSR.qc0``)
+
+
+Find ``Open Configuration`` from the ``File`` menu, and choose the configuration file path.
+This will automatically fill the blanks with the paths found.
+
+![Select Config File](examples/screenshots/select-config.png)
+
+If you encounter the SERI QC file not found error,
+
+![SERI QC Warning Message](examples/screenshots/seriqc-warning.png)
+
+Please click ``SERI QC Path`` button and verify its location.
+
+If you encounter the Input file not found error,
+
+![Input File Warning Message](examples/screenshots/inputfile-warning.png)
+
+Please click ``Input File`` button and verify its location.
+
+This should now look as follows. We highly recommend to put full file paths (not relative path).
+
+![File Path Correction](examples/screenshots/filepath-corrected.png)
+
+Please review all the contents if it is extracted correctly. Click ``Create Extended Report`` if you wish to generate it. Data format should match with the one from your solar irradiance data file.
+
+Once everything is ready, click ``Start`` button to start processing. You might see the progress through the bar below. For your reference, it took less than 10 seconds to run the example.
+
+Once it is completed, the report will pop up. And the Output file and reports can be found under your working folder.
+
+![Report](examples/screenshots/report.png)
+
+```
+Uncertainty Processing Report for SRRL2004_01_testing.csv
+Station ID: NRELSR (SRRL)
+QC0 File: s_NRELSR.qc0
+Processing date: 03/18/2026 16:55
+From 1/1/2004 0:00 to 1/2/2004 8:00 (1-minute interval)
+
+System Configuration:
+GHI: s/n  14003 | Class: A | Class Uncert: +/-2.4%*| Cal Uncert: +/-1.9% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.1%
+DNI: s/n 190042 | Class: A | Class Uncert: +/-0.9%*| Cal Uncert: +/-0.8% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-1.2%
+DHI: s/n 140033 | Class: A | Class Uncert: +/-2.4%*| Cal Uncert: +/-1.9% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.1%
+   * indicates user override
+SERI QC Max: 89
+Zenith Angle Max: 80.0
+DNI Min: 25.0
+System Uncertainty Max: 100.0
+
+Input Data Records: 1921
+Three-component records: 0 (0.0%)
+Above SERIQC Max: 0 (0.0%)
+Above Zenith Angle Max: 0 (0.0%)
+Below DNI Minimum: 0 (0.0%)
+Above Max System Uncertainty: 0 (0.0%)
+Mathematically Invalid: 0 (0.0%)
+Total Eligible Uncertainty Records: 0 (0.0%)
+
+GHI Mean U95: +/--9900.00% | Standard deviation: -9900.00
+DNI Mean U95: +/--9900.00% | Standard deviation: -9900.00
+DHI Mean U95: +/--9900.00% | Standard deviation: -9900.00
+
+Urads Uncertainty Mean: +/--9900.00%
+Mean of System Uncertainty ABS: -9900.00%
+Field Uncertainty Mean: +/--9900.00%
+```
+
+### CLI
+
+From a desired code directory, download this repository using ``git clone git@github.com:NREL/SUNI.git``
+
+1. Create ``suni`` environment and install package
+    1) Create a conda env: ``conda create -n suni python=3.11``
+    2) Activate the newly-created environment using the command: ``conda activate suni``
+    3) cd into the repo cloned in 1.
+    4) Install ``suni`` and its dependencies by running: ``pip install .``
+
+2. Check that ``suni`` was installed successfully
+    1) From any directory, run the following command. This should return the
+       help pages for the CLI.
+
+        - ``suni --help``
+
+You can now use the `sample config <https://github.com/NREL/SUNI/blob/main/examples/sample_config.json>`_
+as a template to set up your own runs and then execute them using
+
+``suni config.json``
+
+
+
+
 <!-- Attached is the latest specifications document with revised user interface and changes to pseudocode. In summary:
 ![image](https://github.com/sjanzou/SolarUncertaintyIntegrator/assets/6498311/3d854ba1-9b1c-4768-a86a-ca733d407783)
 

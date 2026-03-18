@@ -1,0 +1,32 @@
+Uncertainty Processing Report for SRRL2004_01_testing.csv
+Station ID: NRELSR (SRRL)
+QC0 File: s_NRELSR.qc0
+Processing date: 03/18/2026 17:00
+From 1/1/2004 0:00 to 1/2/2004 8:00 (1-minute interval)
+
+System Configuration:
+GHI: s/n  14003 | Class: A | Class Uncert: +/-2.4%*| Cal Uncert: +/-1.9% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.1%
+DNI: s/n 190042 | Class: A | Class Uncert: +/-0.9%*| Cal Uncert: +/-0.8% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-1.2%
+DHI: s/n 140033 | Class: A | Class Uncert: +/-2.4%*| Cal Uncert: +/-1.9% | Cal Date: 2019-05-05 | Due Date: 2020-05-05 | Radiometer Uncert: +/-3.1%
+   * indicates user override
+SERI QC Max: 89
+Zenith Angle Max: 80.0
+DNI Min: 25.0
+System Uncertainty Max: 100.0
+
+Input Data Records: 1921
+Three-component records: 0 (0.0%)
+Above SERIQC Max: 0 (0.0%)
+Above Zenith Angle Max: 0 (0.0%)
+Below DNI Minimum: 0 (0.0%)
+Above Max System Uncertainty: 0 (0.0%)
+Mathematically Invalid: 0 (0.0%)
+Total Eligible Uncertainty Records: 0 (0.0%)
+
+GHI Mean U95: +/--9900.00% | Standard deviation: -9900.00
+DNI Mean U95: +/--9900.00% | Standard deviation: -9900.00
+DHI Mean U95: +/--9900.00% | Standard deviation: -9900.00
+
+Urads Uncertainty Mean: +/--9900.00%
+Mean of System Uncertainty ABS: -9900.00%
+Field Uncertainty Mean: +/--9900.00%

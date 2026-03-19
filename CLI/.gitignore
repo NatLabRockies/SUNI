@@ -12,6 +12,9 @@
 *test*.csv
 *scratch*.csv
 
+# Keep test fixture CSVs tracked for CI.
+!tests/data/**/*.csv
+
 # Sphinx documentation
 docs/_build/
 docs/source/_autosummary/

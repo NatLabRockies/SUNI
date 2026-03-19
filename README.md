@@ -96,6 +96,8 @@ The overall radiometer uncertainty is calculated by following the GUM method of
 implementing the root-sum-square method. Details about the method are documented
 in (Wilcox and Stoffel 2024; Wilcox et al. 2025).
 
+A flow chart of SUNI software is given below:
+
 ![SUNI Flowchart](examples/screenshots/SUNI-flowchart.png)
 
 <!-- ## Key Features

@@ -42,5 +42,5 @@ jobs:
           DEFAULT_BRANCH: origin/main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LINTER_RULES_PATH: /CLI/
-          PYTHON_PYLINT_CONFIG_FILE: CLI/.pylintrc
+          PYTHON_PYLINT_CONFIG_FILE: .pylintrc
           FILTER_REGEX_INCLUDE: CLI/(?!tests)(.*)/

@@ -1,0 +1,47 @@
+[build-system]
+requires = [
+  "setuptools >= 81",
+]
+build-backend = 'setuptools.build_meta'
+
+[project]
+name="NLR-SERIQC"
+version="0.1.0"
+description = "SERI QC is a python package for quality controlling of solar irradiance data."
+authors = [
+  {name = "Adam R. Jensen", email = "adam-r-j@hotmail.com"},
+]
+maintainers = [
+  {name = "Sora Ryu", email = "sryu@nlr.gov"},
+]
+license = "BSD-3-Clause"
+keywords = ["SERIQC", "NLR"]
+requires-python = ">=3.8"
+classifiers=[
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+]
+dependencies = [
+  "matplotlib>=3.10.8,<4",
+  "numpy>=2.2.4,<3",
+  "pandas>=2.2.3,<3",
+  "pvlib>=0.15.0,<0.16",
+]
+
+[project.urls]
+homepage = "https://github.com/NatLabRockies/SUNI"
+documentation = "https://natlabrockies.github.io/SUNI/"
+repository = "https://github.com/NatLabRockies/SUNI"
+
+[project.scripts]
+
+[tool.setuptools.packages]
+find = { include = ["seriqc*"] }

@@ -8756,33 +8756,13 @@ packages:
 - pypi: ./SERIQC
   name: nlr-seriqc
   version: 0.1.0
-  sha256: 169b3247c6f24d39bfc3e2eeb3aa2047f8d1a0d99bb45c76efc823014ee549b9
+  sha256: 790e4035075a194642373a364c135cb33073a120e85f32cb6cd2a65642ef94a0
   requires_dist:
-  - numpy
-  - matplotlib
-  - pandas
-  - pvlib
-  - pytest ; extra == 'test'
-  - pytest-cov ; extra == 'test'
-  - pytest ; extra == 'dev'
-  - pytest-cov ; extra == 'dev'
-  - black ; extra == 'dev'
-  - pylint ; extra == 'dev'
-  - jupyter ; extra == 'dev'
-  - pipreqs ; extra == 'dev'
-  - pytest ; extra == 'docs'
-  - pytest-cov ; extra == 'docs'
-  - black ; extra == 'docs'
-  - pylint ; extra == 'docs'
-  - jupyter ; extra == 'docs'
-  - pipreqs ; extra == 'docs'
-  - make ; extra == 'docs'
-  - ghp-import ; extra == 'docs'
-  - numpydoc ; extra == 'docs'
-  - pandoc ; extra == 'docs'
-  - sphinx ; extra == 'docs'
-  - myst-nb ; extra == 'docs'
-  - sphinx-book-theme ; extra == 'docs'
+  - matplotlib>=3.10.8,<4
+  - numpy>=2.2.4,<3
+  - pandas>=2.2.3,<3
+  - pvlib>=0.15.0,<0.16
+  requires_python: '>=3.8'
 - pypi: ./SUNI
   name: nlr-suni
   version: 0.1.1

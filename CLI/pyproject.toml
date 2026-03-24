@@ -1,0 +1,320 @@
+[build-system]
+requires = [
+  "setuptools >= 81",
+]
+build-backend = 'setuptools.build_meta'
+
+[project]
+name="NLR-SUNI-CLI"
+version="0.1.0"
+description = "National Laboratory of the Rockies' (NLR's) Solar Uncertainty Analysis (SUNI) framework"
+readme = "../README.md"
+authors = [
+  {name = "Paul Pinchuk", email = "ppinchuk@nlr.gov"},
+  {name = "Sora Ryu", email = "sryu@nlr.gov"},
+]
+maintainers = [
+  {name = "Sora Ryu", email = "sryu@nlr.gov"},
+]
+license = "BSD-3-Clause"
+keywords = ["SUNI", "NLR", "Solar Uncertainty", "SERIQC"]
+requires-python = ">= 3.11"
+classifiers=[
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+dependencies = [
+  "attrs>=26.1.0,<27",
+  "click>=8.1.7,<9",
+  "matplotlib>=3.10.8,<4",
+  "numpy>=2.2.4,<3",
+  "pandas>=2.2.3,<3",
+  "pvlib>=0.15.0,<0.16",
+  "rich>=13.9.4,<14",
+  "tqdm>=4.67.3,<5",
+]
+
+[project.optional-dependencies]
+dev = [
+  "jupyter>=1.0.0,<1.1",
+  "pipreqs>=0.4.13,<0.5",
+  "ruff>=0.15.5,<0.16",
+  "ruff-lsp>=0.0.62,<0.0.63",
+]
+test = [
+  "flaky>=3.8.1,<4",
+  "pytest>=8.3.3,<9",
+  "pytest-asyncio>=0.25.2,<0.26",
+  "pytest-cases>=3.8.6,<4",
+  "pytest-cov>=6.0.0,<7",
+  "pytest-mock>=3.14.0,<4",
+  "pytest-profiling>=1.7.0,<2",
+  "pytest-xdist>=3.6.1,<4",
+  "snakeviz>=2.2.2,<3",
+  "tox>=4.23.2,<5",
+]
+doc = [
+  "ghp-import>=2.1.0,<3",
+  "pydata-sphinx-theme>=0.16.1,<0.17",
+  "sphinx-click>=6.1.0,<7",
+  "sphinx-copybutton>=0.5",
+  "sphinx-tabs>=3.4",
+  "sphinxcontrib-mermaid>=1.2.3,<2",
+]
+build = [
+  "build>=1.2.2,<2",
+  "pkginfo>=1.12.1.2,<2",
+]
+
+[project.scripts]
+suni = "suni.cli:main"
+
+[project.urls]
+homepage = "https://github.com/NatLabRockies/SUNI"
+documentation = "https://natlabrockies.github.io/SUNI/"
+repository = "https://github.com/NatLabRockies/SUNI"
+
+[tool.setuptools.packages]
+find = { include = ["SERIQC*", "SUNI*"] }
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["win-64", "osx-arm64", "osx-64", "linux-64"]
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev", "build", "test", "doc"], solve-group = "default" }
+test = { features = ["test"], solve-group = "default" }
+doc = { features = ["doc"], solve-group = "default" }
+build = { features = ["build"], solve-group = "default" }
+
+[tool.pixi.tasks]
+
+[tool.pixi.feature.dev.tasks]
+lint = "ruff check ./S*"
+format = "ruff format ./S*"
+
+[tool.pixi.feature.test.tasks]
+tests = "pytest --durations=20 -rapP -vv --cov=SUNI --cov=SERIQC --cov-report=html --cov-branch --cov-report=xml:coverage.xml --cov-fail-under=95 tests"
+tests-suni = "pytest --durations=20 -rapP -vv --cov=SUNI --cov-report=html --cov-branch --cov-report=xml:coverage.xml --cov-fail-under=95 tests/test_suni"
+tests-seriqc = "pytest --durations=20 -rapP -vv --cov=SERIQC --cov-report=html --cov-branch --cov-report=xml:coverage.xml --cov-fail-under=95 tests/test_seriqc"
+
+
+[tool.pixi.feature.doc.tasks]
+python-docs = { cmd = "make clean html", cwd = "docs", env = { SPHINXOPTS = "--fail-on-warning --keep-going --nitpicky" }}
+
+[tool.pixi.feature.build.tasks]
+build-wheels = { cmd = "uv build --sdist --wheel --out-dir dist/ ." }
+
+[tool.pixi.dependencies]
+attrs = ">=26.1.0,<27"
+click = ">=8.1.7,<9"
+matplotlib = ">=3.10.8,<4"
+numpy = ">=2.2.4,<3"
+pandas = ">=2.2.3,<3"
+pvlib = ">=0.15.0,<0.16"
+python = ">=3.11"
+rich = ">=13.9.4,<14"
+tqdm = ">=4.67.3,<5"
+
+[tool.pixi.pypi-dependencies]
+NLR-SERIQC = { path = "./SERIQC", editable = true}
+NLR-SUNI = { path = "./SUNI", editable = true}
+
+[tool.pixi.feature.dev.dependencies]
+ipykernel = ">=7.1.0,<8"
+jupyter = ">=1.0.0,<1.1"
+pipreqs = ">=0.4.13,<0.5"
+ruff = ">=0.15.5,<0.16"
+ruff-lsp = ">=0.0.62,<0.0.63"
+seaborn = ">=0.13.2,<0.14"
+
+[tool.pixi.feature.test.dependencies]
+flaky = ">=3.8.1,<4"
+pytest = ">=8.3.3,<9"
+pytest-cases = ">=3.8.6,<4"
+pytest-cov = ">=6.0.0,<7"
+pytest-mock = ">=3.14.0,<4"
+pytest-profiling = ">=1.7.0,<2"
+pytest-xdist = ">=3.6.1,<4"
+snakeviz = ">=2.2.2,<3"
+tox = ">=4.23.2,<5"
+
+[tool.pixi.feature.doc.dependencies]
+ghp-import = ">=2.1.0,<3"
+make = ">=4.4.1,<5"
+pydata-sphinx-theme = ">=0.16.1,<0.17"
+sphinx-click = ">=6.1.0,<7"
+sphinx-copybutton = ">=0.5.2,<0.6"
+sphinx-tabs = ">=3.4.1,<4"
+sphinxcontrib-mermaid = ">=1.2.3,<2"
+
+[tool.pixi.feature.build.dependencies]
+python-build = ">=1.2.2,<2"
+pkginfo = ">=1.12.1.2,<2"
+uv = ">=0.8.4,<0.9"
+
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+preview = true
+select = [
+  "A", # flake8-builtins
+  "B", # flake8-bugbear
+  "ARG", # flake8-unused-arguments
+  "BLE", # flake8-blind-except
+  "C4", # flake8-comprehensions
+  "C90", # mccabe
+  "COM", # flake8-commas
+  "D", # pydocstyle
+  "E", # pycodestyle
+  "EM", # flake8-errmsg
+  "F", # Pyflakes
+  "FURB", # refurb
+  "FLY", #  flynt
+  "G", # flake8-logging-format
+  "I", # isort
+  "INP", # flake8-no-pep420
+  "ISC", # flake8-implicit-str-concat
+  "LOG", # flake8-logging
+  "N", # pep8-naming
+  "NPY", # numpy-specific
+  "PD", # pandas-vet
+  "PERF", # Perflint
+  "PIE", # flake8-pie
+  "PL", # Pylint
+  "PTH", # flake8-use-pathlib
+  "PYI", # flake8-pyi
+  "Q", # flake8-quotes
+  "RET", # flake8-return
+  "RSE", # flake8-raise
+  "RUF", # Ruff-specific rules
+  "S", # flake8-bandit
+  "SLF", # flake8-self
+  "SIM", # flake8-simplify
+  "TID", # flake8-tidy-imports (absolute imports)
+  "TRY", # tryceratops
+  "UP", # pyupgrade
+  "W", # Warning
+]
+ignore = [
+  "B028", # no-explicit-stacklevel
+  "COM812", # missing-trailing-comma (incompatible with formatter)
+  "D105", # undocumented-magic-method
+  "D205", # blank-line-after-summary
+  "D202", # no-blank-lines-after-function
+  "D210", # surrounded-whitespace
+  "D400", # first-line-should-end-with-a-period
+  "D401", # non-imperative-mood
+  "D403", # first-line-capitalized
+  "FURB140", # reimplemented-starmap
+  "I001", # unsorted-imports
+  "PYI024", # collections-named-tuple
+  "RUF012", # mutable-class-default
+  "RUF031", # incorrectly-parenthesized-tuple-in-subscript
+  "RUF067", # non-empty-init-module
+  "S101", # assert
+  "S324", # hashlib-insecure-hash-function
+  "S403", # suspicious-pickle-import
+  "TRY003", # raise-vanilla-args
+]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 72
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [
+  "F401", # unused-import
+]
+"tests/**.py" = [
+  "ARG001", # unused-function-argument
+  "ARG002", # unused-method-argument
+  "D101", # undocumented-public-class
+  "D102", # undocumented-public-method
+  "EM101", # raw-string-in-exception
+  "G004", # logging-f-string
+  "INP001", # implicit-namespace-package
+  "N806", # non-lowercase-variable-in-function
+  "PLC2701", # import-private-name
+  "PLR0914", # too-many-locals
+  "PLR0915", # too-many-statements
+  "PLR2004", # magic-value-comparison
+  "PLR6301", # no-self-use
+  "SLF001", # private-member-access
+  "TRY301", # raise-within-try
+  "W505", # doc-line-too-long
+]
+
+[tool.ruff.lint.pylint]
+max-args = 10
+max-positional-args = 10
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_also = [
+  # Have to re-enable the standard pragma
+  "pragma: no cover",
+
+  # Don't complain about missing debug-only code:
+  "if self\\.debug",
+
+  # Don't complain about repr methods
+  "def __repr__",
+  "def _repr_markdown_",
+
+  # Don't complain about data I/O code
+  "def load*",
+  "def _load*",
+
+  # Don't complain if tests don't hit defensive assertion code:
+  "raise AssertionError",
+  "raise NotImplementedError",
+
+  # Don't complain if non-runnable code isn't run:
+  "if __name__ == .__main__.:",
+
+  # Don't complain about abstract methods, they aren't run:
+  "@(abc\\.)?abstractmethod",
+
+  # Don't complain about logging debugging functions
+  "def print_logging_info*",
+  "def __cls_name",
+]
+
+omit = [
+  # omit test files
+  "tests/*",
+  # omit init files
+  "__init__.py",
+  # omit version file
+  "version.py",
+  # omit pixi files
+  ".pixi/*",
+]
+
+
+[tool.pytest.ini_options]
+addopts = "--disable-warnings"
+testpaths = [
+  "tests/test_seriqc",
+  "tests/test_suni",
+]

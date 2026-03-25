@@ -50,6 +50,7 @@ jobs:
         working-directory: ./CLI
 
     - run: |
+        cd CLI
         pixi reinstall -e dev --locked NLR-SUNI-CLI
         pixi run -e dev --locked tests
 
@@ -80,6 +81,7 @@ jobs:
         working-directory: ./CLI
 
     - run: |
+        cd CLI
         pixi reinstall -e dev NLR-SUNI-CLI
         pixi run -e dev tests-u
 

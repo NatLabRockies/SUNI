@@ -8,7 +8,7 @@ build-backend = 'setuptools.build_meta'
 name="NLR-SUNI-CLI"
 version="0.1.0"
 description = "National Laboratory of the Rockies' (NLR's) Solar Uncertainty Analysis (SUNI) framework"
-readme = "../README.md"
+readme = "README.md"
 authors = [
   {name = "Paul Pinchuk", email = "ppinchuk@nlr.gov"},
   {name = "Sora Ryu", email = "sryu@nlr.gov"},

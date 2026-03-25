@@ -222,6 +222,10 @@ ignore = [
   "D403", # first-line-capitalized
   "FURB140", # reimplemented-starmap
   "I001", # unsorted-imports
+  "N801", # class-name-styles
+  "N803", # argument-name-styles
+  "N806", # non-lowercase-variable-in-function
+  "N815", # mixed-case-variable-in-class
   "PYI024", # collections-named-tuple
   "RUF012", # mutable-class-default
   "RUF031", # incorrectly-parenthesized-tuple-in-subscript

@@ -83,7 +83,7 @@ jobs:
     - run: |
         cd CLI
         pixi reinstall -e dev NLR-SUNI-CLI
-        pixi run -e dev tests-u
+        pixi run -e dev tests
 
   pytest:
     needs: lint

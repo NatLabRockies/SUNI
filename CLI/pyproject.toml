@@ -82,8 +82,12 @@ homepage = "https://github.com/NatLabRockies/SUNI"
 documentation = "https://natlabrockies.github.io/SUNI/"
 repository = "https://github.com/NatLabRockies/SUNI"
 
-[tool.setuptools.packages]
-find = { include = ["SERIQC*", "SUNI*"] }
+[tool.setuptools]
+packages = ["suni", "seriqc"]
+
+[tool.setuptools.package-dir]
+suni = "SUNI/suni"
+seriqc = "SERIQC/seriqc"
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]

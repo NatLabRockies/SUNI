@@ -47,9 +47,9 @@ jobs:
         cache: true
         cache-write: false
         environments: dev
+        working-directory: ./CLI
 
     - run: |
-        cd CLI
         pixi reinstall -e dev --locked NLR-SUNI-CLI
         pixi run -e dev --locked tests
 
@@ -77,9 +77,9 @@ jobs:
         cache: true
         cache-write: ${{ github.ref == 'refs/heads/main' }}
         environments: dev
+        working-directory: ./CLI
 
     - run: |
-        cd CLI
         pixi reinstall -e dev NLR-SUNI-CLI
         pixi run -e dev tests-u
 

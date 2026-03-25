@@ -83,7 +83,7 @@ documentation = "https://natlabrockies.github.io/SUNI/"
 repository = "https://github.com/NatLabRockies/SUNI"
 
 [tool.setuptools]
-packages = ["suni", "seriqc"]
+packages = ["suni", "suni.utilities", "seriqc"]
 
 [tool.setuptools.package-dir]
 suni = "SUNI/suni"

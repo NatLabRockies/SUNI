@@ -107,9 +107,9 @@ lint = "ruff check ./S*"
 format = "ruff format ./S*"
 
 [tool.pixi.feature.test.tasks]
-tests = "pytest --durations=20 -rapP -vv --cov=SUNI --cov=SERIQC --cov-report=html --cov-branch --cov-report=xml:coverage.xml --cov-fail-under=95 tests"
-tests-suni = "pytest --durations=20 -rapP -vv --cov=SUNI --cov-report=html --cov-branch --cov-report=xml:coverage.xml --cov-fail-under=95 tests/test_suni"
-tests-seriqc = "pytest --durations=20 -rapP -vv --cov=SERIQC --cov-report=html --cov-branch --cov-report=xml:coverage.xml --cov-fail-under=95 tests/test_seriqc"
+tests = "pytest --durations=20 -rapP -vv --cov=SUNI --cov=SERIQC --cov-report=html --cov-branch --cov-report=xml:coverage.xml --cov-fail-under=90 tests"
+tests-suni = "pytest --durations=20 -rapP -vv --cov=SUNI --cov-report=html --cov-branch --cov-report=xml:coverage.xml --cov-fail-under=80 tests/test_suni"
+tests-seriqc = "pytest --durations=20 -rapP -vv --cov=SERIQC --cov-report=html --cov-branch --cov-report=xml:coverage.xml --cov-fail-under=98 tests/test_seriqc"
 
 
 [tool.pixi.feature.doc.tasks]

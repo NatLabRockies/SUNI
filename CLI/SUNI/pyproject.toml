@@ -1,0 +1,50 @@
+[build-system]
+requires = [
+  "setuptools >= 81",
+]
+build-backend = 'setuptools.build_meta'
+
+[project]
+name="NLR-SUNI"
+version="0.1.2"
+description = "National Laboratory of the Rockies' (NLR's) Solar Uncertainty Analysis (SUNI) framework"
+authors = [
+  {name = "Paul Pinchuk", email = "ppinchuk@nlr.gov"},
+  {name = "Sora Ryu", email = "sryu@nlr.gov"},
+]
+maintainers = [
+  {name = "Sora Ryu", email = "sryu@nlr.gov"},
+]
+license = "BSD-3-Clause"
+keywords = ["SUNI", "NLR"]
+requires-python = ">=3.11"
+classifiers=[
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+dependencies = [
+  "attrs>=26.1.0,<27",
+  "click>=8.1.7,<9",
+  "numpy>=2.2.4,<3",
+  "NLR-SERIQC>=0.1.0,<1",
+  "pandas>=2.2.3,<3",
+  "rich>=13.9.4,<14",
+  "tqdm>=4.67.3,<5",
+]
+
+[project.urls]
+homepage = "https://github.com/NatLabRockies/SUNI"
+documentation = "https://natlabrockies.github.io/SUNI/"
+repository = "https://github.com/NatLabRockies/SUNI"
+
+[project.scripts]
+suni = "suni.cli:main"
+
+[tool.setuptools.packages]
+find = { include = ["suni*"] }

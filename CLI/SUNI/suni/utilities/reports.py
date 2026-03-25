@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """SUNI report compilation utilities"""
+
 from pathlib import Path
 
 from suni.framework import ErrorCode
 from suni.utilities import format_date, extract_time_from_input_data
-from suni.version import __version__
+from suni import __version__
 
 
 def _counts_from_results(results):
@@ -80,15 +81,14 @@ def compile_popup_report(results, cfg):
     sq_max = counts[ErrorCode.QC_MAX]
 
     lines = [
-        f"Uncertainty Processing Report for {input_fn} "
-        f"{cfg['StationID']}\n",
+        f"Uncertainty Processing Report for {input_fn} {cfg['StationID']}\n",
         f"Beginning: {format_date(*start_time[:3], date_format)} "
         f"{start_time[3]}:{start_time[4]:02d}, "
         f"Ending: {format_date(*end_time[:3], date_format)} "
         f"{end_time[3]}:{end_time[4]:02d}, "
         f"Data records: {len(results):d}",
-        f"Total eligible records: {n_valid:d} ({n_valid/len(results):.1%})",
-        f"Exceeded SERIQC max: {sq_max:d} ({sq_max/len(results):.1%})\n",
+        f"Total eligible records: {n_valid:d} ({n_valid / len(results):.1%})",
+        f"Exceeded SERIQC max: {sq_max:d} ({sq_max / len(results):.1%})\n",
     ]
     lines = _add_irradiance_stats(results, lines, fn=2)
 
@@ -101,7 +101,7 @@ def compile_popup_report(results, cfg):
 
 
 def _get_station_name_from_file(qc0_fp):
-    """Get station name from QC0 file. """
+    """Get station name from QC0 file."""
     with open(qc0_fp, "r") as fh:
         line = fh.readline()
     line = line.split(",")
@@ -230,16 +230,16 @@ def compile_standard_report(results, cfg, proc_start_time):
         f"System Uncertainty Max: {cfg['MaxSysUncert']}\n",
         f"Input Data Records: {len(results):d}",
         f"Three-component records: "
-        f"{three_comp:d} ({three_comp/len(results):.1%})",
-        f"Above SERIQC Max: {sq_max:d} ({sq_max/len(results):.1%})",
-        f"Above Zenith Angle Max: {high_zen:d} ({high_zen/len(results):.1%})",
-        f"Below DNI Minimum: {low_dni:d} ({low_dni/len(results):.1%})",
+        f"{three_comp:d} ({three_comp / len(results):.1%})",
+        f"Above SERIQC Max: {sq_max:d} ({sq_max / len(results):.1%})",
+        f"Above Zenith Angle Max: {high_zen:d} ({high_zen / len(results):.1%})",
+        f"Below DNI Minimum: {low_dni:d} ({low_dni / len(results):.1%})",
         f"Above Max System Uncertainty: {high_uncertainty:d} "
-        f"({high_uncertainty/len(results):.1%})",
+        f"({high_uncertainty / len(results):.1%})",
         f"Mathematically Invalid: "
-        f"{math_invalid:d} ({math_invalid/len(results):.1%})",
+        f"{math_invalid:d} ({math_invalid / len(results):.1%})",
         f"Total Eligible Uncertainty Records: "
-        f"{n_valid:d} ({n_valid/len(results):.1%})\n",
+        f"{n_valid:d} ({n_valid / len(results):.1%})\n",
     ]
     lines = _add_irradiance_stats(results, lines, fn=2)
 
@@ -260,15 +260,15 @@ def _compile_test_report(cfg, results, input_fn, of):  # pragma: no cover
     n_valid = (results["uCode"] == ErrorCode.VALID).sum()
 
     lines = [
-        f'Station,{cfg.get("StationID")}',
+        f"Station,{cfg.get('StationID')}",
         f"Total_records,{len(results)}",
         f"Total_sunup_records,{sun_up_count}",
         f"Total_valid_records,{n_valid}",
-        f"Total_invalid_records,{len(results)-n_valid}",
+        f"Total_invalid_records,{len(results) - n_valid}",
         "Meas,Ur",
-        f'GHI,{cfg["GHIradUncert"]}',
-        f'DNI,{cfg["DNIradUncert"]}',
-        f'DHI,{cfg["DHIradUncert"]}\n',
+        f"GHI,{cfg['GHIradUncert']}",
+        f"DNI,{cfg['DNIradUncert']}",
+        f"DHI,{cfg['DHIradUncert']}\n",
         f"Input_file,{input_fn}",
         # f"Config_file,{Path(config).name}",
         f"Output_file,{str(of)}\n",

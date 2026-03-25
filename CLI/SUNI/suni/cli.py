@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """SUNI CLI"""
+
 import os
 import logging
 from pathlib import Path
@@ -33,16 +33,14 @@ CHUNK_SIZE = 50
 
 @contextmanager
 def row_ind_in_raised_exception(row_ind):
+    """Context manager to include row index in any raised exception"""
     try:
         yield
     except KeyboardInterrupt as cancel:
-        raise cancel
-    except Exception as err:
-        msg = (
-            f"Error processing input data on line {row_ind + 2}:"
-            f"\n{err}"
-        )
-        raise type(err)(msg)
+        raise cancel  # noqa
+    except Exception as err:  # noqa
+        msg = f"Error processing input data on line {row_ind + 2}:\n{err}"
+        raise type(err)(msg)  # noqa
 
 
 @click.command(no_args_is_help=True)
@@ -55,6 +53,7 @@ def row_ind_in_raised_exception(row_ind):
     help="Number of processes to use. Default uses all available CPU cores",
 )
 def main(config, max_workers):
+    """Run SUNI from the command line"""
     handler = logging.StreamHandler()
     handler.setLevel("INFO")
     logger.addHandler(handler)
@@ -69,16 +68,38 @@ def main(config, max_workers):
 
 
 def process_from_config(cfg, from_gui=True):
+    """Process data from config dict
+
+    Parameters
+    ----------
+    cfg : dict
+        Config dict containing necessary parameters to run SUNI.
+    from_gui : bool, optional
+        Whether the processing is being run from the GUI. If True, will
+        print progress as percentage to be read by GUI progress bar.
+        By default, ``True``.
+
+    Returns
+    -------
+    dict
+        Dictionary containing output file path and report string.
+
+    Raises
+    ------
+    SUNIInputDataError
+        If there is an error with the input data, such as missing values
+        or incorrect formatting.
+    """
     if not from_gui:
         return _process(cfg, from_gui=from_gui)
 
     try:
         return _process(cfg, from_gui=from_gui)
     except KeyboardInterrupt as cancel:
-        raise cancel
-    except Exception as err:
+        raise cancel  # noqa
+    except Exception as err:  # noqa
         msg = f"{type(err).__name__}:\n{err}"
-        return msg
+        return msg  # noqa
 
 
 def _read_data(input_file):
@@ -95,7 +116,7 @@ def _read_data(input_file):
             "input data starts with at least the following columns: "
             '["DATE", "TIME", "GHI", "DNI", "DHI"]'
         )
-        logger.error(msg)
+        logger.error(msg)  # noqa
         raise SUNIInputDataError(msg) from None
 
     missing_values = input_data[["GHI", "DNI", "DHI"]].T.isna().any()
@@ -139,19 +160,18 @@ def _process(cfg, from_gui=True):
     popup_report = compile_popup_report(results, cfg)
 
     results = _finalize_format(results, cfg)
-    results.to_csv(of, index=False) # , float_format="%.1f")
-    logger.info("Results written to %s", str(of))
+    results.to_csv(of, index=False)  # , float_format="%.1f")
+    logger.info("Results written to %s", str(of))  # noqa
 
     rf = of.parent / f"{of.stem}_report.txt"
-    with open(rf, "w") as fh:
-        fh.write(standard_report)
+    Path(rf).write_text(standard_report, encoding="utf-8")
+
     logger.info("\n---")
     logger.info(standard_report)
     logger.info("---\n")
-    logger.info("Report written to %s", str(rf))
+    logger.info("Report written to %s", str(rf))  # noqa
 
-    return_dict = {"out_file": str(of), "report": popup_report}
-    return return_dict
+    return {"out_file": str(of), "report": popup_report}
 
 
 def _finalize_format(results, cfg):
@@ -239,13 +259,13 @@ def _row_to_data(row, cfg, ghi_rad_u, dni_rad_u, dhi_rad_u):
 
 
 def run_mp(input_file, input_data, cfg, max_workers, from_gui):
+    """Run SUNI using multiprocessing"""
     results = {}
     ghi_rad_u, dni_rad_u, dhi_rad_u = extract_rad_uncertainty(cfg)
     chunk_size = max(CHUNK_SIZE, MIN_RECORDS_PER_PROCESS * max_workers)
 
     progress_count = 0
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
-
         for out in _iter_mp_chunks(
             input_file, input_data, from_gui, chunk_size=chunk_size
         ):
@@ -266,11 +286,11 @@ def run_mp(input_file, input_data, cfg, max_workers, from_gui):
                 else:
                     pbar.update(1)
 
-    results = pd.DataFrame(results).T.sort_index()
-    return results
+    return pd.DataFrame(results).T.sort_index()
 
 
 def run_sp(input_file, input_data, cfg, from_gui):
+    """Run SUNI using a single process"""
     results = {}
     ghi_rad_u, dni_rad_u, dhi_rad_u = extract_rad_uncertainty(cfg)
     nun_to_run = len(input_data)
@@ -283,8 +303,7 @@ def run_sp(input_file, input_data, cfg, from_gui):
         if from_gui:
             print(int(ind / nun_to_run * 100))
 
-    results = pd.DataFrame(results).T.sort_index()
-    return results
+    return pd.DataFrame(results).T.sort_index()
 
 
 def _iter_df(input_file, input_data, from_gui):
@@ -292,12 +311,17 @@ def _iter_df(input_file, input_data, from_gui):
         yield from _iter_enumerated_df(input_data)
 
     else:
-        for out in tqdm(
+        # for out in tqdm(
+        #     _iter_enumerated_df(input_data),
+        #     total=len(input_data),
+        #     desc=input_file.stem,
+        # ):
+        #     yield out
+        yield from tqdm(
             _iter_enumerated_df(input_data),
             total=len(input_data),
             desc=input_file.stem,
-        ):
-            yield out
+        )
 
 
 def _iter_enumerated_df(input_data):

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """SUNI base utilities"""
+
 
 class SUNIInputDataError(ValueError):
     """SUNI input data error"""
@@ -132,5 +132,5 @@ def extract_irradiance_from_input_data(row):
             f"be parsed as a number: {values.to_dict()}"
         )
         raise SUNIInputDataError(msg) from None
-    irradiance[irradiance < -9900] *= -1
+    irradiance[irradiance < -9900] *= -1  # noqa
     return irradiance

@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
 """SUNI config file loaders"""
+
 import json
 import configparser
+from pathlib import Path
 
 
 CONFIG_KEYS = [
@@ -83,6 +84,5 @@ def data_from_json(fp):
     dict
         Loaded config.
     """
-    with open(fp, "r") as fh:
-        data = json.load(fh)
-    return data
+    with Path(fp).open("r", encoding="utf-8") as fh:
+        return json.load(fh)

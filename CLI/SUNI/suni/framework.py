@@ -1,5 +1,5 @@
-# pylint: disable=too-few-public-methods,invalid-name
 """SUNI data structures"""
+
 from attrs import define
 from enum import IntEnum
 
@@ -21,7 +21,7 @@ class uDat:
     """
 
     stationID: str
-    """[INPUT] Station ID for SERIQC (includes access to lat, lon, timezone)"""
+    """[INPUT] Station ID for SERIQC (includes lat, lon, timezone)"""
     qc0_dir: str
     """[INPUT] Path to QC0 file directory."""
     yr: int
@@ -96,6 +96,7 @@ class uDat:
     """[OUTPUT] DHI k-space"""
 
     def as_result_dict(self):
+        """Return a dictionary of the output values"""
         return {
             "qcGHI": self.qcGHI,
             "qcDNI": self.qcDNI,
@@ -133,7 +134,7 @@ class ErrorCode(IntEnum):
     LIST_SIZE = 10
 
 
-def Uprocess(data, **kwargs):
+def Uprocess(data, **kwargs):  # noqa
     """Compute uncertainty for measurement data.
 
     Parameters
@@ -191,7 +192,7 @@ def Uprocess(data, **kwargs):
         data.uCode = ErrorCode.HIGH_ZENITH
         return data
 
-    if data.DNI < data.DNImin:
+    if data.DNI < data.DNImin:  # noqa
         data.uCode = ErrorCode.LOW_DNI
         return data
 
@@ -245,6 +246,6 @@ def is_valid_three_component_record(ghi_flag):
         Wether the record contains valid three-component data.
     """
     is_3_or_9 = ghi_flag in {3, 9}
-    in_valid_range = 10 <= ghi_flag <= 87
-    has_valid_remainder = ((ghi_flag + 2) % 4) < 2
+    in_valid_range = 10 <= ghi_flag <= 87  # noqa
+    has_valid_remainder = ((ghi_flag + 2) % 4) < 2  # noqa
     return is_3_or_9 or (in_valid_range and has_valid_remainder)

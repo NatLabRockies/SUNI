@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """SUNI integrated tests"""
+
 import json
 import shutil
 from pathlib import Path
@@ -12,7 +13,7 @@ from suni.cli import main, process_from_config
 from suni.framework import SERIQCError
 from suni.utilities import convert_to_year_first
 import suni.instrument_uncertainty
-from suni.version import __version__
+from suni import __version__
 
 EXPECTED_GUI_REPORT = f"""
 Uncertainty Processing Report for SRRL2004_01_testing.csv NRELSR
@@ -47,7 +48,7 @@ SUNI v{__version__}
 
 
 def _no_9900_in_line(lines):
-    """Replace any -9900 instances. """
+    """Replace any -9900 instances."""
     return [line.replace("-9900", "") for line in lines]
 
 
@@ -317,7 +318,7 @@ def test_date_parse_error_from_gui(tmp_cwd, test_data_dir):
         tmp_cwd / "b1_extra_field_testing.csv", index=False
     )
 
-    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+    with open(test_data_dir / "extra_fields" / "sample_config.json") as fh:
         cfg = json.load(fh)
 
     out = process_from_config(cfg, from_gui=True)
@@ -344,7 +345,7 @@ def test_time_parse_error_from_gui(tmp_cwd, test_data_dir):
         tmp_cwd / "b1_extra_field_testing.csv", index=False
     )
 
-    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+    with open(test_data_dir / "extra_fields" / "sample_config.json") as fh:
         cfg = json.load(fh)
 
     out = process_from_config(cfg, from_gui=True)
@@ -373,7 +374,7 @@ def test_irradiance_parse_error_from_gui(tmp_cwd, test_data_dir, irr_data):
         tmp_cwd / "b1_extra_field_testing.csv", index=False
     )
 
-    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+    with open(test_data_dir / "extra_fields" / "sample_config.json") as fh:
         cfg = json.load(fh)
 
     out = process_from_config(cfg, from_gui=True)
@@ -421,12 +422,13 @@ def test_extra_field(tmp_cwd, test_data_dir):
     shutil.copy(ef_dir / "b1_extra_field_testing.csv", tmp_cwd)
     shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
 
-    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+    with open(test_data_dir / "extra_fields" / "sample_config.json") as fh:
         cfg = json.load(fh)
 
     out = process_from_config(cfg, from_gui=False)
     test_results = pd.read_csv(out["out_file"])
     assert len(test_results) == 6
+
 
 def test_missing_fields(tmp_cwd, test_data_dir):
     """Test that missing fields in the input file raise correct error"""
@@ -447,6 +449,7 @@ def test_missing_fields(tmp_cwd, test_data_dir):
     assert "Ensure your input data starts with at least" in str(error)
     assert '"DATE", "TIME", "GHI", "DNI", "DHI"' in str(error)
 
+
 @pytest.mark.parametrize("flags", list(product([0, 1], [0, 1], [0, 1])))
 def test_editable_class_uncertainty(tmp_cwd, test_data_dir, flags):
     """Test that the report highlights a user-edited uncertainty."""
@@ -455,7 +458,7 @@ def test_editable_class_uncertainty(tmp_cwd, test_data_dir, flags):
     shutil.copy(ef_dir / "b1_extra_field_testing.csv", tmp_cwd)
     shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
 
-    with open(test_data_dir / "extra_fields"/ "sample_config.json") as fh:
+    with open(test_data_dir / "extra_fields" / "sample_config.json") as fh:
         cfg = json.load(fh)
 
     config_opts = ["GHIclassModFlg", "DNIclassModFlg", "DHIclassModFlg"]

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """SUNI instrument uncertainty computations"""
+
 from math import sqrt
 from pathlib import Path
 
@@ -57,9 +57,12 @@ class _InstrumentUncertainties:
 def _read_instrument_data_from_file(fp):
     """read instrument data csv file."""
     if not fp.exists():
-        raise FileNotFoundError(
-            f"Did not find valid file in instrument database: {str(fp)}"
+        msg = (
+            f"Did not find valid file in instrument database: "
+            f"{str(fp)}"  # noqa
         )
+        raise FileNotFoundError(msg)
+
     instrument_data = pd.read_csv(fp).set_index("Class")
     return (
         instrument_data["Uclass"].to_dict(),
@@ -68,7 +71,7 @@ def _read_instrument_data_from_file(fp):
 
 
 def add_instrument_uncertainties(config):
-    """Add instrument uncertainties, if they are missing from the config.
+    """Add instrument uncertainties, if they are missing from the config
 
     Parameters
     ----------

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """SUNI merging functionality"""
+
 from math import sqrt
 
 

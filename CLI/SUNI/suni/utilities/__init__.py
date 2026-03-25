@@ -1,3 +1,5 @@
+"""SUNI utilities"""
+
 from .utilities import (
     format_date,
     convert_to_year_first,

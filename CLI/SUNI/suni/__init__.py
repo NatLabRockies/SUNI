@@ -1,3 +1,5 @@
+"""SUNI: Solar Uncertainty Integrator"""
+
 from pathlib import Path
 import importlib.metadata
 

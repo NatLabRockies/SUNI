@@ -8765,33 +8765,17 @@ packages:
   requires_python: '>=3.8'
 - pypi: ./SUNI
   name: nlr-suni
-  version: 0.1.1
-  sha256: b57ad9afdedf2d3add1c051f67ec3cfc85a394799e9d8423b943c55681193741
+  version: 0.1.2
+  sha256: eb59428d0f12f2c666a2bf8cf75f3b93598731b7c2334e2efdf784107953a530
   requires_dist:
-  - attrs
-  - click
-  - numpy
-  - nlr-seriqc
-  - pandas
-  - tqdm
-  - pytest ; extra == 'test'
-  - pytest-cov ; extra == 'test'
-  - pytest ; extra == 'dev'
-  - pytest-cov ; extra == 'dev'
-  - black ; extra == 'dev'
-  - pylint ; extra == 'dev'
-  - jupyter ; extra == 'dev'
-  - pipreqs ; extra == 'dev'
-  - pytest ; extra == 'docs'
-  - pytest-cov ; extra == 'docs'
-  - black ; extra == 'docs'
-  - pylint ; extra == 'docs'
-  - jupyter ; extra == 'docs'
-  - pipreqs ; extra == 'docs'
-  - make ; extra == 'docs'
-  - ghp-import ; extra == 'docs'
-  - numpydoc ; extra == 'docs'
-  - pandoc ; extra == 'docs'
+  - attrs>=26.1.0,<27
+  - click>=8.1.7,<9
+  - numpy>=2.2.4,<3
+  - nlr-seriqc>=0.1.0,<1
+  - pandas>=2.2.3,<3
+  - rich>=13.9.4,<14
+  - tqdm>=4.67.3,<5
+  requires_python: '>=3.11'
 - conda: https://conda.anaconda.org/conda-forge/noarch/notebook-7.5.5-pyhcf101f3_0.conda
   sha256: 11cfeabc41ed73bb088315d96cfdfeaaa10470c06ce6332bae368590e3047ef6
   md5: 471096452091ae8c460928ad5ff143cc

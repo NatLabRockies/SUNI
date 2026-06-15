@@ -114,6 +114,19 @@ SUNI can be used through either the CLI or the GUI.
 
 ### CLI Installation
 
+You can install with Pixi or Conda.
+
+#### Using Pixi (recommended)
+From the repository root:
+
+```bash
+cd CLI/
+pixi install --frozen       # Install the default environment with the exact versions as defined in the `pixi.lock` file
+pixi shell -e default       # Shell into the environment
+suni --help                 # Confirm SUNI CLI is installed properly
+```
+
+#### Using Conda
 From the repository root:
 
 ```bash

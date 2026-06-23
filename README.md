@@ -117,6 +117,8 @@ SUNI can be used through either the CLI or the GUI.
 You can install with Pixi or Conda.
 
 #### Using Pixi (recommended)
+Make sure [Pixi](https://pixi.prefix.dev/latest/installation/) is first installed based on your operating system.
+
 From the repository root:
 
 ```bash
@@ -127,6 +129,8 @@ suni --help                 # Confirm SUNI CLI is installed properly
 ```
 
 #### Using Conda
+Make sure [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) is first installed based on your operating system.
+
 From the repository root:
 
 ```bash

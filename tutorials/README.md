@@ -1,5 +1,7 @@
 ## How to Run
 
+Please make sure SUNI has been installed in advance. Please refer to the [main readme file](../README.md) if you haven't done yet.
+
 ### Input Requirements
 
 SUNI expects three inputs:

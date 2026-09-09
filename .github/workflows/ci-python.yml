@@ -16,12 +16,12 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: astral-sh/ruff-action@v3
         with:
-          version: "latest"
+          version: "0.15.5"
           args: "check"
           src: "./CLI/SUNI"
       - uses: astral-sh/ruff-action@v3
         with:
-          version: "latest"
+          version: "0.15.5"
           args: "format --check"
           src: "./CLI/SUNI"
 

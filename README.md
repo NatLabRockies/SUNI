@@ -98,7 +98,7 @@ in (Wilcox and Stoffel 2024; Wilcox et al. 2025).
 
 A flow chart of SUNI software is given below:
 
-![SUNI Flowchart](examples/screenshots/SUNI-flowchart.png)
+![SUNI Flowchart](tutorials/screenshots/SUNI-flowchart.png)
 
 <!-- ## Key Features
 
@@ -150,7 +150,7 @@ suni --help
 
 1. Download the installer for your platform from this repository's Releases page.
 2. Complete the installation and launch the SUNI application.
-3. Use the example files in `examples/` to validate your first run.
+3. Use the tutorial files in `tutorials/` to validate your first run.
 
 
 ## References

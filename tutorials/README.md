@@ -8,19 +8,19 @@ SUNI expects three inputs:
 2. A solar irradiance CSV containing date/time and irradiance values
 3. A SERI QC station file (`.qc0`)
 
-See `examples/sample_config.json` for the expected configuration schema.
+See `tutorials/sample_config.json` for the expected configuration schema.
 
 ### CLI Workflow
 Use the provided example files:
 
-- Configuration: `examples/sample_config.json`
-- Input data: `examples/SRRL2004_01_testing.csv`
-- SERI QC file: `examples/s_NRELSR.qc0`
+- Configuration: `tutorials/sample_config.json`
+- Input data: `tutorials/SRRL2004_01_testing.csv`
+- SERI QC file: `tutorials/s_NRELSR.qc0`
 
 Run SUNI with:
 
 ```bash
-suni examples/sample_config.json
+suni tutorials/sample_config.json
 ```
 
 The run creates:
@@ -30,11 +30,11 @@ The run creates:
 
 ### GUI Workflow
 
-The following walkthrough uses the example files in `examples/` and mirrors the GUI flow shown in `examples/screenshots/`.
+The following walkthrough uses the example files in `tutorials/` and mirrors the GUI flow shown in `tutorials/screenshots/`.
 
 1. Launch SUNI and open a configuration file.
 	- In the application menu, select File -> Open Configuration.
-	- Choose `examples/sample_config.json`.
+	- Choose `tutorials/sample_config.json`.
 
 	![Select Config File](screenshots/select-config.png)
 

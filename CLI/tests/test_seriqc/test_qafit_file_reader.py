@@ -1,4 +1,4 @@
-"""Test QC0 file reading utilities."""
+"""Test QA0 file reading utilities."""
 from pathlib import Path
 
 import pytest
@@ -7,7 +7,7 @@ import numpy as np
 from seriqc.qafit_file_reader import (
     AirMassRegime,
     read_site_data_for_month,
-    QC0FileError,
+    QA0FileError,
     extract_curve_numbers,
     extract_kn_kt,
 )
@@ -32,83 +32,67 @@ def test_air_mass_regime_enum():
     assert AirMassRegime.from_value(100) == AirMassRegime.HIGH
 
 
-def test_read_site_data_for_month(qc0_info, tmp_path):
+def test_read_site_data_for_month(qa0_info, tmp_path):
     """Test that `read_site_data_for_month` returns correct codes"""
-
-    site, qc0_dir = qc0_info
-    bad_qc0_fp = tmp_path / f"s_{site}.qc0"
+    
+    site, qa0_dir = qa0_info
+    bad_qa0_fp = tmp_path / f"s_{site}.qa0"
 
     with pytest.raises(FileNotFoundError):
         read_site_data_for_month(site, tmp_path, 1)
 
-    with open(Path(qc0_dir) / f"s_{site}.qc0", "r") as fh:
+    with open(Path(qa0_dir) / f"s_{site}.qa0", "r") as fh:
         lines = fh.readlines()
 
     lines[9] = lines[9].replace("JAN", "DNE")
-    with open(bad_qc0_fp, "w") as fh:
+    with open(bad_qa0_fp, "w") as fh:
         fh.writelines(lines)
 
-    with pytest.raises(QC0FileError):
+    with pytest.raises(QA0FileError):
         read_site_data_for_month(site, tmp_path, 1)
 
-    data, meta_1 = read_site_data_for_month(site, qc0_dir, 1)
+    data, meta_1 = read_site_data_for_month(site, qa0_dir, 1)
     expected_data_from_line = [
         90,
         96,
+        np.nan,
+        np.nan,
+        np.nan,
+        np.nan,
+        90,
         96,
-        np.nan,
-        96,
-        np.nan,
-        np.nan,
-        np.nan,
-        np.nan,
-        np.nan,
-        np.nan,
-        np.nan,
         4,
         9,
         1,
-        16,
         13,
-        np.nan,
-        13,
+        90,
+        96,
         4,
         8,
         1,
-        14,
-        12,
-        np.nan,
         12,
     ]
     assert np.allclose(data.values, expected_data_from_line, equal_nan=True)
 
-    data, meta_2 = read_site_data_for_month(site, qc0_dir, 3)
+    data, meta_2 = read_site_data_for_month(site, qa0_dir, 3)
     expected_data_from_line = [
         85,
-        94,
-        94,
-        np.nan,
         94,
         4,
         10,
         1,
-        14,
         12,
-        np.nan,
-        12,
+        85,
+        94,
         4,
         9,
         2,
-        17,
         15,
-        np.nan,
-        15,
+        85,
+        94,
         4,
         9,
         1,
-        15,
-        13,
-        np.nan,
         13,
     ]
     assert np.allclose(data.values, expected_data_from_line, equal_nan=True)
@@ -118,12 +102,12 @@ def test_read_site_data_for_month(qc0_info, tmp_path):
     assert meta_1["tz"] == -7
 
 
-def test_extract_curve_numbers(qc0_info):
+def test_extract_curve_numbers(qa0_info):
     """Test the `extract_curve_numbers` function"""
-    site, qc0_dir = qc0_info
+    site, qa0_dir = qa0_info
 
     low, med, hi = AirMassRegime.LOW, AirMassRegime.MEDIUM, AirMassRegime.HIGH
-    data, __ = read_site_data_for_month(site, qc0_dir, 1)
+    data, __ = read_site_data_for_month(site, qa0_dir, 1)
     assert extract_curve_numbers(data, 1, low) == (0, 0, 0, 0)
     assert extract_curve_numbers(data, 5, low) == (0, 0, 0, 0)
     assert extract_curve_numbers(data, 15, low) == (0, 0, 0, 0)
@@ -152,11 +136,11 @@ def test_extract_curve_numbers(qc0_info):
     assert extract_curve_numbers(data, 60, hi) == (4, 1, 8, 12)
 
 
-def test_extract_kn_kt(qc0_info):
+def test_extract_kn_kt(qa0_info):
     """Test the `extract_kn_kt` function"""
-    site, qc0_dir = qc0_info
+    site, qa0_dir = qa0_info
 
-    data, __ = read_site_data_for_month(site, qc0_dir, 1)
+    data, __ = read_site_data_for_month(site, qa0_dir, 1)
     assert extract_kn_kt(data, 0.5) == (90, 96)
     assert extract_kn_kt(data, 1) == (90, 96)
     assert extract_kn_kt(data, 2) == (90, 96)

@@ -8,24 +8,16 @@ import numpy as np
 
 # Add plotting options
 
-HEADER_VARIABLES = ['month', 'Kn_max'] + ['Kt_max']*4 +\
-    ['left_shape', 'left_position', 'right_shape'] + ['right_position']*4 + \
-    ['left_shape', 'left_position', 'right_shape'] + ['right_position']*4 + \
-    ['left_shape', 'left_position', 'right_shape'] + ['right_position']*4
+HEADER_VARIABLES = ['month'] + ['Kn_max', 'Kt_max', 'left_shape', 'left_position', 'right_shape', 'right_position']*3
 
-HEADER_AIRMASS = [None] + ['all']*5 + ['low']*7 + ['medium']*7 + ['high']*7
+HEADER_AIRMASS = [None] + ['low']*6 + ['medium']*6 + ['high']*6
 
-HEADER_FREQUENCY = [None, 'all'] + [1, 5, 15, 60] + \
-    ['all']*3 + [1, 5, 15, 60] + \
-    ['all']*3 + [1, 5, 15, 60] + \
-    ['all']*3 + [1, 5, 15, 60]
-
-QC0_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP",
+QA0_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP",
               "OCT", "NOV", "DEC"]
 
 
-class QC0FileError(Exception):
-    """Exception to indicate problems with QC0 file."""
+class QA0FileError(Exception):
+    """Exception to indicate problems with QA0 file."""
 
 
 class AirMassRegime(IntEnum):
@@ -65,9 +57,9 @@ class AirMassRegime(IntEnum):
 
 
 @lru_cache(maxsize=128)
-def read_qc0(filename):
+def read_qa0(filename):
     """
-    Read a QC-zero (.QC0) file created by QCFIT and used by SERI-QC.
+    Read a QA-zero (.QA0) file created by QAFIT and used by NLR-QA.
 
     Parameters
     ----------
@@ -77,7 +69,7 @@ def read_qc0(filename):
     Returns
     -------
     data : DataFrame
-        DataFrame with specification of the QCFit boundaries.
+        DataFrame with specification of the QAFit boundaries.
     meta : dict
         Dictionary of the site metadata in the file. The dictionary contains
         the keys: {'site_identifier', 'latitude', 'longitude', 'tz'}.
@@ -101,11 +93,11 @@ def read_qc0(filename):
         # parse the data section
         data_lines = [_split_line(fbuf.readline()) for _ in range(12)]
 
-        columns = [HEADER_VARIABLES, HEADER_AIRMASS, HEADER_FREQUENCY]
+        columns = [HEADER_VARIABLES, HEADER_AIRMASS]
         data = pd.DataFrame(data_lines, columns=columns)
-        data = data.set_index(('month', None, None))
+        data = data.set_index(('month', None))
         data.columns = data.columns.set_names(
-            ['variable', 'airmass', 'frequency'])
+            ['variable', 'airmass'])
 
         data = data.astype(int)
         data = data.replace(0, np.nan)
@@ -123,46 +115,46 @@ def read_qc0(filename):
     return data, meta
 
 
-def read_site_data_for_month(site, qc0_dir, month):
-    """Extract data for a particular month from a QC0 file.
+def read_site_data_for_month(site, qa0_dir, month):
+    """Extract data for a particular month from a QA0 file.
 
     Parameters
     ----------
     site : str
-        Name of the site represented by the QC0 file. The QC0 file name
-        must be of the format s_<site>.qc0, where <site> is replaced
+        Name of the site represented by the QA0 file. The QA0 file name
+        must be of the format s_<site>.qa0, where <site> is replaced
         by this input.
-    qc0_dir : path-like
-        Path to directory containing the QC0 file(s) to read.
+    qa0_dir : path-like
+        Path to directory containing the QA0 file(s) to read.
     month : int
         Integer representing the month of data being requested from the
-        QC0 file (1 = January, 12 = December).
-
+        Integer representing the month of data being requested from the
+        QA0 file (1 = January, 12 = December).
     Returns
     -------
     pandas.Series
-        Series containing the QC0 data for the requested month.
+        Series containing the QA0 data for the requested month.
     dict
         Dictionary containing meta information (i.e., latitude,
-        longitude, timezone, etc.) from the QC0 file.
+        longitude, timezone, etc.) from the QA0 file.
 
     Raises
     ------
     FileNotFoundError
         If filepath is not  found on disk.
-    QC0FileError
+    QA0FileError
         If the expected month name does not match the month name read
-        from the QC0 file.
+        from the QA0 file.
     """
-    filename = Path(qc0_dir) / f"s_{site}.qc0"
+    filename = Path(qa0_dir) / f"s_{site}.qa0"
     if not filename.exists():
         raise FileNotFoundError(f"{str(filename)} not found")
 
-    data, meta = read_qc0(filename)
+    data, meta = read_qa0(filename)
     month_data = data.iloc[month - 1]
-    if month_data.name != QC0_MONTHS[month - 1]:
-        raise QC0FileError(
-            f"Expected month {QC0_MONTHS[month - 1]}, found month "
+    if month_data.name != QA0_MONTHS[month - 1]:
+        raise QA0FileError(
+            f"Expected month {QA0_MONTHS[month - 1]}, found month "
             f"{month_data.name} in {str(filename)}"
         )
     return data.iloc[month - 1], meta
@@ -171,7 +163,7 @@ def read_site_data_for_month(site, qc0_dir, month):
 def _int_bin(interval):
     """Compute int_bin"""
     # `int_bin` is an integer from 1 to 4, signifying the place of the digit
-    # containing the information in the S_<id>.QC0 file.  If data
+    # containing the information in the S_<id>.QA0 file.  If data
     # approximate 1-minute resolution, 1 is chosen; if the resolution
     # approximates 64 minutes, 4 is chosen.
     # ``interval`` should be bounded by 1 and 60.
@@ -180,12 +172,12 @@ def _int_bin(interval):
 
 
 def extract_curve_numbers(data, interval, air_mass_regime):
-    """Extract Gompertz curve numbers from QC0 month data.
+    """Extract Gompertz curve numbers from QA0 month data.
 
     Parameters
     ----------
     data : pandas.Series
-        A pandas Series containing QC0 data for a particular month. See
+        A pandas Series containing QA0 data for a particular month. See
         :func:`read_site_data_for_month` to extract data in the format
         required by this input.
     interval : int
@@ -197,10 +189,10 @@ def extract_curve_numbers(data, interval, air_mass_regime):
     -------
     left_shape, right_shape : int
         Integer representing the left and right Gompertz curve shape, or
-        0 if the shapes were not given in the input QC0 data.
+        0 if the shapes were not given in the input QA0 data.
     left_position, right_position : int
         Integer representing the left and right Gompertz curve
-        position, or 0 if the positions were not given in the input QC0
+        position, or 0 if the positions were not given in the input QA0
         data.
 
     See Also
@@ -208,9 +200,9 @@ def extract_curve_numbers(data, interval, air_mass_regime):
     AirMassRegime :
         Air mass regime enumeration of air mass options.
     read_site_data_for_month :
-        Function to parse QC0 file data for a particular month.
+        Function to parse QA0 file data for a particular month.
     seriqc.gompertz_curves.boundary_from_gompertz_curve :
-        Convert shape amd position numbers to a curve array.
+        Convert shape and position numbers to a curve array.
     """
     data = data.fillna(0).astype(int)
     left_shape = data["left_shape"].iloc[air_mass_regime - 1]
@@ -225,12 +217,12 @@ def extract_curve_numbers(data, interval, air_mass_regime):
 
 
 def extract_kn_kt(data, interval):
-    """Extract Kn and Kt from QC data for a particular month.
+    """Extract Kn and Kt from QA0 data for a particular month.
 
     Parameters
     ----------
     data : pandas.Series
-        A pandas Series containing QC0 data for a particular month. See
+        A pandas Series containing QA0 data for a particular month. See
         :func:`read_site_data_for_month` to extract data in the format
         required by this input.
     interval : int
@@ -239,7 +231,7 @@ def extract_kn_kt(data, interval):
     Returns
     -------
     Kn, Kt : int
-        Kn and Kt values from the QC0 file.
+        Kn and Kt values from the QA0 file.
     """
     int_bin = _int_bin(interval)
     data = data.fillna(0).astype(int)

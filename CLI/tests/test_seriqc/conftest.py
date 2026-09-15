@@ -5,7 +5,7 @@ from seriqc.gompertz_curves import boundary_from_gompertz_curve
 
 
 @pytest.fixture
-def qc0_info(test_data_dir):
+def qa0_info(test_data_dir):
     """Site name and directory path, both as bytes."""
     return "BMS", str(test_data_dir)
 

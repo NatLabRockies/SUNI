@@ -14,7 +14,7 @@ from seriqc.utilities import (
 from seriqc.qafit_file_reader import (
     AirMassRegime,
     read_site_data_for_month,
-    QC0FileError,
+    QA0FileError,
     extract_curve_numbers,
     extract_kn_kt,
 )

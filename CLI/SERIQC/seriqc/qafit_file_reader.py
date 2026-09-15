@@ -171,7 +171,7 @@ def _int_bin(interval):
     return int(1.49 + np.log(res) / np.log(4))
 
 
-def extract_curve_numbers(data, interval, air_mass_regime):
+def extract_curve_numbers(data, air_mass_regime):
     """Extract Gompertz curve numbers from QA0 month data.
 
     Parameters
@@ -180,8 +180,8 @@ def extract_curve_numbers(data, interval, air_mass_regime):
         A pandas Series containing QA0 data for a particular month. See
         :func:`read_site_data_for_month` to extract data in the format
         required by this input.
-    interval : int
-        The measurement averaging interval (in minutes; 1-60).
+    # interval : int
+    #     The measurement averaging interval (in minutes; 1-60).
     air_mass_regime : AirMassRegime
         AirMassRegime enum option representing the air mass regime.
 
@@ -209,14 +209,14 @@ def extract_curve_numbers(data, interval, air_mass_regime):
     right_shape = data["right_shape"].iloc[air_mass_regime - 1]
 
     left_position = data["left_position"].iloc[air_mass_regime - 1]
-    int_bin = _int_bin(interval)
-    amr = str(air_mass_regime)
-    right_position = data["right_position"][amr].iloc[int_bin - 1]
+    # int_bin = _int_bin(interval)
+    # amr = str(air_mass_regime)
+    right_position = data["right_position"].iloc[air_mass_regime - 1]
 
     return left_shape, right_shape, left_position, right_position
 
 
-def extract_kn_kt(data, interval):
+def extract_kn_kt(data):
     """Extract Kn and Kt from QA0 data for a particular month.
 
     Parameters
@@ -225,14 +225,15 @@ def extract_kn_kt(data, interval):
         A pandas Series containing QA0 data for a particular month. See
         :func:`read_site_data_for_month` to extract data in the format
         required by this input.
-    interval : int
-        The measurement averaging interval (in minutes; 1-60).
+    # interval : int
+    #     The measurement averaging interval (in minutes; 1-60).
 
     Returns
     -------
     Kn, Kt : int
         Kn and Kt values from the QA0 file.
     """
-    int_bin = _int_bin(interval)
+    # int_bin = _int_bin(interval)
     data = data.fillna(0).astype(int)
-    return data["Kn_max"].iloc[0], data["Kt_max"].iloc[int_bin - 1]
+    # return data["Kn_max"].iloc[0], data["Kt_max"].iloc[int_bin - 1]
+    return data["Kn_max"].iloc[0], data["Kt_max"].iloc[0]

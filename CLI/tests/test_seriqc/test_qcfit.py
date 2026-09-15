@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import numpy as np
 
-from seriqc.qcfit import (
+from seriqc.qafit_file_reader import (
     AirMassRegime,
     read_site_data_for_month,
     QC0FileError,

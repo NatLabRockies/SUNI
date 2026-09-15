@@ -11,7 +11,7 @@ from seriqc.utilities import (
     validate_curve_numbers,
     validate_kn_kt,
 )
-from CLI.SERIQC.seriqc.qcfit_file_reader import (
+from seriqc.qafit_file_reader import (
     AirMassRegime,
     read_site_data_for_month,
     QC0FileError,

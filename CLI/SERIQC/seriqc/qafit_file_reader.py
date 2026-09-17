@@ -181,8 +181,6 @@ def extract_curve_numbers(data, air_mass_regime):
         A pandas Series containing QA0 data for a particular month. See
         :func:`read_site_data_for_month` to extract data in the format
         required by this input.
-    # interval : int
-    #     The measurement averaging interval (in minutes; 1-60).
     air_mass_regime : AirMassRegime
         AirMassRegime enum option representing the air mass regime.
 

@@ -29,7 +29,7 @@ XD_MAX = [0.19, 0.22, 0.24, 0.28, 0.32, 0.18, 0.24]
 
 def seriqc_from_file(
     site,
-    qc0_dir,
+    qa0_dir,
     year,
     month,
     day,
@@ -41,9 +41,9 @@ def seriqc_from_file(
     dhi,
     **kwargs,
 ):
-    """Generate SERI-QC flags for one timestamp using QC0 file input.
+    """Generate SERI-QC flags for one timestamp using QA0 file input.
 
-    Performs QC checks on the major broadband solar measurements:
+    Performs QA checks on the major broadband solar measurements:
         Global Horizontal or Total (T)
         Direct Normal (N)
         Diffuse Horizontal (D)
@@ -60,11 +60,11 @@ def seriqc_from_file(
     Parameters
     ----------
     site : str
-        Name of the site represented by the QC0 file. The QC0 file name
-        must be of the format s_<site>.qc0, where <site> is replaced
+        Name of the site represented by the QA0 file. The QA0 file name
+        must be of the format s_<site>.qa0, where <site> is replaced
         by this input.
-    qc0_dir : path-like
-        Path to directory containing the QC0 file(s) to read.
+    qa0_dir : path-like
+        Path to directory containing the QA0 file(s) to read.
     year : int
         Year of the observation (e.g. 1988).
     month : int
@@ -153,9 +153,9 @@ def seriqc_from_file(
     year = conform_to_spa_years(year)
 
     try:
-        data, meta = read_site_data_for_month(site, qc0_dir, month)
+        data, meta = read_site_data_for_month(site, qa0_dir, month)
     except FileNotFoundError:
-        return_value |= 1 << ErrorCode.QC0_FILE
+        return_value |= 1 << ErrorCode.QA0_FILE
         return (
             global_out,
             direct_out,
@@ -165,8 +165,8 @@ def seriqc_from_file(
             sol_zen,
             return_value,
         )
-    except QC0FileError:
-        return_value |= 1 << ErrorCode.QC0_FORMAT
+    except QA0FileError:
+        return_value |= 1 << ErrorCode.QA0_FORMAT
         return (
             global_out,
             direct_out,
@@ -225,9 +225,9 @@ def seriqc_from_file(
     )
     nam = AirMassRegime.from_value(air_mass)
 
-    out = extract_curve_numbers(data, interval, nam)
+    out = extract_curve_numbers(data, nam)
     left_shape, right_shape, left_position, right_position = out
-    kn, kt = extract_kn_kt(data, interval)
+    kn, kt = extract_kn_kt(data)
 
     return_value |= validate_curve_numbers(
         left_shape, right_shape, left_position, right_position

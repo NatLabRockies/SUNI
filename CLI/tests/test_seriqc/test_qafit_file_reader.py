@@ -36,6 +36,8 @@ def test_read_site_data_for_month(qa0_info, tmp_path):
     """Test that `read_site_data_for_month` returns correct codes"""
     
     site, qa0_dir = qa0_info
+    interval = 60
+    site += f"_{interval}"
     bad_qa0_fp = tmp_path / f"s_{site}.qa0"
 
     with pytest.raises(FileNotFoundError):
@@ -105,6 +107,8 @@ def test_read_site_data_for_month(qa0_info, tmp_path):
 def test_extract_curve_numbers(qa0_info):
     """Test the `extract_curve_numbers` function"""
     site, qa0_dir = qa0_info
+    interval = 60
+    site += f"_{interval}"
 
     low, med, hi = AirMassRegime.LOW, AirMassRegime.MEDIUM, AirMassRegime.HIGH
     data, __ = read_site_data_for_month(site, qa0_dir, 1)
@@ -139,6 +143,8 @@ def test_extract_curve_numbers(qa0_info):
 def test_extract_kn_kt(qa0_info):
     """Test the `extract_kn_kt` function"""
     site, qa0_dir = qa0_info
+    interval = 60
+    site += f"_{interval}"
 
     data, __ = read_site_data_for_month(site, qa0_dir, 1)
     # assert extract_kn_kt(data, 0.5) == (90, 96)

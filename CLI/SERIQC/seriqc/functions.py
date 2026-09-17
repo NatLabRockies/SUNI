@@ -10,6 +10,18 @@ from seriqc.utilities import as_c_int
 
 logger = logging.getLogger(__name__)
 
+
+# Definitions for Daytime and Nighttime maximums and minimums
+KT_LO_DAY = 0.0
+KD_LO_DAY = 0.0
+DNI_LO_DAY = -4.0
+DNI_LO_NGT = -4.0
+DNI_HI_NGT = 5.0
+GHI_LO_NGT = -2.0
+GHI_HI_NGT = 2.0
+DHI_LO_NGT = -5.0
+DHI_HI_NGT = 5.0
+
 # Things to consider
 # There is adjustments of Kt_max and Kn_max by airmass hard coded in the C-code
 # "Max Kt is 0.10 larger than the Gompertz right boundary)"
@@ -106,17 +118,17 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
 
     # Nighttime test
     if zenith >= 90:  # Condition could also be expressed as "if ETR=0"
-        if ghi < min_irradiance:
+        if ghi < GHI_LO_NGT:
             ghi_flag = 7
-        elif ghi > max_nighttime_irradiance:
+        elif ghi > GHI_HI_NGT:
             ghi_flag = 8
-        if dni < min_irradiance:
+        if dni < DNI_LO_NGT:
             dni_flag = 7
-        elif dni > max_nighttime_irradiance:
+        elif dni > DNI_HI_NGT:
             dni_flag = 8
-        if dhi < min_irradiance:
+        if dhi < DHI_LO_NGT:
             dhi_flag = 7
-        elif dhi > max_nighttime_irradiance:
+        elif dhi > DHI_HI_NGT:
             dhi_flag = 8
         return ghi_flag, dni_flag, dhi_flag
 
@@ -139,15 +151,15 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     )
 
     # Daytime tests (one-component limit tets)
-    if Xt < 0.05:
+    if Xt < KT_LO_DAY:
         ghi_flag = 7
-    elif Xt > Kt_max + 0.10:  # Added 0.10 the original Fortran code, seems silly
+    elif Xt > Kt_max:  # Added 0.10 the original Fortran code, seems silly
         ghi_flag = 8
-    if dni < min_irradiance:
+    if dni < DNI_LO_DAY:
         dni_flag = 7
     elif Xn > Kn_max:
         dni_flag = 8
-    if Xd < 0.03:
+    if Xd < KD_LO_DAY:
         dhi_flag = 7
     elif Xd > Kd_max:
         dhi_flag = 8
@@ -164,9 +176,9 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     # Do not use a flag of 7 if ghi or dhi >= min_irradiance
     # If ETR<=25 W/m, a ghi value of <=10 W/m2 should not be considered to high
     if (zenith > twilight_zenith) & (zenith < 90):
-        if (ghi_flag == 7) & (ghi >= min_irradiance):
+        if (ghi_flag == 7) & (ghi >= GHI_LO_NGT):
             ghi_flag = 1
-        if (dhi_flag == 7) & (dhi >= min_irradiance):
+        if (dhi_flag == 7) & (dhi >= DHI_LO_NGT):
             dhi_flag = 1
         if (ghi_flag == 8) & (ghi_extra <= 25) & (ghi <= max_nighttime_irradiance):
             ghi_flag = 1

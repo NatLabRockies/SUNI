@@ -215,7 +215,7 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     if components_valid == 3:
         # SQC_3C(Kt, Kn, Kd, ghi_flag, dni_flag, dhi_flag)
         ghi_flag, dni_flag, dhi_flag = \
-            SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.03)
+            SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.02)
         # Return flags if 3-component test failed
         if ghi_flag > 3:  # Note flag == 3 means three-component test passed
             return ghi_flag, dni_flag, dhi_flag
@@ -224,7 +224,7 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     if (ghi_flag <= 3) & (dni_flag <= 3):
         ghi_flag, dni_flag = SQC_2C(
             Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
-            K_diff_threshold=K_diff_threshold)
+            K_diff_threshold=0.0)
         # ARJ don't really understand the purpose of this line
         if dhi_flag != 3:
             return ghi_flag, dni_flag, dhi_flag
@@ -244,20 +244,20 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
         # SQC_2C(Kt, Kn_calc, ghi_flag, dhi_flag, Il, Ir, Jl, Jr,Kt_max,Kn_max)
         ghi_flag, dhi_flag = SQC_2C(
             Kt, Kn_calc, Kt_max, Kn_max, left_boundary, right_boundary,
-            K_diff_threshold=K_diff_threshold)
+            K_diff_threshold=0.0)
     else:
         # GHI must be missing, and Kt is calculated from DNI and DHI
         Kt_calc = Kn + Kd + 1e-6
         # SQC_2C(Kt_calc, Kn, dhi_flag, dni_flag, Il, Ir, Jl, Jr,Kt_max,Kn_max)
         dhi_flag, dni_flag = SQC_2C(
             Kt_calc, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
-            K_diff_threshold=K_diff_threshold)
+            K_diff_threshold=0.0)
         dhi_flag = dni_flag  # Why is this flag set?
     # ARJ: The below return is not present in the C-code but seems necessary...
     return ghi_flag, dni_flag, dhi_flag
 
 
-def SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.03):
+def SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.02):
     """
     Derive three-component SERI-QC quality flags.
 
@@ -277,7 +277,7 @@ def SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.03):
         DESCRIPTION.
     Kd : numeric
         DESCRIPTION.
-    K_diff_threshold : numeric, default : 0.03
+    K_diff_threshold : numeric, default : 0.02
         Tolerance of consistency among the K-values, fraction. Original
         SERI QC software used 0.03 (3%).
 
@@ -321,7 +321,7 @@ def SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.03):
 
 
 def SQC_2C(Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
-           K_diff_threshold=0.03):
+           K_diff_threshold=0.0):
     """
     Derive two-component SERI QC quality flags.
 

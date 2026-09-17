@@ -161,17 +161,6 @@ def read_site_data_for_month(site, qa0_dir, month):
     return data.iloc[month - 1], meta
 
 
-def _int_bin(interval):
-    """Compute int_bin"""
-    # `int_bin` is an integer from 1 to 4, signifying the place of the digit
-    # containing the information in the S_<id>.QA0 file.  If data
-    # approximate 1-minute resolution, 1 is chosen; if the resolution
-    # approximates 64 minutes, 4 is chosen.
-    # ``interval`` should be bounded by 1 and 60.
-    res = min(max(interval, 1), 60)
-    return int(1.49 + np.log(res) / np.log(4))
-
-
 def extract_curve_numbers(data, air_mass_regime):
     """Extract Gompertz curve numbers from QA0 month data.
 
@@ -208,8 +197,6 @@ def extract_curve_numbers(data, air_mass_regime):
     right_shape = data["right_shape"].iloc[air_mass_regime - 1]
 
     left_position = data["left_position"].iloc[air_mass_regime - 1]
-    # int_bin = _int_bin(interval)
-    # amr = str(air_mass_regime)
     right_position = data["right_position"].iloc[air_mass_regime - 1]
 
     return left_shape, right_shape, left_position, right_position
@@ -232,7 +219,5 @@ def extract_kn_kt(data):
     Kn, Kt : int
         Kn and Kt values from the QA0 file.
     """
-    # int_bin = _int_bin(interval)
     data = data.fillna(0).astype(int)
-    # return data["Kn_max"].iloc[0], data["Kt_max"].iloc[int_bin - 1]
     return data["Kn_max"].iloc[0], data["Kt_max"].iloc[0]

@@ -34,7 +34,7 @@ DHI_HI_NGT = 5.0
 # Kd_max = [0.19, 0.22, 0.24, 0.28, 0.32][boundary['right_shape']-1]
 
 
-def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
+def seriqc_flag(ghi, dni, dhi, zenith, elevation, dni_extra, airmass, Kt_max, Kn_max,
                 Kd_max, left_boundary=None, right_boundary=None,
                 twilight_zenith=80, nan_threshold=8000,
                 min_irradiance=-10, max_nighttime_irradiance=10,
@@ -48,6 +48,8 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     dni : float
     zenith : float
         Apparent solar zenith angle in degrees.
+    elevation : float
+        Site elevation in meters.
     dni_extra : float
         Extraterrestrial normal irradiance in W/m^2.
     airmass : float
@@ -171,6 +173,22 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
         f"KD: {Xd*100 + 0.5:.6f}, XTmax: {Kt_max:.6f}, XNmax: {Kn_max:.6f}, "
         f"XDmax: {Kd_max:.6f}"
     )
+
+    # Rayleigh test
+    if (ghi > 50.0) & (dhi_flag == 1):
+        cz = np.cos(np.deg2rad(zenith))
+        pressure = (101325 * (1 - (2.25577 * 10 ** (-5)) * elevation) ** 5.25588) / 100
+        rayleigh_limit = (
+                        209.3 * cz
+                        - 708.3 * (cz ** 2)
+                        + 1128.7 * (cz ** 3)
+                        - 911.2 * (cz ** 4)
+                        + 287.85 * (cz ** 5)
+                        + 0.046725 * cz * pressure
+                        - 1.0
+                    )
+        if dhi < rayleigh_limit:
+            dhi_flag = 5
 
     # Twilight one-component tests (overrules daytime tests)
     # Do not use a flag of 7 if ghi or dhi >= min_irradiance

@@ -44,7 +44,7 @@ def test_read_site_data_for_month(qa0_info, tmp_path):
     with open(Path(qa0_dir) / f"s_{site}.qa0", "r") as fh:
         lines = fh.readlines()
 
-    lines[9] = lines[9].replace("JAN", "DNE")
+    lines[10] = lines[10].replace("JAN", "DNE")
     with open(bad_qa0_fp, "w") as fh:
         fh.writelines(lines)
 

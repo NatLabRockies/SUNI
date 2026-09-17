@@ -79,6 +79,7 @@ def read_qa0(filename):
         meta['site_identifier'] = fbuf.readline().split(':')[1].strip()
         meta['latitude'] = float(fbuf.readline().split(':')[1].strip())
         meta['longitude'] = float(fbuf.readline().split(':')[1].strip())
+        meta['elevation'] = float(fbuf.readline().split(':')[1].strip())
         meta['tz'] = float(fbuf.readline().split(':')[1].strip())
 
         # skip the next 5 lines which contain the column information

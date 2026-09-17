@@ -258,13 +258,6 @@ def seriqc_from_file(
     xn_max = kn / 100
     xt_max = kt / 100
 
-    if nam == AirMassRegime.MEDIUM:
-        xt_max -= 0.025
-        xn_max -= 0.050
-    elif nam == AirMassRegime.HIGH:
-        xt_max -= 0.10
-        xn_max -= 0.15
-
     left_boundary = boundary_from_gompertz_curve(
         int(left_shape), left_position, "left"
     )

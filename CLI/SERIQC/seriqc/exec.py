@@ -24,7 +24,7 @@ from seriqc.functions import seriqc_flag
 
 
 logger = logging.getLogger(__name__)
-XD_MAX = [0.19, 0.22, 0.24, 0.28, 0.32]
+XD_MAX = [0.19, 0.22, 0.24, 0.28, 0.32, 0.18, 0.24]
 
 
 def seriqc_from_file(

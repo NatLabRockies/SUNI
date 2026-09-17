@@ -11,7 +11,7 @@ def boundary_from_gompertz_curve(shape_number, position_number, side):
     shape_number : int
         The number of the shape of the Gompertz curve. The original SERI QC
         software allowed users to chosen between a set of predetermined
-        Gompertz curves (6 for the left-side and 5 for the right-side).
+        Gompertz curves (8 for the left-side and 7 for the right-side).
     position_number : int
         The position number of the Gompertz curve. This value determines the
         offset in the Kt direction.
@@ -36,15 +36,15 @@ def boundary_from_gompertz_curve(shape_number, position_number, side):
         raise ValueError("Side must be either 'left' or 'right'")
 
     if side.casefold() == 'left':
-        if shape_number not in [1, 2, 3, 4, 5, 6]:
+        if shape_number not in [1, 2, 3, 4, 5, 6, 7, 8]:
             raise ValueError('For left-side Gompertz boundaries, the shape '
-                             'number must be between 1 and 6.')
+                             'number must be between 1 and 8.')
         Kts = np.array(GOMPERTZ_CURVES_LEFT[shape_number - 1]) + Kt_offset
 
     elif side.casefold() == 'right':
-        if shape_number not in [1, 2, 3, 4, 5]:
+        if shape_number not in [1, 2, 3, 4, 5, 6, 7]:
             raise ValueError('For right-side Gompertz boundaries, the shape '
-                             'number must be between 1 and 5.')
+                             'number must be between 1 and 7.')
         Kts = np.array(GOMPERTZ_CURVES_RIGHT[shape_number - 1]) + Kt_offset
 
     # Convert Kt from integer percentages to fractions

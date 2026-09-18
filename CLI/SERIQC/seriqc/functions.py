@@ -10,6 +10,18 @@ from seriqc.utilities import as_c_int
 
 logger = logging.getLogger(__name__)
 
+
+# Definitions for Daytime and Nighttime maximums and minimums
+KT_LO_DAY = 0.0
+KD_LO_DAY = 0.0
+DNI_LO_DAY = -4.0
+DNI_LO_NGT = -4.0
+DNI_HI_NGT = 5.0
+GHI_LO_NGT = -2.0
+GHI_HI_NGT = 2.0
+DHI_LO_NGT = -5.0
+DHI_HI_NGT = 5.0
+
 # Things to consider
 # There is adjustments of Kt_max and Kn_max by airmass hard coded in the C-code
 # "Max Kt is 0.10 larger than the Gompertz right boundary)"
@@ -22,7 +34,7 @@ logger = logging.getLogger(__name__)
 # Kd_max = [0.19, 0.22, 0.24, 0.28, 0.32][boundary['right_shape']-1]
 
 
-def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
+def seriqc_flag(ghi, dni, dhi, zenith, pressure, dni_extra, airmass, Kt_max, Kn_max,
                 Kd_max, left_boundary=None, right_boundary=None,
                 twilight_zenith=80, nan_threshold=8000,
                 min_irradiance=-10, max_nighttime_irradiance=10,
@@ -34,8 +46,13 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     ghi : float
         Global horizontal irradiance in W/m^2.
     dni : float
+        Direct normal irradiance in W/m^2.
+    dhi : float
+        Diffuse horizontal irradiance in W/m^2.
     zenith : float
         Apparent solar zenith angle in degrees.
+    pressure : float
+        Pressure at location, in millibars.
     dni_extra : float
         Extraterrestrial normal irradiance in W/m^2.
     airmass : float
@@ -82,6 +99,10 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     ----------
     [2] F. Kasten and A. T. Young, Revised optical air mass tables and
         approximation formula, Applied Optics, 14 (22), 4735-4738, 1989.
+    [3] Rayleigh limit: Younkin, K, and CN Long. 2004. “Improved Correction 
+        of IR Loss in Diffuse Shortwave Measurements: An ARM Value Added Product.” 
+        Atmospheric Radiation Measurement Program Technical Report, ARM TR-009, 
+        available via http://www.arm.gov/publications/techreports.stm.
     """
     # The original code first initializes all flags as 0 (untested).
     # ghi_flag = dni_flag = dhi_flag = 0
@@ -106,17 +127,17 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
 
     # Nighttime test
     if zenith >= 90:  # Condition could also be expressed as "if ETR=0"
-        if ghi < min_irradiance:
+        if ghi < GHI_LO_NGT:
             ghi_flag = 7
-        elif ghi > max_nighttime_irradiance:
+        elif ghi > GHI_HI_NGT:
             ghi_flag = 8
-        if dni < min_irradiance:
+        if dni < DNI_LO_NGT:
             dni_flag = 7
-        elif dni > max_nighttime_irradiance:
+        elif dni > DNI_HI_NGT:
             dni_flag = 8
-        if dhi < min_irradiance:
+        if dhi < DHI_LO_NGT:
             dhi_flag = 7
-        elif dhi > max_nighttime_irradiance:
+        elif dhi > DHI_HI_NGT:
             dhi_flag = 8
         return ghi_flag, dni_flag, dhi_flag
 
@@ -139,15 +160,15 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     )
 
     # Daytime tests (one-component limit tets)
-    if Xt < 0.05:
+    if Xt < KT_LO_DAY:
         ghi_flag = 7
-    elif Xt > Kt_max + 0.10:  # Added 0.10 the original Fortran code, seems silly
+    elif Xt > Kt_max:  # Added 0.10 the original Fortran code, seems silly
         ghi_flag = 8
-    if dni < min_irradiance:
+    if dni < DNI_LO_DAY:
         dni_flag = 7
     elif Xn > Kn_max:
         dni_flag = 8
-    if Xd < 0.03:
+    if Xd < KD_LO_DAY:
         dhi_flag = 7
     elif Xd > Kd_max:
         dhi_flag = 8
@@ -160,13 +181,28 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
         f"XDmax: {Kd_max:.6f}"
     )
 
+    # Rayleigh test
+    if (ghi > 50.0) & (dhi_flag == 1):
+        cz = np.cos(np.deg2rad(zenith))
+        rayleigh_limit = (
+                        209.3 * cz
+                        - 708.3 * (cz ** 2)
+                        + 1128.7 * (cz ** 3)
+                        - 911.2 * (cz ** 4)
+                        + 287.85 * (cz ** 5)
+                        + 0.046725 * cz * pressure
+                        - 1.0
+                    )
+        if dhi < rayleigh_limit:
+            dhi_flag = 5
+
     # Twilight one-component tests (overrules daytime tests)
     # Do not use a flag of 7 if ghi or dhi >= min_irradiance
     # If ETR<=25 W/m, a ghi value of <=10 W/m2 should not be considered to high
     if (zenith > twilight_zenith) & (zenith < 90):
-        if (ghi_flag == 7) & (ghi >= min_irradiance):
+        if (ghi_flag == 7) & (ghi >= GHI_LO_NGT):
             ghi_flag = 1
-        if (dhi_flag == 7) & (dhi >= min_irradiance):
+        if (dhi_flag == 7) & (dhi >= DHI_LO_NGT):
             dhi_flag = 1
         if (ghi_flag == 8) & (ghi_extra <= 25) & (ghi <= max_nighttime_irradiance):
             ghi_flag = 1
@@ -203,7 +239,7 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     if components_valid == 3:
         # SQC_3C(Kt, Kn, Kd, ghi_flag, dni_flag, dhi_flag)
         ghi_flag, dni_flag, dhi_flag = \
-            SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.03)
+            SQC_3C(Kt, Kn, Kd, K_diff_threshold=K_diff_threshold)
         # Return flags if 3-component test failed
         if ghi_flag > 3:  # Note flag == 3 means three-component test passed
             return ghi_flag, dni_flag, dhi_flag
@@ -332,7 +368,7 @@ def SQC_2C(Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
     ghi_flag : int
         Global horizontal irradiance quality control flag.
     dni_flag : int
-        Direct normal irradinace quality control flag.
+        Direct normal irradiance quality control flag.
 
     Notes
     -----

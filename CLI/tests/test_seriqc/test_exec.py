@@ -1,6 +1,7 @@
 """Test SERIQC exec functions."""
 from pathlib import Path
 
+from CLI.tests.conftest import test_data_dir
 import pytest
 import numpy as np
 
@@ -41,19 +42,20 @@ from seriqc.exec import seriqc_from_file
         (0, 0, 1, 1, 1, 0, 0, 0, 6),
     ],
 )
-def test_seriqc_from_file_time_validation(qc0_info, test_case):
+def test_seriqc_from_file_time_validation(qa0_info, test_case):
     """Test time validation of python to C code"""
 
-    site, qc0_dir = qc0_info
+    site, qa0_dir = qa0_info
     ghi = 4500
     dni = 4500
     dhi = 9000
 
     month, day, hour, minute, interval, *expected_output = test_case
+    site += f"_{interval}"
 
     ghi_flag, dni_flag, dhi_flag, *__, return_code = seriqc_from_file(
         site,
-        qc0_dir,
+        qa0_dir,
         2000,
         month,
         day,
@@ -67,12 +69,14 @@ def test_seriqc_from_file_time_validation(qc0_info, test_case):
     assert [ghi_flag, dni_flag, dhi_flag, return_code] == expected_output
 
 
-def test_seriqc_from_file_bad_input(qc0_info, tmp_path):
+def test_seriqc_from_file_bad_input(qa0_info, tmp_path):
     """Test bad file input to function."""
 
-    site, qc0_dir = qc0_info
-    bad_qc0_fp = tmp_path / f"s_{site}.qc0"
-    bad_qc0_dir = str(tmp_path)
+    site, qa0_dir = qa0_info
+    interval = 1
+    site += f"_{interval}"
+    bad_qa0_fp = tmp_path / f"s_{site}.qa0"
+    bad_qa0_dir = str(tmp_path)
 
     ghi = 4500
     dni = 4500
@@ -80,13 +84,13 @@ def test_seriqc_from_file_bad_input(qc0_info, tmp_path):
 
     ghi_flag, dni_flag, dhi_flag, *__, return_code = seriqc_from_file(
         "      ",
-        qc0_dir,
+        qa0_dir,
         2000,
         1,
         1,
         1,
         1,
-        1,
+        interval,
         ghi,
         dni,
         dhi,
@@ -95,35 +99,35 @@ def test_seriqc_from_file_bad_input(qc0_info, tmp_path):
 
     ghi_flag, dni_flag, dhi_flag, *__, return_code = seriqc_from_file(
         site,
-        bad_qc0_dir,
+        bad_qa0_dir,
         2000,
         1,
         1,
         1,
         1,
-        1,
+        interval,
         ghi,
         dni,
         dhi,
     )
     assert (ghi_flag, dni_flag, dhi_flag, return_code) == (0, 0, 0, 128)
 
-    with open(Path(qc0_dir) / f"s_{site}.qc0", "r") as fh:
+    with open(Path(qa0_dir) / f"s_{site}.qa0", "r") as fh:
         lines = fh.readlines()
 
-    lines[9] = lines[9].replace("JAN", "DNE")
-    with open(bad_qc0_fp, "w") as fh:
+    lines[10] = lines[10].replace("JAN", "DNE")
+    with open(bad_qa0_fp, "w") as fh:
         fh.writelines(lines)
 
     ghi_flag, dni_flag, dhi_flag, *__, return_code = seriqc_from_file(
         site,
-        bad_qc0_dir,
+        bad_qa0_dir,
         2000,
         1,
         1,
         1,
         1,
-        1,
+        interval,
         ghi,
         dni,
         dhi,
@@ -131,31 +135,33 @@ def test_seriqc_from_file_bad_input(qc0_info, tmp_path):
     assert (ghi_flag, dni_flag, dhi_flag, return_code) == (0, 0, 0, 256)
 
 
-def test_bad_kt_kn_input(qc0_info, tmp_path):
+def test_bad_kt_kn_input(qa0_info, tmp_path):
     """Test bad Kt/Kn input"""
 
-    site, qc0_dir = qc0_info
-    bad_qc0_fp = tmp_path / f"s_{site}.qc0"
-    bad_qc0_dir = str(tmp_path)
+    site, qa0_dir = qa0_info
+    interval = 1
+    site += f"_{interval}"
+    bad_qa0_fp = tmp_path / f"s_{site}.qa0"
+    bad_qa0_dir = str(tmp_path)
     ghi = 4500
     dni = 4500
     dhi = 9000
 
-    with open(Path(qc0_dir) / f"s_{site}.qc0", "r") as fh:
+    with open(Path(qa0_dir) / f"s_{site}.qa0", "r") as fh:
         lines = fh.readlines()
 
-    lines[13] = lines[13].replace("83-95/95/00/00;", "00-00/00/00/00")
-    with open(bad_qc0_fp, "w") as fh:
+    lines[14] = lines[14].replace("83-095", "00-000")
+    with open(bad_qa0_fp, "w") as fh:
         fh.writelines(lines)
 
     ghi_flag, dni_flag, dhi_flag, *__, return_code = seriqc_from_file(
         site,
-        bad_qc0_dir,
+        bad_qa0_dir,
         2000,
         5,
         1,
         12,
-        1,
+        interval,
         1,
         ghi,
         dni,
@@ -164,31 +170,33 @@ def test_bad_kt_kn_input(qc0_info, tmp_path):
     assert (ghi_flag, dni_flag, dhi_flag, return_code) == (0, 0, 0, 6144)
 
 
-def test_bad_curve_input(qc0_info, tmp_path):
+def test_bad_curve_input(qa0_info, tmp_path):
     """Test bad curve input"""
 
-    site, qc0_dir = qc0_info
-    bad_qc0_fp = tmp_path / f"s_{site}.qc0"
-    bad_qc0_dir = str(tmp_path)
+    site, qa0_dir = qa0_info
+    interval = 1
+    site += f"_{interval}"
+    bad_qa0_fp = tmp_path / f"s_{site}.qa0"
+    bad_qa0_dir = str(tmp_path)
     ghi = 4500
     dni = 4500
     dhi = 9000
 
-    with open(Path(qc0_dir) / f"s_{site}.qc0", "r") as fh:
+    with open(Path(qa0_dir) / f"s_{site}.qa0", "r") as fh:
         lines = fh.readlines()
 
-    lines[12] = lines[12].replace("4-10 1-15/15/00/00", "0-00 0-00/00/00/00")
-    with open(bad_qc0_fp, "w") as fh:
+    lines[13] = lines[13].replace("4-10 1-15", "0-00 0-00")
+    with open(bad_qa0_fp, "w") as fh:
         fh.writelines(lines)
 
     ghi_flag, dni_flag, dhi_flag, *__, return_code = seriqc_from_file(
         site,
-        bad_qc0_dir,
+        bad_qa0_dir,
         2000,
         4,
         1,
         12,
-        1,
+        interval,
         1,
         ghi,
         dni,
@@ -235,11 +243,12 @@ def test_bad_curve_input(qc0_info, tmp_path):
         (7, 0.0083978, 9000, 9000, 1, 99, 99),
     ],
 )
-def test_nominal_exec(qc0_info, test_case):
+def test_nominal_exec(qa0_info, test_case):
     """Test a nominal run (truth values computed using C code)"""
 
-    site, qc0_dir = qc0_info
+    site, qa0_dir = qa0_info
     month, interval = 1, 60
+    site += f"_{interval}"
     hour, ghi, dni, dhi, *truth_flags = test_case
     if hour:
         minute = 30
@@ -250,7 +259,7 @@ def test_nominal_exec(qc0_info, test_case):
 
     ghi_flag, dni_flag, dhi_flag, *__, return_code = seriqc_from_file(
         site,
-        qc0_dir,
+        qa0_dir,
         2000,
         month,
         day,
@@ -288,6 +297,7 @@ def test_nominal_nrelsr_site(test_data_dir, test_case):
 
     month = interval = 1
     site = "NRELSR"
+    site += f"_{interval}"
 
     day, hour, minute, ghi, dni, dhi, *truth_flags = test_case
 
@@ -316,15 +326,16 @@ def test_nominal_nrelsr_site(test_data_dir, test_case):
         (1, 7, 26, 3.9072, 0.251888, 4.50005, 1, 1, 1),
     ],
 )
-def test_nominal_benchmarking_exec(qc0_info, test_case):
+def test_nominal_benchmarking_exec(test_data_dir, test_case):
     """Test a nominal run with benchmarking data"""
 
-    __, qc0_dir = qc0_info
     month = interval = 1
+    site = "NRELSR"
+    site += f"_{interval}"
     day, hour, minute, ghi, dni, dhi, *truth_flags = test_case
     ghi_flag, dni_flag, dhi_flag, *__, return_code = seriqc_from_file(
-        "NRELSR",
-        qc0_dir,
+        site,
+        test_data_dir,
         2021,
         month,
         day,

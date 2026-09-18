@@ -178,8 +178,8 @@ def seriqc_from_file(
         )
 
     spa_kwargs = {}
-    spa_kwargs["elev"] = kwargs.pop("elev", 0)
-    spa_kwargs["pressure"] = kwargs.pop("pressure", 1013.25)
+    spa_kwargs["elev"] = kwargs.pop("elev", meta["elevation"])
+    spa_kwargs["pressure"] = kwargs.pop("pressure", (101325 * (1 - (2.25577 * 10 ** (-5)) * spa_kwargs["elev"]) ** 5.25588) / 100)
     spa_kwargs["temp"] = kwargs.pop("temp", 12)
     spa_kwargs["delta_t"] = kwargs.pop("delta_t", 67)
     spa_kwargs["atmos_refract"] = kwargs.pop("atmos_refract", 0.5667)
@@ -202,7 +202,7 @@ def seriqc_from_file(
             dni=dni,
             dhi=dhi,
             zenith=90,
-            elevation=meta["elevation"],
+            pressure=spa_kwargs["pressure"],
             dni_extra=None,
             airmass=None,
             Kt_max=None,
@@ -271,7 +271,7 @@ def seriqc_from_file(
         dni=dni,
         dhi=dhi,
         zenith=sol_zen,
-        elevation=meta["elevation"],
+        pressure=spa_kwargs["pressure"],
         ghi_extra=etr,
         dni_extra=etrn,
         airmass=air_mass,

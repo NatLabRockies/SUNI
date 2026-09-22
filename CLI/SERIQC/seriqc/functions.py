@@ -34,8 +34,8 @@ DHI_HI_NGT = 5.0
 # Kd_max = [0.19, 0.22, 0.24, 0.28, 0.32][boundary['right_shape']-1]
 
 
-def seriqc_flag(ghi, dni, dhi, zenith, pressure, dni_extra, airmass, Kt_max, Kn_max,
-                Kd_max, left_boundary=None, right_boundary=None,
+def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
+                Kd_max, pressure=820, left_boundary=None, right_boundary=None,
                 twilight_zenith=80, nan_threshold=8000,
                 min_irradiance=-10, max_nighttime_irradiance=10,
                 K_diff_threshold=0.03, ghi_extra=None):

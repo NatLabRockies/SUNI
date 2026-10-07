@@ -11,10 +11,10 @@ from seriqc.utilities import (
     validate_curve_numbers,
     validate_kn_kt,
 )
-from seriqc.qcfit import (
+from seriqc.qafit_file_reader import (
     AirMassRegime,
     read_site_data_for_month,
-    QC0FileError,
+    QA0FileError,
     extract_curve_numbers,
     extract_kn_kt,
 )
@@ -24,12 +24,12 @@ from seriqc.functions import seriqc_flag
 
 
 logger = logging.getLogger(__name__)
-XD_MAX = [0.19, 0.22, 0.24, 0.28, 0.32]
+XD_MAX = [0.19, 0.22, 0.24, 0.28, 0.32, 0.18, 0.24]
 
 
 def seriqc_from_file(
     site,
-    qc0_dir,
+    qa0_dir,
     year,
     month,
     day,
@@ -41,9 +41,9 @@ def seriqc_from_file(
     dhi,
     **kwargs,
 ):
-    """Generate SERI-QC flags for one timestamp using QC0 file input.
+    """Generate SERI-QC flags for one timestamp using QA0 file input.
 
-    Performs QC checks on the major broadband solar measurements:
+    Performs QA checks on the major broadband solar measurements:
         Global Horizontal or Total (T)
         Direct Normal (N)
         Diffuse Horizontal (D)
@@ -60,11 +60,11 @@ def seriqc_from_file(
     Parameters
     ----------
     site : str
-        Name of the site represented by the QC0 file. The QC0 file name
-        must be of the format s_<site>.qc0, where <site> is replaced
+        Name of the site represented by the QA0 file. The QA0 file name
+        must be of the format s_<site>.qa0, where <site> is replaced
         by this input.
-    qc0_dir : path-like
-        Path to directory containing the QC0 file(s) to read.
+    qa0_dir : path-like
+        Path to directory containing the QA0 file(s) to read.
     year : int
         Year of the observation (e.g. 1988).
     month : int
@@ -153,9 +153,9 @@ def seriqc_from_file(
     year = conform_to_spa_years(year)
 
     try:
-        data, meta = read_site_data_for_month(site, qc0_dir, month)
+        data, meta = read_site_data_for_month(site, qa0_dir, month)
     except FileNotFoundError:
-        return_value |= 1 << ErrorCode.QC0_FILE
+        return_value |= 1 << ErrorCode.QA0_FILE
         return (
             global_out,
             direct_out,
@@ -165,8 +165,8 @@ def seriqc_from_file(
             sol_zen,
             return_value,
         )
-    except QC0FileError:
-        return_value |= 1 << ErrorCode.QC0_FORMAT
+    except QA0FileError:
+        return_value |= 1 << ErrorCode.QA0_FORMAT
         return (
             global_out,
             direct_out,
@@ -178,8 +178,8 @@ def seriqc_from_file(
         )
 
     spa_kwargs = {}
-    spa_kwargs["elev"] = kwargs.pop("elev", 0)
-    spa_kwargs["pressure"] = kwargs.pop("pressure", 1013.25)
+    spa_kwargs["elev"] = kwargs.pop("elev", meta["elevation"])
+    spa_kwargs["pressure"] = kwargs.pop("pressure", (101325 * (1 - (2.25577 * 10 ** (-5)) * spa_kwargs["elev"]) ** 5.25588) / 100)
     spa_kwargs["temp"] = kwargs.pop("temp", 12)
     spa_kwargs["delta_t"] = kwargs.pop("delta_t", 67)
     spa_kwargs["atmos_refract"] = kwargs.pop("atmos_refract", 0.5667)
@@ -202,6 +202,7 @@ def seriqc_from_file(
             dni=dni,
             dhi=dhi,
             zenith=90,
+            pressure=spa_kwargs["pressure"],
             dni_extra=None,
             airmass=None,
             Kt_max=None,
@@ -225,9 +226,9 @@ def seriqc_from_file(
     )
     nam = AirMassRegime.from_value(air_mass)
 
-    out = extract_curve_numbers(data, interval, nam)
+    out = extract_curve_numbers(data, nam)
     left_shape, right_shape, left_position, right_position = out
-    kn, kt = extract_kn_kt(data, interval)
+    kn, kt = extract_kn_kt(data)
 
     return_value |= validate_curve_numbers(
         left_shape, right_shape, left_position, right_position
@@ -258,13 +259,6 @@ def seriqc_from_file(
     xn_max = kn / 100
     xt_max = kt / 100
 
-    if nam == AirMassRegime.MEDIUM:
-        xt_max -= 0.025
-        xn_max -= 0.050
-    elif nam == AirMassRegime.HIGH:
-        xt_max -= 0.10
-        xn_max -= 0.15
-
     left_boundary = boundary_from_gompertz_curve(
         int(left_shape), left_position, "left"
     )
@@ -277,6 +271,7 @@ def seriqc_from_file(
         dni=dni,
         dhi=dhi,
         zenith=sol_zen,
+        pressure=spa_kwargs["pressure"],
         ghi_extra=etr,
         dni_extra=etrn,
         airmass=air_mass,

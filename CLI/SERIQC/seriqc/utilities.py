@@ -35,12 +35,12 @@ class ErrorCode(IntEnum):
     MINUTE       4    Minute                   0 - 59
     TIME         5    Composite Time           00:00:00 - 24:00:00
     INTERVAL     6    Interval                 1 - 60
-    QC0_FILE     7    QC-ZERO file             missing
-    QC0_FORMAT   8    QC-ZERO format           file format corrupt
-    R_BOUND      9    QC-ZERO right boundary   boundary undefined
-    L_BOUND      10   QC-ZERO left boundary    boundary undefined
-    KT_MAX       11   QC-ZERO Kt max           boundary undefined
-    KN_MAX       12   QC-ZERO Kn max           boundary undefined
+    QA0_FILE     7    QA0 file                 missing
+    QA0_FORMAT   8    QA0 format               file format corrupt
+    R_BOUND      9    QA-ZERO right boundary   boundary undefined
+    L_BOUND      10   QA-ZERO left boundary    boundary undefined
+    KT_MAX       11   QA-ZERO Kt max           boundary undefined
+    KN_MAX       12   QA-ZERO Kn max           boundary undefined
     """
 
     SITE = 0
@@ -50,8 +50,8 @@ class ErrorCode(IntEnum):
     MINUTE = 4
     TIME = 5
     INTERVAL = 6
-    QC0_FILE = 7
-    QC0_FORMAT = 8
+    QA0_FILE = 7
+    QA0_FORMAT = 8
     R_BOUND = 9
     L_BOUND = 10
     KT_MAX = 11
@@ -90,10 +90,10 @@ def seri_qc_decode(code, print_msg=True):  # pragma: no cover
         msg.append("Invalid time")
     if code & (1 << ErrorCode.INTERVAL):
         msg.append("Invalid interval")
-    if code & (1 << ErrorCode.QC0_FILE):
-        msg.append("Cannot open QC-ZERO file")
-    if code & (1 << ErrorCode.QC0_FORMAT):
-        msg.append("Incorrect QC-ZERO file format")
+    if code & (1 << ErrorCode.QA0_FILE):
+        msg.append("Cannot open QA0 file")
+    if code & (1 << ErrorCode.QA0_FORMAT):
+        msg.append("Incorrect QA0 file format")
     if code & (1 << ErrorCode.R_BOUND):
         msg.append("Right Gompertz boundary undefined")
     if code & (1 << ErrorCode.L_BOUND):
@@ -376,12 +376,12 @@ def validate_curve_numbers(
 
 
 def validate_kn_kt(kn, kt):
-    """Validate Kt and Kn values read from a QC0 file.
+    """Validate Kt and Kn values read from a QA0 file.
 
     Parameters
     ----------
     kn, kt : int
-        Kn and Kt values read in from a QC0 file.
+        Kn and Kt values read in from a QA0 file.
 
     Returns
     -------

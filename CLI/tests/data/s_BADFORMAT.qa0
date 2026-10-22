@@ -1,0 +1,27 @@
+  Site Identifier: NRELSR, SRRL
+ --- Latitude:   39.7400
+ -- Longitude: -105.1800
+ -- Time Zone:   -7.0000
+
+     ---Low Airmass--  ---Med Airmass--  --High Airmass--
+     -MAX-  -LFT RGT-  -MAX-  -LFT RGT-  -MAX-  -LFT RGT-
+     KN KT  S  P S  P  KN KT  S  P S  P  KN KT  S  P S  P
+
+JAN: 87-99; 4-09 5-17; 87-99; 4-09 1-17; 87-99; 4-08 1-17
+FEB: 86-99; 4-09 5-17; 86-99; 4-09 1-19; 86-99; 4-09 1-16
+MAR: 85-99; 4-09 1-15; 85-99; 4-10 1-18; 85-99; 4-09 1-16
+APR: 84-99; 4-10 1-17; 84-99; 4-10 1-17; 84-99; 4-09 1-15
+MAY: 82-99; 4-10 1-17; 82-99; 4-10 1-16; 82-99; 4-10 1-15
+JUN: 82-99; 4-10 1-16; 82-99; 4-09 1-16; 82-99; 4-09 1-13
+JUL: 80-99; 4-10 1-15; 80-99; 4-09 1-15; 80-99; 4-09 1-14
+AAG: 82-99; 4-09 1-16; 82-99; 4-09 1-16; 82-99; 4-08 1-13
+SEP: 82-99; 4-10 1-16; 82-99; 4-09 1-16; 82-99; 4-09 1-14
+OCT: 86-94; 4-09 5-17; 86-94; 4-10 1-15; 86-94; 4-09 1-15
+NOV: 87-99; 4-09 5-17; 87-99; 4-10 1-16; 87-99; 4-09 1-15
+DEC: 84-99; 4-09 5-17; 84-99; 4-10 1-16; 84-99; 4-10 1-14
+
+DEFAULT CONFIGURATION
+ Integration (minutes):  1
+ Data Folder: d:\SRS\UncertaintyProject\Deliverables\6.2 Proof of Concept\Processing
+ Plane: 0 Kt-Kn
+ 3-Component Filter: -1.000000

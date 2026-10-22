@@ -1,13 +1,14 @@
 """SERIQC solar utilities"""
 import numpy as np
+import pandas as pd
 from pvlib.spa import solar_position
 from pvlib.irradiance import get_extra_radiation
+from pvlib.solarposition import nrel_earthsun_distance
 
 from seriqc.utilities import (
     DAYS_IN_MONTH,
     is_leap_year,
     convert_to_unix_time,
-    convert_to_day_of_year,
 )
 
 SOLAR_CONSTANT = 1361.1  # W/sq m
@@ -26,7 +27,7 @@ def compute_solar_properties(
     timezone,
     elev=0,
     pressure=1013.25,
-    temp=12,
+    temp=11,
     delta_t=67,
     atmos_refract=0.5667,
 ):
@@ -116,8 +117,9 @@ def compute_solar_properties(
             esd=False,
         )[0][0]
 
+        timestamp = pd.to_datetime(unix_time, unit="s", utc=True)
         etr_now, etrn_now = compute_etr_at_time(
-            solar_zenith_now, day_now, month_now, year_now
+            solar_zenith_now, timestamp, delta_t
         )
 
         if etr_now > 0:
@@ -138,7 +140,7 @@ def compute_solar_properties(
     return sol_zen, etr, etrn
 
 
-def compute_etr_at_time(solar_zenith_angle, day, month, year):
+def compute_etr_at_time(solar_zenith_angle, timestamp, delta_t=67):
     """Compute extraterrestrial irradiance for a given time.
 
     Parameters
@@ -146,9 +148,10 @@ def compute_etr_at_time(solar_zenith_angle, day, month, year):
     solar_zenith_angle : float
         Solar zenith angle. Can be calculated using
         :func:`pvlib.spa.solar_position`.
-    day, month, year : int
-        Day (1-31), month (1-12), and year represented as integer
-        values.
+    timestamp : pandas.Timestamp
+        Timestamp of the measurement, localized to UTC.
+    delta_t : float, optional
+        Difference between terrestrial time and UT1. By default, ``67``.
 
     Returns
     -------
@@ -161,10 +164,18 @@ def compute_etr_at_time(solar_zenith_angle, day, month, year):
     pvlib.spa.solar_position : Compute solar zenith angle.
     pvlib.irradiance.get_extra_radiation : Compute extraterrestrial radiation.
     """
-    doy = convert_to_day_of_year(day, month, year)
+
+    # Use 'nrel' method to compute extraterrestrial radiation. (Originally it was set as 'spencer')
     etrn = get_extra_radiation(
-        doy, solar_constant=SOLAR_CONSTANT, method="spencer", epoch_year=year
-    )
+        timestamp,
+        solar_constant=SOLAR_CONSTANT,
+        method="nrel",
+        delta_t=delta_t,
+    ).item()
+
+    # For debugging purposes, the Earth-Sun distance can be computed as follows:
+    # r = nrel_earthsun_distance(timestamp, delta_t=delta_t).item()
+
     etr = etrn * np.cos(np.deg2rad(solar_zenith_angle))
     return etr, etrn
 

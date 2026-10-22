@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from suni.framework import ErrorCode
+from suni.framework import ErrorCode, qa0_site_name
 from suni.utilities import format_date, extract_time_from_input_data
 from suni import __version__
 
@@ -105,9 +105,9 @@ def compile_popup_report(results, cfg):
     return "\n".join(lines)
 
 
-def _get_station_name_from_file(qc0_fp):
-    """Get station name from QC0 file."""
-    with Path(qc0_fp).open("r", encoding="utf-8") as fh:
+def _get_station_name_from_file(qa0_fp):
+    """Get station name from QA0 file."""
+    with Path(qa0_fp).open("r", encoding="utf-8") as fh:
         line = fh.readline()
     line = line.split(",")
     assert len(line) >= 2  # noqa
@@ -140,10 +140,10 @@ def compile_standard_report(results, cfg, proc_start_time):  # noqa
     )
     counts, n_valid = _counts_from_results(results)
 
-    qc0_file = f"s_{cfg['StationID']}.qc0"
-    qc0_fp = Path(cfg["SERIQCpath"]) / qc0_file
+    qa0_file = f"s_{qa0_site_name(cfg['StationID'], cfg['Interval'])}.qa0"
+    qa0_fp = Path(cfg["SERIQCpath"]) / qa0_file
     try:
-        station_name = _get_station_name_from_file(qc0_fp)
+        station_name = _get_station_name_from_file(qa0_fp)
     except KeyboardInterrupt:
         raise
     except Exception:  # noqa
@@ -152,7 +152,7 @@ def compile_standard_report(results, cfg, proc_start_time):  # noqa
     lines = [
         f"Uncertainty Processing Report for {input_fn}",
         f"Station ID: {cfg['StationID']} ({station_name})",
-        f"QC0 File: {qc0_file}",
+        f"QA0 File: {qa0_file}",
         f"Processing date: {proc_date}",
         (
             f"From {format_date(*start_time[:3], date_format)} "

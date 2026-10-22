@@ -41,9 +41,9 @@ def test_boundary_from_gompertz_curve():
     [
         (1, 1, "middle"),
         (0, 1, "left"),
-        (7, 1, "left"),
+        (9, 1, "left"),
         (0, 1, "right"),
-        (7, 1, "left"),
+        (8, 1, "right"),
     ],
 )
 def test_boundary_from_gompertz_curve_invalid_inputs(

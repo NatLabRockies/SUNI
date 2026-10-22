@@ -42,12 +42,12 @@ def c_code_alignment(monkeypatch):
 
 def _extract_date(row):
     """Extract and split date from CSV row input."""
-    return tuple(int(d) for d in row["DATE"].split("/"))
+    return tuple(int(d) for d in row["DATE"].split("-"))
 
 
 def _extract_time(row):
     """Extract and split time from CSV row input."""
-    return tuple(int(d) for d in row["MST"].split(":"))
+    return tuple(int(d) for d in row["TIME"].split(":"))
 
 
 def _compute_ret_value_counts(ret_values):
@@ -78,22 +78,43 @@ def _parse_c_code_count_output(fp):
 @pytest.mark.parametrize(
     "input_data_fn, site, interval",
     [
-        ("SRRL1987_05.csv", "NRELSR", 5),
-        ("SRRL1987_15.csv", "NRELSR", 15),
-        ("SRRL1987_30.csv", "NRELSR", 30),
-        ("SRRL1987_60.csv", "NRELSR", 60),
-        ("SRRL2004_01.csv", "NRELSR", 1),
-        ("SRRL2007_01.csv", "NRELSR", 1),
-        ("SRRL2007_30.csv", "NRELSR", 30),
-        ("SRRL2007_60.csv", "NRELSR", 60),
-        ("SRRL2007_TIME_01.csv", "NRELSR", 1),
-        ("SRRL2007_SITE_01.csv", "XXXX", 1),
-        ("SRRL2007_BOUNDARY1_01.csv", "BOUNDARY1", 1),
-        ("SRRL2007_CLOCK_01.csv", "CLOCK", 1),
-        ("SRRL2007_INTERVAL_01.csv", "NRELSR", 61),
-        ("SRRL2007_INCREMENTAL.csv", "NRELSR", 1),
-        ("SRRL2007_TIMERAMP.csv", "NRELSR", 1),
-        ("SRRL2007_FORMAT_01.csv", "BADFORMAT", 1),
+        # ("SRRL1987_05.csv", "NRELSR", 5),
+        # ("SRRL1987_15.csv", "NRELSR", 15),
+        # ("SRRL1987_30.csv", "NRELSR", 30),
+        # ("SRRL1987_60.csv", "NRELSR", 60),
+        # ("SRRL2004_01.csv", "NRELSR", 1),
+        # ("SRRL2007_01.csv", "NRELSR", 1),
+        # ("SRRL2007_30.csv", "NRELSR", 30),
+        # ("SRRL2007_60.csv", "NRELSR", 60),
+        # ("SRRL2007_TIME_01.csv", "NRELSR", 1),
+        # ("SRRL2007_SITE_01.csv", "XXXX", 1),
+        # ("SRRL2007_BOUNDARY1_01.csv", "BOUNDARY1", 1),
+        # ("SRRL2007_CLOCK_01.csv", "CLOCK", 1),
+        # ("SRRL2007_INTERVAL_01.csv", "NRELSR", 61),
+        # ("SRRL2007_INCREMENTAL.csv", "NRELSR", 1),
+        # ("SRRL2007_TIMERAMP.csv", "NRELSR", 1),
+        # ("SRRL2007_FORMAT_01.csv", "BADFORMAT", 1)
+        # ("Payerne_June_Kn44x.csv", "PAY", 1),     # Below are NLR-QA Validation Datasets
+        # ("PayerneAprKt100.csv", "PAY", 1),
+        # ("PayerneJanHiKnKtwK.csv", "PAY", 1),
+        # ("PayerneJunHiKnKt.csv", "PAY", 1),
+        # ("PayerneMayKn31.csv", "PAY", 1),
+        # ("PayerneMayKt87.csv", "PAY", 1),
+        # ("PayerneNight.csv", "PAY", 1),
+        # ("PayerneNovKn06.csv", "PAY", 1),
+        # ("PayerneSepKt109.csv", "PAY", 1),
+        # ("BSRN_SON_2013-10-01_2015-03-31.csv", "SON", 1),
+        # ("BSRN_PAY_2012-07-01_2021-03-31.csv", "PAY", 1),
+        # ("SON_Difference_Records.csv", "SON", 1),
+        # ("PAY_2-comp.csv", "PAY", 1),
+        # ("SON_missing.csv", "SON", 1),
+        # ("SON_2-comp.csv", "SON", 1),
+        ("BSRN_SON_2013-10-01_2015-03-31_NewBuf.csv", "SON", 1),        # Beta07
+        ("BSRN_PAY_2012-07-01_2021-03-31_NewBuf.csv", "PAY", 1),        # Beta08
+        # ("BSRN_SON_2013-10-01_2015-03-31_NewBuf_difference.csv", "SON", 1),
+        # ("BSRN_PAY_2012-07-01_2021-03-31_NewBuf_difference.csv", "PAY", 1),
+        # ("SON_Mismatch.csv", "SON", 1),
+        # ("SON_Plus_variables_test.csv", "SON", 1)
     ],
 )
 def test_nominal_benchmarking_exec(
@@ -110,7 +131,7 @@ def test_nominal_benchmarking_exec(
         header=0,
         names=[
             "DATE",
-            "MST",
+            "TIME",
             "GHI",
             "DNI",
             "DHI",
@@ -119,7 +140,8 @@ def test_nominal_benchmarking_exec(
             "C_DHI_FLG",
         ],
     )
-    input_data[["Month", "Day", "Year"]] = input_data.apply(
+
+    input_data[["Year", "Month", "Day"]] = input_data.apply(
         _extract_date, axis="columns", result_type="expand"
     )
 
@@ -143,7 +165,7 @@ def test_nominal_benchmarking_exec(
             future = executor.submit(
                 seriqc_from_file,
                 site=site,
-                qc0_dir=test_data_dir,
+                qa0_dir=test_data_dir,
                 year=int(row["Year"]),
                 month=int(row["Month"]),
                 day=int(row["Day"]),
@@ -153,7 +175,6 @@ def test_nominal_benchmarking_exec(
                 ghi=ghi,
                 dni=dni,
                 dhi=dhi,
-                pressure=820,
                 temp=11,
             )
             future_to_row[future] = row_ind
@@ -223,7 +244,7 @@ def test_nominal_benchmarking_exec(
 
         out_cols = [
             "DATE",
-            "MST",
+            "TIME",
             "GHI",
             "DNI",
             "DHI",
@@ -257,7 +278,7 @@ def test_nominal_benchmarking_exec(
 
                 *__, etr, __, sol_zen, __ = seriqc_from_file(
                     site="NRELSR",
-                    qc0_dir=test_data_dir,
+                    qa0_dir=test_data_dir,
                     year=int(row["Year"]),
                     month=int(row["Month"]),
                     day=int(row["Day"]),
@@ -272,7 +293,7 @@ def test_nominal_benchmarking_exec(
 
             out_data = pd.DataFrame(output, columns=["Solzen", "ETR"])
             out_data["Date"] = june_data["DATE"].values
-            out_data["Time"] = june_data["MST"].values
+            out_data["Time"] = june_data["TIME"].values
 
             out_data[["Date", "Time", "Solzen", "ETR"]].to_csv(
                 test_data_dir

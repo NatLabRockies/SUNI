@@ -41,24 +41,18 @@ def test_nan_threshold_works(bms_january_1min_boundaries):
 
 
 def test_minimum_daytime_values_one_component():
-    # Test minimum daytime valus
-    dni_extra = 1360
-    # Minimum GHI test
-    min_ghi = 0.05 * dni_extra * np.cos(np.deg2rad(45))
-    flags = seriqc_flag(ghi=min_ghi-10, dni=np.nan, dhi=np.nan,
-                        zenith=45, Kt_max=1, Kn_max=1, Kd_max=1,
-                        dni_extra=dni_extra, airmass=2)
-    assert flags[0] == 7
-    # Test dni less than minimum irradiance thershold
-    flags = seriqc_flag(ghi=np.nan, dni=-11, dhi=np.nan,
-                        zenith=45, Kt_max=1, Kn_max=1, Kd_max=1,
-                        dni_extra=dni_extra, airmass=2)
-    assert flags[1] == 7
-    min_dhi = 0.03 * dni_extra * np.cos(np.deg2rad(45))
-    flags = seriqc_flag(ghi=np.nan, dni=np.nan, dhi=min_dhi-10,
-                        zenith=45, Kt_max=1, Kn_max=1, Kd_max=1,
-                        dni_extra=dni_extra, airmass=2)
-    assert flags[2] == 7
+    # Test minimum daytime values
+    kwargs = dict(zenith=45, Kt_max=1, Kn_max=1, Kd_max=1,
+                  dni_extra=1360, airmass=2)
+    # GHI: flagged only when Kt < KT_LO_DAY (0)
+    assert seriqc_flag(ghi=0, dni=np.nan, dhi=np.nan, **kwargs)[0] == 1
+    assert seriqc_flag(ghi=-1, dni=np.nan, dhi=np.nan, **kwargs)[0] == 7
+    # DNI: flagged only when dni < DNI_LO_DAY (-4 W/m²)
+    assert seriqc_flag(ghi=np.nan, dni=-4, dhi=np.nan, **kwargs)[1] == 1
+    assert seriqc_flag(ghi=np.nan, dni=-5, dhi=np.nan, **kwargs)[1] == 7
+    # DHI: flagged only when Kd < KD_LO_DAY (0)
+    assert seriqc_flag(ghi=np.nan, dni=np.nan, dhi=0, **kwargs)[2] == 1
+    assert seriqc_flag(ghi=np.nan, dni=np.nan, dhi=-1, **kwargs)[2] == 7
 
 
 def test_low_nighttime_irradiance():

@@ -1,5 +1,6 @@
 # fmt: off
 """Functions for determining SERI QC quality control flags."""
+from ast import If
 import logging
 
 import numpy as np
@@ -108,6 +109,7 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     # ghi_flag = dni_flag = dhi_flag = 0
     # Set all flags to 1 (only one parameter present; passed limits test)
     ghi_flag = dni_flag = dhi_flag = 1
+    rayglo = 0.0    # Temporary variable for testing global
 
     # Irradiance values exceeding the min_irradiance threshold are set as nan
     if ghi > nan_threshold:
@@ -182,8 +184,15 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     )
 
     # Rayleigh test
-    if (ghi > 50.0) & (dhi_flag == 1):
-        cz = np.cos(np.deg2rad(zenith))
+    cz = np.cos(np.deg2rad(zenith))     # cosine of zenith
+
+    # Test needs GHI >50, but gives priority to GHI calculated from DHI and DNI
+    if (dni_flag == 1) & (dhi_flag == 1):
+        rayglo = dni * cz + dhi     # calculated
+    elif ghi_flag == 1:
+        rayglo = ghi     # use measured GHI if available
+
+    if (rayglo > 50.0) & (dhi_flag == 1):
         rayleigh_limit = (
                         209.3 * cz
                         - 708.3 * (cz ** 2)
@@ -237,9 +246,8 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
 
     # Perform three-parameter test
     if components_valid == 3:
-        # SQC_3C(Kt, Kn, Kd, ghi_flag, dni_flag, dhi_flag)
         ghi_flag, dni_flag, dhi_flag = \
-            SQC_3C(Kt, Kn, Kd, K_diff_threshold=K_diff_threshold)
+            SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.02)
         # Return flags if 3-component test failed
         if ghi_flag > 3:  # Note flag == 3 means three-component test passed
             return ghi_flag, dni_flag, dhi_flag
@@ -248,7 +256,7 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     if (ghi_flag <= 3) & (dni_flag <= 3):
         ghi_flag, dni_flag = SQC_2C(
             Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
-            K_diff_threshold=K_diff_threshold)
+            K_diff_threshold=0.01)
         # ARJ don't really understand the purpose of this line
         if dhi_flag != 3:
             return ghi_flag, dni_flag, dhi_flag
@@ -264,24 +272,25 @@ def seriqc_flag(ghi, dni, dhi, zenith, dni_extra, airmass, Kt_max, Kn_max,
     # This section is only reached if either ghi or dni is missing
     if ghi_flag == 1:
         # DNI must be missing, and Kn is calculated from GHI and DHI
-        Kn_calc = Kt - Kd + 1e-6
-        # SQC_2C(Kt, Kn_calc, ghi_flag, dhi_flag, Il, Ir, Jl, Jr,Kt_max,Kn_max)
+        # Modified the code below to remove small buffer
+        # Kn_calc = Kt - Kd + 1e-6
+        Kn_calc = Kt - Kd
         ghi_flag, dhi_flag = SQC_2C(
             Kt, Kn_calc, Kt_max, Kn_max, left_boundary, right_boundary,
-            K_diff_threshold=K_diff_threshold)
+            K_diff_threshold=0.01)
     else:
         # GHI must be missing, and Kt is calculated from DNI and DHI
-        Kt_calc = Kn + Kd + 1e-6
-        # SQC_2C(Kt_calc, Kn, dhi_flag, dni_flag, Il, Ir, Jl, Jr,Kt_max,Kn_max)
+        # Modified the code below to remove small buffer
+        # Kt_calc = Kn + Kd + 1e-6
+        Kt_calc = Kn + Kd
         dhi_flag, dni_flag = SQC_2C(
             Kt_calc, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
-            K_diff_threshold=K_diff_threshold)
+            K_diff_threshold=0.01)
         dhi_flag = dni_flag  # Why is this flag set?
     # ARJ: The below return is not present in the C-code but seems necessary...
     return ghi_flag, dni_flag, dhi_flag
 
-
-def SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.03):
+def SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.02):
     """
     Derive three-component SERI-QC quality flags.
 
@@ -301,9 +310,9 @@ def SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.03):
         DESCRIPTION.
     Kd : numeric
         DESCRIPTION.
-    K_diff_threshold : numeric, default : 0.03
+    K_diff_threshold : numeric, default : 0.02
         Tolerance of consistency among the K-values, fraction. Original
-        SERI QC software used 0.03 (3%).
+        SERI QC software used 0.02 (2%).
 
     Returns
     -------
@@ -332,12 +341,19 @@ def SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.03):
     K_diff_abs = int(100*abs(K_diff) + 1e-3)
     # The IQC0 and IQC1 variables are intermediary and follows the name from
     # the original SERI QC C code.
-    IQC0 = 4 * min(K_diff_abs, 23) - 1
+
+    # Modified the line below to reduce 3-component buffer
+    # Original code: IQC0 = 4 * min(K_diff_abs, 23) - 1
+    IQC0 = 4 * (min(K_diff_abs, 21 ) + 2) - 1
     if (sign == 1):
         IQC0 = IQC0 - 1
     # IQC1 has to take on the opposite sign (TOO HIGH/TOO LOW) from IQC0
     IQC1 = IQC0 + sign
-    if K_diff_abs >= 3:
+
+    # Modified the line below to reduce 3-component buffer
+    # Original code: if K_diff_abs >= 3:
+    K_diff_threshold = K_diff_threshold*100
+    if K_diff_abs >= K_diff_threshold:
         ghi_flag_3 = IQC0
         dni_flag_3 = IQC1
         dhi_flag_3 = IQC1
@@ -345,7 +361,7 @@ def SQC_3C(Kt, Kn, Kd, K_diff_threshold=0.03):
 
 
 def SQC_2C(Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
-           K_diff_threshold=0.03):
+           K_diff_threshold=0.01):
     """
     Derive two-component SERI QC quality flags.
 
@@ -378,13 +394,19 @@ def SQC_2C(Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
     K: K-value. If L < 1, L is reassigned to 1. If K > 1, K is reassigned to 1.
        This is because such values are both meaningless and troublesome for the
        Gompertz function.
+
+    Points between the curve values at their integer Kn, clipped to
+    [1, Kt_max] in integer percentages, pass as in the C implementation.
+    Kn = 0 is checked against the Kn = 1 curve points.
+    Right-curve distances include points clipped to Kt_max through Kn_max.
     """
     # Initialize flags as succesfull (2)
     ghi_flag = dni_flag = 2
 
-    # All the following equations assumes the K-values are integer percentages
-    Kn = int(Kn*100 + 1e-6)
-    Kt = int(Kt*100 + 1e-6)
+    # Preserve integer percentages on both sides of zero when truncating.
+    Kn = int(Kn*100 + np.copysign(1e-6, Kn))
+    Kt = int(Kt*100 + np.copysign(1e-6, Kt))
+
     Kn_max = int(Kn_max*100 + 0.51)
     Kt_max = int(Kt_max*100 + 0.51)
     K_diff_threshold = K_diff_threshold*100
@@ -409,6 +431,14 @@ def SQC_2C(Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
     Bot_R = max(Bot_R, 0)
     Bot_R = min(Bot_R, Kt_max)
 
+    # C uses inclusive bounds after clipping each curve point to Kt_max.
+    if 0 <= Kn <= Kn_max:
+        index = max(Kn, 1) - 1
+        left_at_kn = max(min(Xt_left[index], Kt_max), 1)
+        right_at_kn = max(min(Xt_right[index], Kt_max), 1)
+        if left_at_kn <= Kt <= right_at_kn:
+            return ghi_flag, dni_flag
+
     # All points on the Gompertz curve are described by arrays Xn and Xt
     # Left curve is cut off when Kn_max is met, hence [:Kn_max]
     Xn_left = Xn_left[:Kn_max]
@@ -416,6 +446,14 @@ def SQC_2C(Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
     dist_left = np.round(
         np.sqrt((Kt - np.maximum(Xt_left, 1))**2 + (Kn - Xn_left)**2),
         decimals=12  # sqrt sometimes gives .9999 out to 13 decimals
+    )
+    # C retains right-curve points above Kt_max, clipping their Kt coordinates.
+    dist_right = np.round(
+        np.sqrt(
+            (Kt - np.clip(Xt_right[:Kn_max], 1, Kt_max))**2
+            + (Kn - Xn_right[:Kn_max])**2
+        ),
+        decimals=12,
     )
     # Right curve is cut off when Kt_max is met (have to calculate cutoff Kn)
     N_right_max = np.argmax(Kt_max < Xt_right)  # index of cutoff
@@ -445,21 +483,27 @@ def SQC_2C(Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
     if (Kn > Kn_max) & (Kt <= Top_R) & (Kt >= Top_L):
         IQC = Kn - Kn_max
         if IQC >= K_diff_threshold:
-            ghi_flag = 4 * min(IQC, 23)
+            # Modified original code below to reduce the minimum allowable buffer in the two-component test from 0.03 to 0.01 in K-space.
+            # ghi_flag = 4 * min(IQC, 23)
+            ghi_flag = 4 * (min(IQC, 21) + 2)
             dni_flag = ghi_flag + 1
         return ghi_flag, dni_flag
     # Kn is above Kn_max, and Kt is to the right of Gompertz curve cutoff
     elif (Kn > Kn_max) & (Kt > Top_R):
         IQC = int(np.sqrt((Kn-Kn_max)**2 + (Kt-Top_R)**2))
         if IQC >= K_diff_threshold:
-            dni_flag = 4 * min(IQC, 23)
+            # Modified original code below to reduce the minimum allowable buffer in the two-component test from 0.03 to 0.01 in K-space.
+            # dni_flag = 4 * min(IQC, 23)
+            dni_flag = 4 * (min(IQC, 21) + 2)
             ghi_flag = dni_flag + 1
         return ghi_flag, dni_flag
     # Kn is below zero and Kt is outside Gompertz curve
     elif (Kn < 0) & (Kt <= Bot_R) & (Kt >= Bot_L):
         IQC = -Kn
         if IQC >= K_diff_threshold:
-            dni_flag = 4 * min(IQC, 23)
+            # Modified original code below to reduce the minimum allowable buffer in the two-component test from 0.03 to 0.01 in K-space.
+            # dni_flag = 4 * min(IQC, 23)
+            dni_flag = 4 * (min(IQC, 21) + 2)
             ghi_flag = dni_flag + 1
         return ghi_flag, dni_flag
     # Kn is below zero and Kt is to the left of Gompertz curve
@@ -467,39 +511,39 @@ def SQC_2C(Kt, Kn, Kt_max, Kn_max, left_boundary, right_boundary,
         # ARJ added conversion to integer
         IQC = int(np.sqrt(Kn**2 + (Kt-Bot_L)**2))
         if IQC >= K_diff_threshold:
-            ghi_flag = 4 * min(IQC, 23)
+            # Modified original code below to reduce the minimum allowable buffer in the two-component test from 0.03 to 0.01 in K-space.
+            # ghi_flag = 4 * min(IQC, 23)
+            ghi_flag = 4 * (min(IQC, 21) + 2)
             dni_flag = ghi_flag + 1
         return ghi_flag, dni_flag
 
     # The below implementation checks distance to all Gompertz curves
     # Calculate minimum distance
-    dist_right = np.round(
-        np.sqrt((Kt - np.maximum(Xt_right, 1))**2 + (Kn - Xn_right)**2),
-        decimals=12  # sqrt sometimes gives .9999 out to 13 decimals
-    )
     min_dist_left = min(dist_left)
     min_dist_right = min(dist_right)
     min_dist = min(min_dist_left, min_dist_right)
-    # Special case of point below Kn_max and directly to the right of Kt_max
-    if (Kt > Kt_max) & (Kn > Xn_right[-1]):
-        min_dist = Kt - Kt_max
-        min_dist_right = min_dist
     # CHECK: If Kn is below 0, that counts as "to the right".
     # CHECK: If Kn is above KNmax, that counts as "to the left".
     # if (( Xt >= Kt2 ) && ( Kn2 >= 0.0 )) return(-1);
     if min_dist >= K_diff_threshold:
         Iflg = int(min_dist)
-        IQClo = 4 * min(Iflg, 23)
+        # Modified original code below to reduce the minimum allowable buffer in the two-component test from 0.03 to 0.01 in K-space.
+        # IQClo = 4 * min(Iflg, 23)
+        IQClo = 4 * (min(Iflg, 21) + 2)
         IQChi = IQClo + 1
         if min_dist_right > min_dist_left:  # To the left of Gompertz curve
             # Code strucure from original SERI QC
             # The distance is large enough to trigger a 2-component flag.
-            if Iflg >= 3:
+
+            # Modified original code below to reduce the minimum allowable buffer in the two-component test from 0.03 to 0.01 in K-space.
+            # if Iflg >= 3:
+            if Iflg >= K_diff_threshold:
                 dni_flag = max(IQChi, dni_flag)
                 ghi_flag = max(IQClo, ghi_flag)
             return ghi_flag, dni_flag
         else:  # to the right of Gompertz curve
-            if Iflg >= 3:
+            # if Iflg >= 3:
+            if Iflg >= K_diff_threshold:
                 dni_flag = max(IQClo, dni_flag)
                 ghi_flag = max(IQChi, ghi_flag)
 
@@ -525,4 +569,10 @@ def is_point_within_boundary(point, boundary_vertices):
     boundary_path = mpath.Path(boundary_vertices)
     # A small negative radius ensures that points on the boundary are counted
     # as within the boundary.
-    return boundary_path.contains_point(point, radius=-0.001)
+
+    # Modified code below to make points on the boundary be outside the boundary (e.g., (0,0)).
+    # Small buffer/offset addition was no longer used, so adjust the logic accordingly.
+    return boundary_path.contains_point(point)
+
+    # Below code triggers other matched records working incorrectly.. Keep this same but try to teak Kt, Kn values instead.
+    # return boundary_path.contains_point(point)

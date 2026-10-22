@@ -112,31 +112,8 @@ def test_extract_curve_numbers(qa0_info):
 
     low, med, hi = AirMassRegime.LOW, AirMassRegime.MEDIUM, AirMassRegime.HIGH
     data, __ = read_site_data_for_month(site, qa0_dir, 1)
-    # assert extract_curve_numbers(data, low) == (0, 0, 0, 0)
-    # assert extract_curve_numbers(data, low) == (0, 0, 0, 0)
-    # assert extract_curve_numbers(data, low) == (0, 0, 0, 0)
     assert extract_curve_numbers(data, low) == (0, 0, 0, 0)
-
-    # assert extract_curve_numbers(data, med) == (4, 1, 9, 16)
-    # assert extract_curve_numbers(data, med) == (4, 1, 9, 16)
-    # assert extract_curve_numbers(data, med) == (4, 1, 9, 16)
-    # assert extract_curve_numbers(data, med) == (4, 1, 9, 13)
-    # assert extract_curve_numbers(data, med) == (4, 1, 9, 13)
-    # assert extract_curve_numbers(data, med) == (4, 1, 9, 0)
-    # assert extract_curve_numbers(data, med) == (4, 1, 9, 0)
-    # assert extract_curve_numbers(data, med) == (4, 1, 9, 0)
-    # assert extract_curve_numbers(data, med) == (4, 1, 9, 13)
     assert extract_curve_numbers(data, med) == (4, 1, 9, 13)
-
-    # assert extract_curve_numbers(data, hi) == (4, 1, 8, 14)
-    # assert extract_curve_numbers(data, hi) == (4, 1, 8, 14)
-    # assert extract_curve_numbers(data, hi) == (4, 1, 8, 14)
-    # assert extract_curve_numbers(data, hi) == (4, 1, 8, 12)
-    # assert extract_curve_numbers(data, hi) == (4, 1, 8, 12)
-    # assert extract_curve_numbers(data, hi) == (4, 1, 8, 0)
-    # assert extract_curve_numbers(data, hi) == (4, 1, 8, 0)
-    # assert extract_curve_numbers(data, hi) == (4, 1, 8, 0)
-    # assert extract_curve_numbers(data, hi) == (4, 1, 8, 12)
     assert extract_curve_numbers(data, hi) == (4, 1, 8, 12)
 
 
@@ -146,17 +123,11 @@ def test_extract_kn_kt(qa0_info):
     interval = 60
     site += f"_{interval}"
 
+    low, med, hi = AirMassRegime.LOW, AirMassRegime.MEDIUM, AirMassRegime.HIGH
     data, __ = read_site_data_for_month(site, qa0_dir, 1)
-    # assert extract_kn_kt(data, 0.5) == (90, 96)
-    # assert extract_kn_kt(data, 1) == (90, 96)
-    # assert extract_kn_kt(data, 2) == (90, 96)
-    # assert extract_kn_kt(data, 3) == (90, 96)
-    # assert extract_kn_kt(data, 5) == (90, 96)
-    # assert extract_kn_kt(data, 10) == (90, 0)
-    # assert extract_kn_kt(data, 15) == (90, 0)
-    # assert extract_kn_kt(data, 30) == (90, 0)
-    # assert extract_kn_kt(data, 45) == (90, 96)
-    assert extract_kn_kt(data) == (90, 96)
+    assert extract_kn_kt(data, low) == (90, 96)
+    assert extract_kn_kt(data, med) == (90, 96)
+    assert extract_kn_kt(data, hi) == (90, 96)
 
 
 if __name__ == "__main__":

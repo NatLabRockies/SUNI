@@ -6,6 +6,40 @@ import numpy as np
 import pytest
 
 from seriqc import SQC_2C
+from seriqc.functions import seriqc_flag
+from seriqc.gompertz_curves import boundary_from_gompertz_curve
+
+
+@pytest.mark.parametrize("Kt", [0.01, 0.28, 1.04])
+def test_two_component_zero_kn_inside_son_boundaries(Kt):
+    left = boundary_from_gompertz_curve(7, 7, "left")
+    right = boundary_from_gompertz_curve(5, 30, "right")
+    result = SQC_2C(Kt, 0, 1.30, 0.76, left, right)
+    assert result[:2] == (2, 2)
+
+
+@pytest.mark.parametrize("Kt, Kn", [(0, 0), (1.06, 0), (0.28, -0.02)])
+def test_two_component_outside_son_bottom_edge(Kt, Kn):
+    left = boundary_from_gompertz_curve(7, 7, "left")
+    right = boundary_from_gompertz_curve(5, 30, "right")
+    result = SQC_2C(Kt, Kn, 1.30, 0.76, left, right)
+    assert result[0] > 3
+    assert result[1] > 3
+
+
+def test_son_low_dni_three_component_regression():
+    left = boundary_from_gompertz_curve(7, 7, "left")
+    right = boundary_from_gompertz_curve(5, 30, "right")
+    result = seriqc_flag(
+        ghi=69, dni=3, dhi=69,
+        zenith=79.55397177101352,
+        dni_extra=1360.230055668625,
+        ghi_extra=246.62202603615216,
+        airmass=5.36,
+        Kt_max=1.30, Kn_max=0.76, Kd_max=1.145,
+        left_boundary=left, right_boundary=right,
+    )
+    assert result[:3] == (3, 3, 3)
 
 
 def test_two_component_test_correct(bms_january_1min_boundaries):
@@ -18,7 +52,7 @@ def test_two_component_test_correct(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
+        K_diff_threshold=0.01)
     # Check these flags are correct
     np.testing.assert_equal(ghi_flag_2, 2)
     np.testing.assert_equal(dni_flag_2, 2)
@@ -35,7 +69,7 @@ def test_two_component_test_correct_on_boundary(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
+        K_diff_threshold=0.01)
     # Check these flags are correct
     np.testing.assert_equal(ghi_flag_2, 2)
     np.testing.assert_equal(dni_flag_2, 2)
@@ -52,7 +86,7 @@ def test_two_component_test_correct_max_Kn(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
+        K_diff_threshold=0.01)
     # Check these flags are correct
     np.testing.assert_equal(ghi_flag_2, 2)
     np.testing.assert_equal(dni_flag_2, 2)
@@ -69,7 +103,7 @@ def test_two_component_test_correct_max_Kt(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
+        K_diff_threshold=0.01)
     # Check these flags are correct
     np.testing.assert_equal(ghi_flag_2, 2)
     np.testing.assert_equal(dni_flag_2, 2)
@@ -86,7 +120,7 @@ def test_two_component_test_correct_max_Kt_Kn(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
+        K_diff_threshold=0.01)
     # Check these flags are correct
     np.testing.assert_equal(ghi_flag_2, 2)
     np.testing.assert_equal(dni_flag_2, 2)
@@ -104,10 +138,10 @@ def test_two_component_greater_than_Kn_low_error(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
+        K_diff_threshold=0.01)
     # Flags 16 and 17 correctly correspond to error between 0.04 and 0.05
-    np.testing.assert_equal(ghi_flag_2, 16)
-    np.testing.assert_equal(dni_flag_2, 17)
+    np.testing.assert_equal(ghi_flag_2, 24)
+    np.testing.assert_equal(dni_flag_2, 25)
 
 
 def test_two_component_greater_than_Kn_high_Kt_high(
@@ -122,9 +156,9 @@ def test_two_component_greater_than_Kn_high_Kt_high(
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
-    np.testing.assert_equal(ghi_flag_2, 21)
-    np.testing.assert_equal(dni_flag_2, 20)
+        K_diff_threshold=0.01)
+    np.testing.assert_equal(ghi_flag_2, 29)
+    np.testing.assert_equal(dni_flag_2, 28)
 
 
 def test_two_component_Kn_below_zero_part_1(bms_january_1min_boundaries):
@@ -138,9 +172,9 @@ def test_two_component_Kn_below_zero_part_1(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
-    np.testing.assert_equal(ghi_flag_2, 17)
-    np.testing.assert_equal(dni_flag_2, 16)
+        K_diff_threshold=0.01)
+    np.testing.assert_equal(ghi_flag_2, 25)
+    np.testing.assert_equal(dni_flag_2, 24)
 
 
 def test_two_component_Kn_below_zero_part_2(bms_january_1min_boundaries):
@@ -154,9 +188,9 @@ def test_two_component_Kn_below_zero_part_2(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
-    np.testing.assert_equal(ghi_flag_2, 16)
-    np.testing.assert_equal(dni_flag_2, 17)
+        K_diff_threshold=0.01)
+    np.testing.assert_equal(ghi_flag_2, 24)
+    np.testing.assert_equal(dni_flag_2, 25)
 
 
 def test_two_component_greater_than_Kn_high_error(bms_january_1min_boundaries):
@@ -170,10 +204,10 @@ def test_two_component_greater_than_Kn_high_error(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
+        K_diff_threshold=0.01)
     # Flags 16 and 17 correctly correspond to error between 0.04 and 0.05
-    np.testing.assert_equal(ghi_flag_2, 32)
-    np.testing.assert_equal(dni_flag_2, 33)
+    np.testing.assert_equal(ghi_flag_2, 40)
+    np.testing.assert_equal(dni_flag_2, 41)
 
 
 def test_two_component_greater_than_Kn_very_high_error(
@@ -190,7 +224,7 @@ def test_two_component_greater_than_Kn_very_high_error(
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
+        K_diff_threshold=0.01)
     np.testing.assert_equal(ghi_flag_2, 92)
     np.testing.assert_equal(dni_flag_2, 93)
 
@@ -206,7 +240,7 @@ def test_two_component_greater_than_Kt_low_error(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
+        K_diff_threshold=0.01)
     np.testing.assert_equal(ghi_flag_2, 93)
     np.testing.assert_equal(dni_flag_2, 92)
 
@@ -223,9 +257,9 @@ def test_two_component_point_right_of_gompertz(bms_january_1min_boundaries):
         Kn_max=Kn_max,
         left_boundary=left_boundary,
         right_boundary=right_boundary,
-        K_diff_threshold=0.03)
-    np.testing.assert_equal(ghi_flag_2, 73)
-    np.testing.assert_equal(dni_flag_2, 72)
+        K_diff_threshold=0.01)
+    np.testing.assert_equal(ghi_flag_2, 81)
+    np.testing.assert_equal(dni_flag_2, 80)
 
 
 if __name__ == "__main__":

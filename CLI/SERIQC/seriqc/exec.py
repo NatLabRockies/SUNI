@@ -179,8 +179,13 @@ def seriqc_from_file(
 
     spa_kwargs = {}
     spa_kwargs["elev"] = kwargs.pop("elev", meta["elevation"])
-    spa_kwargs["pressure"] = kwargs.pop("pressure", (101325 * (1 - (2.25577 * 10 ** (-5)) * spa_kwargs["elev"]) ** 5.25588) / 100)
-    spa_kwargs["temp"] = kwargs.pop("temp", 12)
+    spa_kwargs["pressure"] = kwargs.pop(
+        "pressure",
+        1013.25
+        * (1 - (0.0065 * spa_kwargs["elev"]) / 288.15)
+        ** (9.80665 / (287.05 * 0.0065)),
+    )
+    spa_kwargs["temp"] = kwargs.pop("temp", 11)
     spa_kwargs["delta_t"] = kwargs.pop("delta_t", 67)
     spa_kwargs["atmos_refract"] = kwargs.pop("atmos_refract", 0.5667)
     sol_zen, etr, etrn = compute_solar_properties(
@@ -228,7 +233,7 @@ def seriqc_from_file(
 
     out = extract_curve_numbers(data, nam)
     left_shape, right_shape, left_position, right_position = out
-    kn, kt = extract_kn_kt(data)
+    kn, kt = extract_kn_kt(data, nam)
 
     return_value |= validate_curve_numbers(
         left_shape, right_shape, left_position, right_position

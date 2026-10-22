@@ -202,7 +202,7 @@ def extract_curve_numbers(data, air_mass_regime):
     return left_shape, right_shape, left_position, right_position
 
 
-def extract_kn_kt(data):
+def extract_kn_kt(data, air_mass_regime):
     """Extract Kn and Kt from QA0 data for a particular month.
 
     Parameters
@@ -211,6 +211,8 @@ def extract_kn_kt(data):
         A pandas Series containing QA0 data for a particular month. See
         :func:`read_site_data_for_month` to extract data in the format
         required by this input.
+    air_mass_regime : AirMassRegime
+        AirMassRegime enum option representing the air mass regime.
     # interval : int
     #     The measurement averaging interval (in minutes; 1-60).
 
@@ -220,4 +222,4 @@ def extract_kn_kt(data):
         Kn and Kt values from the QA0 file.
     """
     data = data.fillna(0).astype(int)
-    return data["Kn_max"].iloc[0], data["Kt_max"].iloc[0]
+    return data["Kn_max"].iloc[air_mass_regime - 1], data["Kt_max"].iloc[air_mass_regime - 1]

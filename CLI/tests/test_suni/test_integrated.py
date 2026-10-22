@@ -19,7 +19,7 @@ EXPECTED_GUI_REPORT = f"""
 Uncertainty Processing Report for SRRL2004_01_testing.csv NRELSR
 
 Beginning: 1/1/2004 0:00, Ending: 1/2/2004 8:00, Data records: 1921
-Total eligible records: 421 (21.9%)
+Total eligible records: 416 (21.7%)
 Exceeded SERIQC max: 0 (0.0%)
 
 GHI Mean U95: +/-3.26% | Standard deviation: 0.37
@@ -32,7 +32,7 @@ EXPECTED_EXTENDED_GUI_REPORT = f"""
 Uncertainty Processing Report for SRRL2004_01_testing.csv NRELSR
 
 Beginning: 2004-1-1 0:00, Ending: 2004-1-2 8:00, Data records: 1921
-Total eligible records: 421 (21.9%)
+Total eligible records: 416 (21.7%)
 Exceeded SERIQC max: 0 (0.0%)
 
 GHI Mean U95: +/-3.26% | Standard deviation: 0.37
@@ -40,8 +40,8 @@ DNI Mean U95: +/-1.48% | Standard deviation: 0.61
 DHI Mean U95: +/-3.26% | Standard deviation: 0.37
 
 Urads Uncertainty Mean: +/-3.79%
-Mean of System Uncertainty ABS: +/-2.36%
-Field Uncertainty Mean: +/-0.47%
+Mean of System Uncertainty ABS: +/-2.37%
+Field Uncertainty Mean: +/-0.48%
 
 SUNI v{__version__}
 """
@@ -103,7 +103,7 @@ def test_basic_suni_run(
         test_data_basic_run_dir / f"sample_config.{config_ext}", tmp_cwd
     )
     shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
-    shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(test_data_basic_run_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 3
 
@@ -121,7 +121,7 @@ def test_gui_report(tmp_cwd, test_data_basic_run_dir, capsys):
     """Test that the GUI report is as expected"""
 
     shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
-    shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(test_data_basic_run_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
 
@@ -153,7 +153,7 @@ def test_gui_report_extended(tmp_cwd, test_data_basic_run_dir):
     )
     input_data["DATE"] = input_data["DATE"].map(convert_to_year_first)
     input_data.to_csv(tmp_cwd / "SRRL2004_01_testing.csv", index=False)
-    shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(test_data_basic_run_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
 
@@ -175,7 +175,7 @@ def test_incompatible_data_format(tmp_cwd, test_data_basic_run_dir):
     """Test that the extended GUI report is as expected"""
 
     shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
-    shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(test_data_basic_run_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
 
@@ -201,7 +201,7 @@ def test_report_no_cal_date(tmp_cwd, test_data_basic_run_dir):
     )
     input_data["DATE"] = input_data["DATE"].map(convert_to_year_first)
     input_data.to_csv(tmp_cwd / "SRRL2004_01_testing.csv", index=False)
-    shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(test_data_basic_run_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
 
@@ -244,7 +244,7 @@ def test_raise_seriqc_error(tmp_cwd, test_data_dir):
     df[["DATE", "MST", "GHI", "DNI", "DHI"]].to_csv(
         tmp_cwd / "SRRL2007_TIME_01.csv", index=False
     )
-    shutil.copy(test_data_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(test_data_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
 
@@ -282,7 +282,7 @@ def test_seriqc_error_from_gui(tmp_cwd, test_data_dir):
     df[["DATE", "MST", "GHI", "DNI", "DHI"]].to_csv(
         tmp_cwd / "SRRL2007_TIME_01.csv", index=False
     )
-    shutil.copy(test_data_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(test_data_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
 
@@ -306,7 +306,7 @@ def test_date_parse_error_from_gui(tmp_cwd, test_data_dir):
     """Test that SUNI gives the expected message for bad date input"""
 
     ef_dir = test_data_dir / "extra_fields"
-    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(ef_dir / "s_NRELSR_1.qa0", tmp_cwd)
     df = pd.read_csv(
         ef_dir / "b1_extra_field_testing.csv",
         header=0,
@@ -333,7 +333,7 @@ def test_time_parse_error_from_gui(tmp_cwd, test_data_dir):
     """Test that SUNI gives the expected message for bad time input"""
 
     ef_dir = test_data_dir / "extra_fields"
-    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(ef_dir / "s_NRELSR_1.qa0", tmp_cwd)
     df = pd.read_csv(
         ef_dir / "b1_extra_field_testing.csv",
         header=0,
@@ -361,7 +361,7 @@ def test_irradiance_parse_error_from_gui(tmp_cwd, test_data_dir, irr_data):
     """Test that SUNI gives the expected message for bad time input"""
 
     ef_dir = test_data_dir / "extra_fields"
-    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(ef_dir / "s_NRELSR_1.qa0", tmp_cwd)
     df = pd.read_csv(
         ef_dir / "b1_extra_field_testing.csv",
         header=0,
@@ -392,7 +392,7 @@ def test_basic_run_new_instrument_uncertainty(
 ):
     """Test basic run with user-input Instrument class and uncertainty."""
     shutil.copy(test_data_basic_run_dir / "SRRL2004_01_testing.csv", tmp_cwd)
-    shutil.copy(test_data_basic_run_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(test_data_basic_run_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
 
@@ -420,7 +420,7 @@ def test_extra_field(tmp_cwd, test_data_dir):
 
     ef_dir = test_data_dir / "extra_fields"
     shutil.copy(ef_dir / "b1_extra_field_testing.csv", tmp_cwd)
-    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(ef_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     with open(test_data_dir / "extra_fields" / "sample_config.json") as fh:
         cfg = json.load(fh)
@@ -435,7 +435,7 @@ def test_missing_fields(tmp_cwd, test_data_dir):
 
     mf_dir = test_data_dir / "missing_fields"
     shutil.copy(mf_dir / "b1_missing_field_testing.csv", tmp_cwd)
-    shutil.copy(mf_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(mf_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
 
@@ -456,7 +456,7 @@ def test_editable_class_uncertainty(tmp_cwd, test_data_dir, flags):
 
     ef_dir = test_data_dir / "extra_fields"
     shutil.copy(ef_dir / "b1_extra_field_testing.csv", tmp_cwd)
-    shutil.copy(ef_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(ef_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     with open(test_data_dir / "extra_fields" / "sample_config.json") as fh:
         cfg = json.load(fh)
@@ -495,7 +495,7 @@ def test_missing_field_values(tmp_cwd, test_data_dir):
 
     mf_dir = test_data_dir / "missing_field_value"
     shutil.copy(mf_dir / "b1_missing_field_value_testing.csv", tmp_cwd)
-    shutil.copy(mf_dir / "s_NRELSR.qc0", tmp_cwd)
+    shutil.copy(mf_dir / "s_NRELSR_1.qa0", tmp_cwd)
 
     assert len(list(tmp_cwd.glob("*"))) == 2
 

@@ -1,6 +1,6 @@
 Uncertainty Processing Report for SRRL2004_01_testing.csv
 Station ID: NRELSR (SRRL)
-QC0 File: s_NRELSR.qc0
+QA0 File: s_NRELSR_1.qa0
 Processing date: 2024-02-06 17:33
 From 2004-1-1 0:00 to 2004-1-2 8:00 (1-minute interval)
 
@@ -14,18 +14,18 @@ DNI Min: 25.0
 System Uncertainty Max: 100
 
 Input Data Records: 1921
-Three-component records: 426 (22.2%)
+Three-component records: 421 (21.9%)
 Above SERIQC Max: 0 (0.0%)
 Above Zenith Angle Max: 0 (0.0%)
 Below DNI Minimum: 5 (0.3%)
 Above Max System Uncertainty: 0 (0.0%)
 Mathematically Invalid: 0 (0.0%)
-Total Eligible Uncertainty Records: 421 (21.9%)
+Total Eligible Uncertainty Records: 416 (21.7%)
 
 GHI Mean U95: +/-3.26% | Standard deviation: 0.37
 DNI Mean U95: +/-1.48% | Standard deviation: 0.61
 DHI Mean U95: +/-3.26% | Standard deviation: 0.37
 
 Urads Uncertainty Mean: +/-3.79%
-Mean of System Uncertainty ABS: 2.36%
-Field Uncertainty Mean: +/-0.47%
+Mean of System Uncertainty ABS: 2.37%
+Field Uncertainty Mean: +/-0.48%

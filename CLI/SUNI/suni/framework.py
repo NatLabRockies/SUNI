@@ -23,7 +23,7 @@ class uDat:
     stationID: str
     """[INPUT] Station ID for SERIQC (includes lat, lon, timezone)"""
     qc0_dir: str
-    """[INPUT] Path to QC0 file directory."""
+    """[INPUT] Path to QA0 file directory."""
     yr: int
     """[INPUT] Data year timestamp"""
     mo: int
@@ -134,6 +134,25 @@ class ErrorCode(IntEnum):
     LIST_SIZE = 10
 
 
+def qa0_site_name(station_id, interval):
+    """Build the SERIQC site name used in the ``s_<site>.qa0`` filename.
+
+    Parameters
+    ----------
+    station_id : str
+        Station identifier, e.g. ``"NRELSR"``.
+    interval : int
+        Averaging interval of the measurement data in minutes.
+
+    Returns
+    -------
+    str
+        Site name of the form ``<station_id>_<interval>``, so the QA0
+        file read is ``s_<station_id>_<interval>.qa0``.
+    """
+    return f"{station_id}_{int(interval)}"
+
+
 def Uprocess(data, **kwargs):  # noqa
     """Compute uncertainty for measurement data.
 
@@ -157,7 +176,7 @@ def Uprocess(data, **kwargs):  # noqa
         data.zen,
         data.SQCcode,
     ) = seriqc_from_file(
-        data.stationID,
+        qa0_site_name(data.stationID, data.intrvl),
         data.qc0_dir,
         data.yr,
         data.mo,
